@@ -1,0 +1,1532 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal de Mensajería e Interconsultas - Hospital de Niños Dr. Orlando Alassia</title>
+  <!-- Remixicon for modern medical icons -->
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Dedicated Full Screen Login Page -->
+  <div class="login-page-screen" id="login-page-screen">
+    <div class="login-box-card">
+      <div class="login-brand-header">
+        <div class="login-brand-logo">
+          <i class="ri-hospital-fill"></i>
+        </div>
+        <h2>HOSPITAL DE NIÑOS</h2>
+        <h3>"DR. ORLANDO ALASSIA"</h3>
+        <p>Portal Digital de Mensajería, Recetas e Interconsultas • Santa Fe</p>
+      </div>
+
+      <div class="login-error-msg" id="login-error-alert" style="display: none;">
+        <i class="ri-error-warning-fill" style="font-size: 1.2rem;"></i>
+        <span id="login-error-text">D.N.I. o Contraseña incorrecta. Verifique sus credenciales.</span>
+      </div>
+
+      <form id="login-form-el" onsubmit="handleLoginSubmit(event)">
+        <div class="form-group full-width" style="margin-bottom: 1.25rem;">
+          <label style="font-weight: 600; color: var(--text-main); font-size: 0.875rem;">
+            <i class="ri-id-card-line" style="color: var(--primary-600);"></i> D.N.I. del Profesional
+          </label>
+          <input type="text" id="login-dni-input" class="form-control" placeholder="Ej: 20341000 (Sin puntos ni espacios)" required autofocus>
+        </div>
+
+        <div class="form-group full-width" style="margin-bottom: 1.5rem;">
+          <label style="font-weight: 600; color: var(--text-main); font-size: 0.875rem;">
+            <i class="ri-lock-password-line" style="color: var(--primary-600);"></i> Contraseña / Clave Personal
+          </label>
+          <input type="password" id="login-pass-input" class="form-control" placeholder="••••••••" required>
+        </div>
+
+        <button type="submit" class="btn-primary" style="width: 100%; padding: 0.85rem; font-size: 1rem; justify-content: center; font-weight: 700;">
+          <i class="ri-login-box-line"></i> Ingresar al Portal Hospitalario
+        </button>
+      </form>
+
+      <!-- Quick Demo Credentials Helper -->
+      <div class="demo-credentials-box">
+        <h4><i class="ri-key-2-line" style="color: var(--primary-600);"></i> Credenciales de Prueba (Hacé Clic para Autocompletar)</h4>
+        <div class="demo-cards-list">
+          <button type="button" class="demo-chip" onclick="fillDemoLogin('11111111', 'admin123')">
+            <strong>Dirección Médica (Admin)</strong>
+            <span>DNI: 11111111 | Pass: admin123</span>
+          </button>
+          <button type="button" class="demo-chip" onclick="fillDemoLogin('20341000', 'cardio123')">
+            <strong>Dr. Orlando Alassia (Cardio)</strong>
+            <span>DNI: 20341000 | Pass: cardio123</span>
+          </button>
+          <button type="button" class="demo-chip" onclick="fillDemoLogin('25392000', 'gastro123')">
+            <strong>Dra. Mariana López (Gastro)</strong>
+            <span>DNI: 25392000 | Pass: gastro123</span>
+          </button>
+          <button type="button" class="demo-chip" onclick="fillDemoLogin('24105200', 'nutri123')">
+            <strong>Maglione Pablo (Nutrición)</strong>
+            <span>DNI: 24105200 | Pass: nutri123</span>
+          </button>
+          <button type="button" class="demo-chip" onclick="fillDemoLogin('22182000', 'farmacia123')">
+            <strong>Farm. Carlos Villalba (Farmacia)</strong>
+            <span>DNI: 22182000 | Pass: farmacia123</span>
+          </button>
+          <button type="button" class="demo-chip" onclick="fillDemoLogin('23310500', 'imagenes123')">
+            <strong>Dr. Andrés Cavallo (Imágenes)</strong>
+            <span>DNI: 23310500 | Pass: imagenes123</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="login-footer">
+        <p><i class="ri-shield-check-line" style="color: var(--emerald-500);"></i> Red Intranet Conectada • Ministerio de Salud de Santa Fe</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-container" id="app-workspace-container" style="display: none;">
+    
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-icon">
+          <i class="ri-hospital-line"></i>
+        </div>
+        <div class="brand-title">
+          <h2>HOSPITAL ALASSIA</h2>
+          <span>Santa Fe • Mensajería</span>
+        </div>
+      </div>
+
+      <nav>
+        <div class="nav-section-label">Principal</div>
+        <ul class="nav-menu">
+          <li class="nav-item">
+            <button class="active" data-tab="tab-dashboard">
+              <i class="ri-dashboard-3-line"></i>
+              <span>Panel General</span>
+            </button>
+          </li>
+          <li class="nav-item">
+            <button data-tab="tab-inbox">
+              <i class="ri-inbox-archive-line"></i>
+              <span>Bandeja de Entrada</span>
+              <span class="badge-count" id="inbox-badge">2</span>
+            </button>
+          </li>
+          <li class="nav-item">
+            <button data-tab="tab-archive">
+              <i class="ri-checkbox-circle-line"></i>
+              <span>Archivo de Resueltos</span>
+            </button>
+          </li>
+          <li class="nav-item">
+            <button data-tab="tab-recurrencia">
+              <i class="ri-alarm-warning-line"></i>
+              <span>Retiros Mensuales & Alarmas</span>
+              <span class="badge-count" style="background: var(--amber-500);" id="recurring-badge">3</span>
+            </button>
+          </li>
+          <li class="nav-item">
+            <button data-tab="tab-reportes">
+              <i class="ri-bar-chart-box-line"></i>
+              <span>Reportes & Métricas</span>
+            </button>
+          </li>
+          <li class="nav-item">
+            <button data-tab="tab-services">
+              <i class="ri-building-4-line"></i>
+              <span>Servicios & Personal</span>
+            </button>
+          </li>
+          <li class="nav-item">
+            <button data-tab="tab-admin">
+              <i class="ri-shield-keyhole-line"></i>
+              <span>Panel Administración</span>
+            </button>
+          </li>
+          <li class="nav-item">
+            <button data-tab="tab-logs">
+              <i class="ri-history-line"></i>
+              <span>Auditoría & Logs</span>
+            </button>
+          </li>
+        </ul>
+
+        <div class="nav-section-label">Formularios Digitales</div>
+        <ul class="nav-menu">
+          <li class="nav-item">
+            <button data-tab="tab-cardio">
+              <i class="ri-heart-pulse-line"></i>
+              <span>Cardiología</span>
+            </button>
+          </li>
+          <li class="nav-item">
+            <button data-tab="tab-general">
+              <i class="ri-stethoscope-line"></i>
+              <span>Interconsulta General</span>
+            </button>
+          </li>
+          <li class="nav-item">
+            <button data-tab="tab-nutri">
+              <i class="ri-goblet-line"></i>
+              <span>Fórmulas Lácteas</span>
+            </button>
+          </li>
+          <li class="nav-item">
+            <button data-tab="tab-farmacia">
+              <i class="ri-capsule-line"></i>
+              <span>Farmacia / Recetas</span>
+            </button>
+          </li>
+          <li class="nav-item">
+            <button data-tab="tab-imagenes">
+              <i class="ri-body-scan-line"></i>
+              <span>Sector Imágenes</span>
+            </button>
+          </li>
+        </ul>
+      </nav>
+
+      <div class="sidebar-footer" style="display: flex; gap: 0.5rem; align-items: center;">
+        <button class="user-profile-btn" style="flex: 1;" onclick="openLoginModal()" title="Cambiar perfil activo">
+          <div class="user-avatar" id="current-user-avatar">OA</div>
+          <div class="user-info">
+            <h4 id="current-user-name">Dr. Orlando Alassia</h4>
+            <p id="current-user-role">Pediatría • Mat. 3410</p>
+          </div>
+          <i class="ri-swap-line" style="margin-left: auto; color: var(--slate-400);"></i>
+        </button>
+        <button class="btn-icon" style="background: var(--slate-100); color: var(--rose-600);" onclick="logoutUser()" title="Bloquear / Cerrar Sesión">
+          <i class="ri-logout-box-r-line"></i>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Workspace -->
+    <div class="main-wrapper">
+      
+      <!-- Top Header -->
+      <header class="top-header">
+        <div class="page-title" style="display: flex; align-items: center; gap: 1rem;">
+          <h1 id="active-tab-title">Panel General de Interconsultas</h1>
+          <div class="role-active-tag" id="header-role-badge">
+            <i class="ri-user-shared-line"></i> <span id="header-role-name">Cardiología Infantil</span>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <div class="search-box">
+            <i class="ri-search-line"></i>
+            <input type="text" id="global-search" placeholder="Buscar por paciente, DNI o HC...">
+          </div>
+
+          <button class="btn-icon" id="theme-toggle" title="Cambiar tema">
+            <i class="ri-moon-line"></i>
+          </button>
+
+          <button class="btn-icon" id="notif-toggle-btn" onclick="toggleNotifDropdown()" title="Notificaciones activas">
+            <i class="ri-notification-3-line"></i>
+            <span class="dot-indicator" id="notif-dot"></span>
+          </button>
+
+          <!-- Notifications Dropdown -->
+          <div class="notif-dropdown" id="notif-dropdown">
+            <div class="notif-header">
+              <h4>Notificaciones del Sistema</h4>
+              <span style="font-size: 0.75rem; color: var(--primary-600); cursor: pointer;" onclick="clearNotifs()">Marcar leídas</span>
+            </div>
+            <div class="notif-list" id="notif-list">
+              <!-- Live Notification Items -->
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Content Area -->
+      <main class="content-body">
+
+        <!-- Tab 1: Dashboard -->
+        <section id="tab-dashboard" class="tab-content active">
+          <div class="welcome-banner">
+            <h2>Sistema Digital de Mensajería e Interconsultas</h2>
+            <p>Digitalización oficial del Hospital de Niños "Dr. Orlando Alassia". Prescripción de fórmulas lácteas restringida exclusivamente a servicios médicos autorizados.</p>
+          </div>
+
+          <div class="quick-stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon blue">
+                <i class="ri-file-text-line"></i>
+              </div>
+              <div class="stat-info">
+                <h3 id="stat-pending-inbox">2</h3>
+                <p>Pendientes de Atención</p>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon teal">
+                <i class="ri-checkbox-circle-line"></i>
+              </div>
+              <div class="stat-info">
+                <h3 id="stat-resolved-total">3</h3>
+                <p>Resueltos / Archivados</p>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon amber">
+                <i class="ri-alarm-warning-line"></i>
+              </div>
+              <div class="stat-info">
+                <h3 id="stat-recurring">3</h3>
+                <p>Retiros Mensuales Activos</p>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon rose">
+                <i class="ri-shield-user-line"></i>
+              </div>
+              <div class="stat-info">
+                <h3 id="stat-authorized-leches">5</h3>
+                <p>Servicios Autorizados Leches</p>
+              </div>
+            </div>
+          </div>
+
+          <h2 style="margin-bottom: 1.25rem; font-size: 1.2rem;">Crear Nueva Solicitud Digital</h2>
+          <div class="actions-grid">
+            
+            <div class="action-card">
+              <div>
+                <div class="action-card-header">
+                  <span class="action-tag cardio">Especialidad</span>
+                  <i class="ri-heart-pulse-fill" style="font-size: 1.5rem; color: #dc2626;"></i>
+                </div>
+                <h3>Interconsulta con Cardiología</h3>
+                <p>Solicitud de evaluación cardiológica infantil, electrocardiograma, ecocardiograma e informe especializado.</p>
+              </div>
+              <button class="btn-primary" onclick="switchTab('tab-cardio')">
+                <i class="ri-add-line"></i> Completar Formulario
+              </button>
+            </div>
+
+            <div class="action-card">
+              <div>
+                <div class="action-card-header">
+                  <span class="action-tag general">General</span>
+                  <i class="ri-stethoscope-fill" style="font-size: 1.5rem; color: #0284c7;"></i>
+                </div>
+                <h3>Interconsulta Médica General</h3>
+                <p>Pedido formal entre servicios/salas del hospital (Pediatría, Cirugía, Traumatología, Neurología).</p>
+              </div>
+              <button class="btn-primary" onclick="switchTab('tab-general')">
+                <i class="ri-add-line"></i> Completar Formulario
+              </button>
+            </div>
+
+            <div class="action-card">
+              <div>
+                <div class="action-card-header">
+                  <span class="action-tag farmacia">Farmacia</span>
+                  <i class="ri-capsule-fill" style="font-size: 1.5rem; color: #d97706;"></i>
+                </div>
+                <h3>Receta Electrónica de Farmacia</h3>
+                <p>Emisión digital de prescripciones de medicamentos hospitalarios y tratamientos crónicos con retiro mensual.</p>
+              </div>
+              <button class="btn-primary" onclick="switchTab('tab-farmacia')">
+                <i class="ri-add-line"></i> Prescribir Receta
+              </button>
+            </div>
+
+            <div class="action-card">
+              <div>
+                <div class="action-card-header">
+                  <span class="action-tag imagenes">Radiodiagnóstico</span>
+                  <i class="ri-body-scan-fill" style="font-size: 1.5rem; color: #7e22ce;"></i>
+                </div>
+                <h3>Solicitud de Imágenes</h3>
+                <p>Pedido de ecografía, radiografía (RX), tomografía (TAC) y resonancia (RMN) para el Sector de Imágenes.</p>
+              </div>
+              <button class="btn-primary" onclick="switchTab('tab-imagenes')">
+                <i class="ri-add-line"></i> Pedir Estudio
+              </button>
+            </div>
+
+            <div class="action-card">
+              <div>
+                <div class="action-card-header">
+                  <span class="action-tag nutri">Nutrición Exclusivo</span>
+                  <i class="ri-drop-fill" style="font-size: 1.5rem; color: #16a34a;"></i>
+                </div>
+                <h3>Prescripción Fórmulas Lácteas</h3>
+                <p>Recetario oficial de leches habilitado únicamente para servicios autorizados por el hospital.</p>
+              </div>
+              <button class="btn-primary" onclick="switchTab('tab-nutri')">
+                <i class="ri-add-line"></i> Prescribir Fórmula Láctea
+              </button>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- Tab 2: Bandeja de Entrada -->
+        <section id="tab-inbox" class="tab-content">
+          <div class="table-card">
+            <div class="table-header">
+              <div>
+                <h2>Bandeja de Entrada de Solicitudes Pendientes</h2>
+                <p style="font-size: 0.8rem; color: var(--text-muted);" id="inbox-filter-subtitle">Mostrando interconsultas asignadas a tu perfil profesional activo.</p>
+              </div>
+              <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                <button class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="filterInbox('all')">Todos los Tipos</button>
+                <button class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="filterInbox('Cardiología')">Cardiología</button>
+                <button class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="filterInbox('General')">General</button>
+                <button class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="filterInbox('Farmacia')">Farmacia</button>
+                <button class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="filterInbox('Imágenes')">Imágenes</button>
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="custom-table">
+                <thead>
+                  <tr>
+                    <th>Código ID</th>
+                    <th>Tipo Formulario</th>
+                    <th>Paciente</th>
+                    <th>Servicio Receptor</th>
+                    <th>Personal Notificado</th>
+                    <th>Fecha</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="inbox-table-body">
+                  <!-- Dynamic Pending Inbox Rows -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- Tab 3: Archivo de Interconsultas Resueltas -->
+        <section id="tab-archive" class="tab-content">
+          <div class="table-card">
+            <div class="table-header">
+              <div>
+                <h2>Archivo de Interconsultas y Recetas Resueltas</h2>
+                <p style="font-size: 0.8rem; color: var(--text-muted);">Historial permanente de solicitudes confirmadas y finalizadas con informe médico firmado.</p>
+              </div>
+              <button class="btn-secondary" onclick="window.print()">
+                <i class="ri-printer-line"></i> Imprimir Archivo
+              </button>
+            </div>
+
+            <div class="table-responsive">
+              <table class="custom-table">
+                <thead>
+                  <tr>
+                    <th>Código ID</th>
+                    <th>Tipo Formulario</th>
+                    <th>Paciente</th>
+                    <th>Servicio</th>
+                    <th>Dictamen / Respuesta Médica</th>
+                    <th>Profesional Firmante</th>
+                    <th>Fecha</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="archive-table-body">
+                  <!-- Dynamic Archive Rows -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- Tab 4: Retiros Mensuales & Alarmas -->
+        <section id="tab-recurrencia" class="tab-content">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <div>
+              <h2 style="font-size: 1.3rem;">Control de Retiros Mensuales y Alarmas de Ausentismo</h2>
+              <p style="font-size: 0.85rem; color: var(--text-muted);">Seguimiento automatizado de pacientes crónicos de Farmacia y Nutrición / Lactario.</p>
+            </div>
+            <button class="btn-primary" onclick="checkAllAlarms()">
+              <i class="ri-refresh-line"></i> Escanear Alarmas de Vencimiento
+            </button>
+          </div>
+
+          <div class="recurring-grid" id="recurring-cards-container">
+            <!-- Dynamic Recurring Cards -->
+          </div>
+        </section>
+
+        <!-- Tab 5: Reportes & Métricas Mensuales -->
+        <section id="tab-reportes" class="tab-content">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <div>
+              <h2 style="font-size: 1.3rem;">Reporte Oficial de Entregas Mensuales y Ausentismo</h2>
+              <p style="font-size: 0.85rem; color: var(--text-muted);">Consolidado estadístico del Servicio de Farmacia, Lactario y Diagnóstico por Imágenes.</p>
+            </div>
+            <button class="btn-primary" onclick="window.print()">
+              <i class="ri-printer-line"></i> Exportar / Imprimir Reporte Mensual
+            </button>
+          </div>
+
+          <div class="report-summary-grid">
+            <div class="report-summary-card">
+              <h4>Total Entregas del Mes</h4>
+              <div class="number" id="rep-total-dispensa">18</div>
+              <p style="font-size: 0.75rem; color: var(--emerald-600); margin-top: 0.25rem;">+12% vs mes anterior</p>
+            </div>
+
+            <div class="report-summary-card">
+              <h4>Módulos de Nutrición Entregados</h4>
+              <div class="number" id="rep-nutri-count">7</div>
+              <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Fórmulas lácteas y módulos APLV</p>
+            </div>
+
+            <div class="report-summary-card">
+              <h4>Recetas de Farmacia Dispensadas</h4>
+              <div class="number" id="rep-farm-count">8</div>
+              <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Tratamientos crónicos y agudos</p>
+            </div>
+
+            <div class="report-summary-card">
+              <h4>Alarmas por Ausentismo / Vencidos</h4>
+              <div class="number" style="color: var(--rose-600);" id="rep-overdue-count">1</div>
+              <p style="font-size: 0.75rem; color: var(--rose-600); margin-top: 0.25rem;">Pacientes con retiro atrasado +5 días</p>
+            </div>
+          </div>
+
+          <div class="table-card" id="report-print-area">
+            <div class="table-header">
+              <h3>Planilla de Registro Detallado de Entregas Mensuales</h3>
+              <span style="font-size: 0.8rem; color: var(--text-muted);">Ministerio de Salud • Hospital Dr. Orlando Alassia</span>
+            </div>
+
+            <div class="table-responsive">
+              <table class="custom-table">
+                <thead>
+                  <tr>
+                    <th>Código ID</th>
+                    <th>Paciente</th>
+                    <th>Servicio / Insumo Dispensado</th>
+                    <th>Módulo</th>
+                    <th>Fecha Retiro</th>
+                    <th>Personal Responsable</th>
+                    <th>Estado Retiro</th>
+                  </tr>
+                </thead>
+                <tbody id="report-table-body">
+                  <!-- Dynamic Report Rows -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- Tab 6: Panel de Administración -->
+        <section id="tab-admin" class="tab-content">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <div>
+              <h2 style="font-size: 1.3rem;">Panel de Administración de Servicios y Permisos</h2>
+              <p style="font-size: 0.85rem; color: var(--text-muted);">Configurá habilitaciones y autorizaciones especiales para recetas de leches y fórmulas lácteas.</p>
+            </div>
+            <button class="btn-primary" onclick="openAddStaffModal()">
+              <i class="ri-user-add-line"></i> Asignar Nuevo Profesional a Servicio
+            </button>
+          </div>
+
+          <!-- Form Permissions Control Grid -->
+          <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1.5rem; box-shadow: var(--shadow-sm);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+              <div>
+                <h3 style="font-size: 1.05rem; font-weight: 800;"><i class="ri-toggle-line" style="color: var(--primary-600);"></i> Control de Habilitación de Tipos de Pedidos y Formularios</h3>
+                <p style="font-size: 0.8rem; color: var(--text-muted);">Habilitá o deshabilitá globalmente la emisión de recetas e interconsultas por especialidad.</p>
+              </div>
+            </div>
+
+            <div class="report-summary-grid" id="admin-forms-toggle-container" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;">
+              <!-- Dynamic Form Permission Toggle Cards -->
+            </div>
+          </div>
+
+          <h3 style="font-size: 1.05rem; font-weight: 800; margin-bottom: 1rem;"><i class="ri-hospital-line" style="color: var(--primary-600);"></i> Habilitación de Servicios y Autorización de Leches</h3>
+
+          <div class="services-grid" id="admin-services-container">
+            <!-- Dynamic Admin Services Cards with Toggle Controls -->
+          </div>
+        </section>
+
+        <!-- Tab 7: Servicios y Personal (View mode) -->
+        <section id="tab-services" class="tab-content">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <div>
+              <h2 style="font-size: 1.3rem;">Servicios Hospitalarios y Personal a Cargo</h2>
+              <p style="font-size: 0.85rem; color: var(--text-muted);">Asignación oficial de profesionales de la salud receptores de interconsultas por departamento.</p>
+            </div>
+            <button class="btn-primary" onclick="openAddStaffModal()">
+              <i class="ri-user-add-line"></i> Asignar Nuevo Personal a Servicio
+            </button>
+          </div>
+
+          <div class="services-grid" id="services-cards-container">
+            <!-- Dynamic Services Cards -->
+          </div>
+        </section>
+
+        <!-- Tab 8: Auditoría & Registro de Logs -->
+        <section id="tab-logs" class="tab-content">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <div>
+              <h2 style="font-size: 1.3rem;">Registro de Auditoría y Trazabilidad (Audit Trail)</h2>
+              <p style="font-size: 0.85rem; color: var(--text-muted);">Registro cronológico inmutable de logins, prescripciones, dictámenes y cambios del sistema.</p>
+            </div>
+            <button class="btn-primary" onclick="exportAuditLog()">
+              <i class="ri-download-2-line"></i> Exportar Audit Log
+            </button>
+          </div>
+
+          <div class="report-summary-grid" style="margin-bottom: 1.5rem;">
+            <div class="report-summary-card">
+              <h4>Total Eventos Registrados</h4>
+              <div class="number" id="audit-total-logs">0</div>
+              <p style="font-size: 0.75rem; color: var(--emerald-600); margin-top: 0.25rem;">Trazabilidad 100% activa</p>
+            </div>
+
+            <div class="report-summary-card">
+              <h4>Logins de Sesión</h4>
+              <div class="number" id="audit-logins-count">0</div>
+              <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Accesos por médicos y admin</p>
+            </div>
+
+            <div class="report-summary-card">
+              <h4>Prescripciones & Pedidos</h4>
+              <div class="number" id="audit-prescriptions-count">0</div>
+              <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Interconsultas y recetas creadas</p>
+            </div>
+
+            <div class="report-summary-card">
+              <h4>Acciones de Administración</h4>
+              <div class="number" style="color: var(--primary-600);" id="audit-admin-count">0</div>
+              <p style="font-size: 0.75rem; color: var(--primary-600); margin-top: 0.25rem;">Cambios de permisos e insumos</p>
+            </div>
+          </div>
+
+          <div class="table-card">
+            <div class="table-header">
+              <div>
+                <h3>Historial de Eventos del Sistema</h3>
+                <p style="font-size: 0.8rem; color: var(--text-muted);">Filtrá por categoría para auditar la actividad de los usuarios.</p>
+              </div>
+              <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                <button class="btn-secondary" style="padding: 0.35rem 0.7rem; font-size: 0.775rem;" onclick="filterLogs('all')">Todos los Eventos</button>
+                <button class="btn-secondary" style="padding: 0.35rem 0.7rem; font-size: 0.775rem;" onclick="filterLogs('LOGIN')">🔑 Logins</button>
+                <button class="btn-secondary" style="padding: 0.35rem 0.7rem; font-size: 0.775rem;" onclick="filterLogs('CREACION')">📝 Prescripciones</button>
+                <button class="btn-secondary" style="padding: 0.35rem 0.7rem; font-size: 0.775rem;" onclick="filterLogs('RESOLUCION')">🟢 Dictámenes</button>
+                <button class="btn-secondary" style="padding: 0.35rem 0.7rem; font-size: 0.775rem;" onclick="filterLogs('ADMIN')">🛡️ Admin</button>
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="custom-table">
+                <thead>
+                  <tr>
+                    <th>Fecha / Hora</th>
+                    <th>Categoría</th>
+                    <th>Usuario / Médico</th>
+                    <th>Matrícula / Rol</th>
+                    <th>Servicio</th>
+                    <th>Detalle del Evento</th>
+                    <th>IP / Terminal</th>
+                  </tr>
+                </thead>
+                <tbody id="audit-logs-table-body">
+                  <!-- Dynamic Audit Logs Rows -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- Cardio Form -->
+        <section id="tab-cardio" class="tab-content">
+          <div class="form-layout-grid">
+            <div class="form-container-card">
+              <div class="form-header">
+                <h2>Formulario de Cardiología</h2>
+                <span class="action-tag cardio">Formulario #1</span>
+              </div>
+
+              <form id="form-cardio-el" onsubmit="handleFormSubmit(event, 'Cardiología')">
+                <div class="form-grid">
+                  <div class="form-group full-width">
+                    <label>Nombre y Apellido del Paciente</label>
+                    <input type="text" id="c-nombre" class="form-control" placeholder="Ej: Mateo Benítez" required>
+                  </div>
+                  
+                  <div class="form-group">
+                    <label>Edad</label>
+                    <input type="text" id="c-edad" class="form-control" placeholder="Ej: 3 años 4 meses">
+                  </div>
+
+                  <div class="form-group">
+                    <label>DNI / HC del Paciente</label>
+                    <div style="display: flex; gap: 0.4rem;">
+                      <input type="text" id="c-dni" class="form-control" placeholder="Ej: 48.912.304" onkeydown="if(event.key==='Enter'){event.preventDefault();buscarPacientePorDNI('c-dni',{nombre:'c-nombre',edad:'c-edad',hc:'c-dni'});}">
+                      <button type="button" class="btn-secondary" style="padding: 0.4rem 0.65rem; font-size: 0.75rem; white-space: nowrap;" onclick="buscarPacientePorDNI('c-dni',{nombre:'c-nombre',edad:'c-edad',hc:'c-dni'})" title="Buscar paciente en Base diagnose (10.12.4.1)">
+                        <i class="ri-search-2-line"></i> Buscar
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="form-group full-width">
+                    <label>Diagnóstico de Ingreso</label>
+                    <input type="text" id="c-diag" class="form-control" placeholder="Ej: Síndrome febril prolongado / Soplo funcional en estudio">
+                  </div>
+
+                  <div class="form-group full-width">
+                    <label>Motivo de la Interconsulta</label>
+                    <textarea id="c-motivo" class="form-control" placeholder="Describa los síntomas cardiológicos, hallazgos auscultatorios y requerimientos del estudio..."></textarea>
+                  </div>
+
+                  <div class="form-group full-width">
+                    <label>Personal a Cargo Notificado (Servicio Cardiología)</label>
+                    <select id="c-staff-target" class="form-control">
+                      <!-- Dynamic Staff Options -->
+                    </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label>Email Servicio Cardiología</label>
+                    <input type="email" id="c-email" class="form-control" value="cardiologia.alassia@santafe.gob.ar" required>
+                  </div>
+
+                  <div class="form-group">
+                    <label>Médico Solicitante</label>
+                    <input type="text" id="c-medico" class="form-control" placeholder="Ej: Dra. Lucía Gómez (Mat. 4812)">
+                  </div>
+                </div>
+
+                <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+                  <button type="submit" class="btn-primary" style="flex: 1;">
+                    <i class="ri-send-plane-fill"></i> Registrar y Notificar Personal
+                  </button>
+                  <button type="button" class="btn-secondary" onclick="window.print()">
+                    <i class="ri-printer-line"></i> Imprimir Sheet
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <!-- Right Paper Live Sheet -->
+            <div class="digital-paper-container">
+              <div class="paper-sheet" id="paper-cardio-preview">
+                <div class="paper-header">
+                  <div class="paper-logo">
+                    <i class="ri-heart-pulse-line"></i>
+                    <div class="paper-logo-text">
+                      <h3>Hospital de Niños</h3>
+                      <p>Dr. Orlando Alassia • Santa Fe</p>
+                    </div>
+                  </div>
+                  <div class="paper-doc-title">
+                    <h4>INTERCONSULTA</h4>
+                    <span>CARDIOLOGÍA</span>
+                  </div>
+                </div>
+
+                <div class="paper-section">
+                  <div class="paper-section-title">Datos del Paciente</div>
+                  <div class="paper-field-grid">
+                    <div class="paper-field"><strong>Nombre y Apellido:</strong> <span id="prev-c-nombre"> Mateo Benítez</span></div>
+                    <div class="paper-field"><strong>DNI / HC:</strong> <span id="prev-c-dni"> 48.912.304 / HC-9821</span></div>
+                    <div class="paper-field"><strong>Edad:</strong> <span id="prev-c-edad"> 3 años 4 meses</span></div>
+                    <div class="paper-field"><strong>Diagnóstico:</strong> <span id="prev-c-diag"> Síndrome febril prolongado</span></div>
+                  </div>
+                </div>
+
+                <div class="paper-section">
+                  <div class="paper-section-title">Motivo de la Interconsulta</div>
+                  <div class="paper-box-content" id="prev-c-motivo">Paciente con soplo holosistólico 3/6 en foco mitral. Se requiere ecocardiograma Doppler color y evaluación por especialista de guardia.</div>
+                </div>
+
+                <div class="paper-section">
+                  <div class="paper-section-title">Respuesta a la Interconsulta (Servicio de Cardiología)</div>
+                  <div class="paper-box-content" style="min-height: 90px; color: #94a3b8;">
+                    [Espacio reservado para informe cardiológico, ECG y recomendaciones médicas]
+                  </div>
+                </div>
+
+                <div class="paper-signatures">
+                  <div class="signature-box">
+                    <div class="signature-line"></div>
+                    <p>Firma y Sello Médico Solicitante<br><span id="prev-c-medico" style="font-weight: 400; font-size: 0.7rem;">Dra. Lucía Gómez</span></p>
+                  </div>
+                  <div class="signature-box">
+                    <div class="signature-line"></div>
+                    <p>Firma y Sello Cardiología<br><span style="font-weight: 400; font-size: 0.7rem;">Fecha y Hora de Respuesta</span></p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- General Form -->
+        <section id="tab-general" class="tab-content">
+          <div class="form-layout-grid">
+            <div class="form-container-card">
+              <div class="form-header">
+                <h2>Interconsulta Médica General</h2>
+                <span class="action-tag general">Formulario #2</span>
+              </div>
+
+              <form id="form-general-el" onsubmit="handleFormSubmit(event, 'Interconsulta General')">
+                <div class="form-grid">
+                  <div class="form-group full-width">
+                    <label>Apellido y Nombres del Paciente</label>
+                    <input type="text" id="g-nombre" class="form-control" placeholder="Ej: Sofía Valentina Rossi" required>
+                  </div>
+
+                  <div class="form-group">
+                    <label>DNI / H.C. Nº</label>
+                    <div style="display: flex; gap: 0.4rem;">
+                      <input type="text" id="g-hc" class="form-control" placeholder="Ej: 50.119.823 / HC-40192" onkeydown="if(event.key==='Enter'){event.preventDefault();buscarPacientePorDNI('g-hc',{nombre:'g-nombre',hc:'g-hc'});}">
+                      <button type="button" class="btn-secondary" style="padding: 0.4rem 0.65rem; font-size: 0.75rem; white-space: nowrap;" onclick="buscarPacientePorDNI('g-hc',{nombre:'g-nombre',hc:'g-hc'})" title="Buscar paciente en Base diagnose (10.12.4.1)">
+                        <i class="ri-search-2-line"></i> Buscar
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label>Servicio de Origen</label>
+                    <input type="text" id="g-servicio" class="form-control" placeholder="Ej: Pediatría II">
+                  </div>
+
+                  <div class="form-group">
+                    <label>Sala / Cama</label>
+                    <input type="text" id="g-sala" class="form-control" placeholder="Ej: Sala 4 - Cama 12B">
+                  </div>
+
+                  <div class="form-group full-width">
+                    <label>PEDIDO DE CONSULTA A (Servicio Receptor)</label>
+                    <select id="g-destino" class="form-control" onchange="updateGeneralStaffList()">
+                      <!-- Dynamic Active Services Dropdown -->
+                    </select>
+                  </div>
+
+                  <div class="form-group full-width">
+                    <label>Personal a Cargo Notificado en Servicio Receptor</label>
+                    <select id="g-staff-target" class="form-control">
+                      <!-- Dynamic Staff Options -->
+                    </select>
+                  </div>
+
+                  <div class="form-group full-width">
+                    <label>Motivo de la Interconsulta y Resumen Clínico</label>
+                    <textarea id="g-motivo" class="form-control" placeholder="Describa antecedentes pertinentes, examen físico y la inquietud clínica puntual..."></textarea>
+                  </div>
+
+                  <div class="form-group">
+                    <label>Email Servicio Destino</label>
+                    <input type="email" id="g-email" class="form-control" value="cirugia.infantil@santafe.gob.ar" required>
+                  </div>
+
+                  <div class="form-group">
+                    <label>Médico Solicitante</label>
+                    <input type="text" id="g-medico" class="form-control" placeholder="Ej: Dr. Martín Peralta">
+                  </div>
+                </div>
+
+                <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+                  <button type="submit" class="btn-primary" style="flex: 1;">
+                    <i class="ri-send-plane-fill"></i> Registrar y Notificar Personal Receptor
+                  </button>
+                  <button type="button" class="btn-secondary" onclick="window.print()">
+                    <i class="ri-printer-line"></i> Imprimir Formulario
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <!-- Right Paper Live Sheet -->
+            <div class="digital-paper-container">
+              <div class="paper-sheet" id="paper-general-preview">
+                <div class="paper-header">
+                  <div class="paper-logo">
+                    <i class="ri-hospital-line"></i>
+                    <div class="paper-logo-text">
+                      <h3>Hospital de Niños</h3>
+                      <p>Dr. Orlando Alassia • Santa Fe</p>
+                    </div>
+                  </div>
+                  <div class="paper-doc-title">
+                    <h4>INTERCONSULTA</h4>
+                    <span>OFICIAL</span>
+                  </div>
+                </div>
+
+                <div class="paper-section">
+                  <div class="paper-section-title">Datos del Paciente e Internación</div>
+                  <div class="paper-field-grid">
+                    <div class="paper-field"><strong>Apellido y Nombres:</strong> <span id="prev-g-nombre"> Sofía Valentina Rossi</span></div>
+                    <div class="paper-field"><strong>H.C. Nº:</strong> <span id="prev-g-hc"> HC-40192</span></div>
+                    <div class="paper-field"><strong>Servicio:</strong> <span id="prev-g-servicio"> Pediatría II</span></div>
+                    <div class="paper-field"><strong>Sala / Cama:</strong> <span id="prev-g-sala"> Sala 4 - Cama 12 B</span></div>
+                  </div>
+                </div>
+
+                <div class="paper-section">
+                  <div class="paper-section-title">PEDIDO DE CONSULTA A: <span id="prev-g-destino" style="color: #0284c7; font-weight: 700;">Cirugía Infantil</span></div>
+                  <div class="paper-section-title">Motivo y Resumen Clínico</div>
+                  <div class="paper-box-content" id="prev-g-motivo">Paciente cursando 48hs de dolor abdominal en fosa ilíaca derecha, náuseas y leucocitosis. Se solicita valoración quirúrgica por sospecha de apendicitis aguda.</div>
+                </div>
+
+                <div class="paper-section">
+                  <div class="paper-section-title">INFORME DE CONSULTA (Procedimiento / Diagnóstico)</div>
+                  <div class="paper-box-content" style="min-height: 90px; color: #94a3b8;">
+                    [Espacio reservado para dictamen del especialista consultado y conducta médica a seguir]
+                  </div>
+                </div>
+
+                <div class="paper-signatures">
+                  <div class="signature-box">
+                    <div class="signature-line"></div>
+                    <p>Médico / Servicio Solicitante<br><span id="prev-g-medico" style="font-weight: 400; font-size: 0.7rem;">Dr. Martín Peralta</span></p>
+                  </div>
+                  <div class="signature-box">
+                    <div class="signature-line"></div>
+                    <p>Firma del Médico Consultante<br><span style="font-weight: 400; font-size: 0.7rem;">Especialista Médico</span></p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- Farmacia Form -->
+        <section id="tab-farmacia" class="tab-content">
+          <div class="form-layout-grid">
+            <div class="form-container-card">
+              <div class="form-header">
+                <h2>Receta Electrónica de Farmacia</h2>
+                <span class="action-tag farmacia">Formulario #4</span>
+              </div>
+
+              <form id="form-farmacia-el" onsubmit="handleFormSubmit(event, 'Receta Electrónica')">
+                <div class="form-grid">
+                  <div class="form-group full-width">
+                    <label>Nombre y Apellido del Paciente</label>
+                    <input type="text" id="f-nombre" class="form-control" placeholder="Ej: Camilo Benavídez" required>
+                  </div>
+
+                  <div class="form-group">
+                    <label>DNI / HC del Paciente</label>
+                    <div style="display: flex; gap: 0.4rem;">
+                      <input type="text" id="f-dni" class="form-control" placeholder="Ej: 51.092.381" onkeydown="if(event.key==='Enter'){event.preventDefault();buscarPacientePorDNI('f-dni',{nombre:'f-nombre',hc:'f-dni'});}">
+                      <button type="button" class="btn-secondary" style="padding: 0.4rem 0.65rem; font-size: 0.75rem; white-space: nowrap;" onclick="buscarPacientePorDNI('f-dni',{nombre:'f-nombre',hc:'f-dni'})" title="Buscar paciente en Base diagnose (10.12.4.1)">
+                        <i class="ri-search-2-line"></i> Buscar
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label>Servicio Solicitante</label>
+                    <input type="text" id="f-servicio" class="form-control" placeholder="Ej: Pediatría I / Guardia Pediatría">
+                  </div>
+
+                  <div class="form-group full-width">
+                    <label>Diagnóstico que motiva la Prescripción</label>
+                    <input type="text" id="f-diag" class="form-control" placeholder="Ej: Neumonía aguda de la comunidad / Otitis media aguda">
+                  </div>
+
+                  <div class="form-group full-width" style="border-top: 1px solid var(--border-color); padding-top: 1rem;">
+                    <label style="color: #b45309;">Rp: Medicamento / Droga Prescripta</label>
+                    <input type="text" id="f-rp" class="form-control" placeholder="Ej: Amoxicilina + Ácido Clavulánico 500mg/125mg suspensión oral" required>
+                  </div>
+
+                  <div class="form-group">
+                    <label>Dosis, Vía y Frecuencia</label>
+                    <input type="text" id="f-dosis" class="form-control" placeholder="Ej: 5 ml cada 8 horas por vía oral (VO)">
+                  </div>
+
+                  <div class="form-group">
+                    <label>Duración del Tratamiento</label>
+                    <input type="text" id="f-duracion" class="form-control" placeholder="Ej: 7 días completación">
+                  </div>
+
+                  <!-- RECURRENCE TOGGLE -->
+                  <div class="form-group full-width">
+                    <label class="checkbox-toggle-card">
+                      <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <i class="ri-repeat-line" style="font-size: 1.2rem; color: #b45309;"></i>
+                        <div>
+                          <strong style="color: var(--text-main); font-size: 0.85rem;">Tratamiento Crónico / Retiro Mensual Programado</strong>
+                          <p style="font-size: 0.75rem; color: var(--text-muted);">Genera recordatorios mensuales automáticos en Farmacia para retiro por módulos</p>
+                        </div>
+                      </div>
+                      <input type="checkbox" id="f-is-recurring">
+                    </label>
+                  </div>
+
+                  <div class="form-group" id="f-recurring-months-group" style="display: none;">
+                    <label>Duración en Módulos Mensuales</label>
+                    <select id="f-total-modulos" class="form-control">
+                      <option value="3">3 Meses (3 Entregas Mensuales)</option>
+                      <option value="6" selected>6 Meses (6 Entregas Mensuales)</option>
+                      <option value="12">12 Meses (12 Entregas Mensuales)</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group" id="f-recurring-freq-group" style="display: none;">
+                    <label>Frecuencia de Retiro</label>
+                    <input type="text" class="form-control" value="Cada 30 días (1 módulo/mes)" readonly>
+                  </div>
+
+                  <div class="form-group full-width">
+                    <label>Personal a Cargo Notificado en Farmacia</label>
+                    <select id="f-staff-target" class="form-control">
+                      <!-- Dynamic Staff Options -->
+                    </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label>Email Farmacia Hospitalaria</label>
+                    <input type="email" id="f-email" class="form-control" value="farmacia.alassia@santafe.gob.ar" required>
+                  </div>
+
+                  <div class="form-group">
+                    <label>Médico Prescriptor</label>
+                    <input type="text" id="f-medico" class="form-control" placeholder="Ej: Dr. Orlando Alassia">
+                  </div>
+                </div>
+
+                <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+                  <button type="submit" class="btn-primary" style="flex: 1;">
+                    <i class="ri-send-plane-fill"></i> Emitir Receta y Enviar a Farmacia
+                  </button>
+                  <button type="button" class="btn-secondary" onclick="window.print()">
+                    <i class="ri-printer-line"></i> Imprimir Receta
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <!-- Right Paper Live Sheet -->
+            <div class="digital-paper-container">
+              <div class="paper-sheet" id="paper-farmacia-preview">
+                <div class="paper-header">
+                  <div class="paper-logo">
+                    <i class="ri-capsule-line" style="color: #b45309;"></i>
+                    <div class="paper-logo-text">
+                      <h3>Hospital de Niños Dr. Orlando Alassia</h3>
+                      <p>Servicio de Farmacia Hospitalaria • Santa Fe</p>
+                    </div>
+                  </div>
+                  <div class="paper-doc-title">
+                    <h4>RECETA</h4>
+                    <span style="background: #fef3c7; color: #b45309;">ELECTRÓNICA</span>
+                  </div>
+                </div>
+
+                <div class="paper-section">
+                  <div class="paper-section-title">Datos de Prescripción del Paciente</div>
+                  <div class="paper-field-grid">
+                    <div class="paper-field"><strong>Paciente:</strong> <span id="prev-f-nombre"> Camilo Benavídez</span></div>
+                    <div class="paper-field"><strong>DNI / HC:</strong> <span id="prev-f-dni"> 51.092.381 / HC-8812</span></div>
+                    <div class="paper-field"><strong>Servicio:</strong> <span id="prev-f-servicio"> Pediatría I</span></div>
+                    <div class="paper-field"><strong>Diagnóstico:</strong> <span id="prev-f-diag"> Neumonía aguda de la comunidad</span></div>
+                  </div>
+                </div>
+
+                <div class="paper-section">
+                  <div class="paper-section-title">Rp / Prescripción Médica Oficial</div>
+                  <div class="paper-box-content" style="border-color: #f59e0b; background-color: #fffbeb;">
+                    <strong id="prev-f-rp" style="color: #b45309; font-size: 0.95rem;">Amoxicilina + Ácido Clavulánico 500mg/125mg suspensión oral</strong><br><br>
+                    <span>Posología / Vía: </span><span id="prev-f-dosis">5 ml cada 8 horas por vía oral (VO)</span><br>
+                    <span>Duración Tratamiento: </span><span id="prev-f-duracion">7 días completación</span>
+                  </div>
+                </div>
+
+                <div class="paper-signatures">
+                  <div class="signature-box">
+                    <div class="signature-line"></div>
+                    <p>Médico Prescriptor<br><span id="prev-f-medico" style="font-weight: 400; font-size: 0.7rem;">Dr. Orlando Alassia</span></p>
+                  </div>
+                  <div class="signature-box">
+                    <div class="signature-line"></div>
+                    <p>Farmacéutico Receptor / Dispensa<br><span style="font-weight: 400; font-size: 0.7rem;">Farm. Carlos Villalba</span></p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- Imágenes Form -->
+        <section id="tab-imagenes" class="tab-content">
+          <div class="form-layout-grid">
+            <div class="form-container-card">
+              <div class="form-header">
+                <h2>Solicitud de Diagnóstico por Imágenes</h2>
+                <span class="action-tag imagenes">Formulario #5</span>
+              </div>
+
+              <form id="form-imagenes-el" onsubmit="handleFormSubmit(event, 'Solicitud de Imágenes')">
+                <div class="form-grid">
+                  <div class="form-group full-width">
+                    <label>Nombre y Apellido del Paciente</label>
+                    <input type="text" id="i-nombre" class="form-control" placeholder="Ej: Valentina Morales" required>
+                  </div>
+
+                  <div class="form-group">
+                    <label>DNI / HC del Paciente</label>
+                    <div style="display: flex; gap: 0.4rem;">
+                      <input type="text" id="i-dni" class="form-control" placeholder="Ej: 49.301.992" onkeydown="if(event.key==='Enter'){event.preventDefault();buscarPacientePorDNI('i-dni',{nombre:'i-nombre',hc:'i-dni'});}">
+                      <button type="button" class="btn-secondary" style="padding: 0.4rem 0.65rem; font-size: 0.75rem; white-space: nowrap;" onclick="buscarPacientePorDNI('i-dni',{nombre:'i-nombre',hc:'i-dni'})" title="Buscar paciente en Base diagnose (10.12.4.1)">
+                        <i class="ri-search-2-line"></i> Buscar
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label>Servicio Solicitante & Cama</label>
+                    <input type="text" id="i-servicio" class="form-control" placeholder="Ej: Traumatología / Sala 2 Cama 5">
+                  </div>
+
+                  <div class="form-group full-width">
+                    <label>Modalidad de Estudio Solicitado</label>
+                    <select id="i-modalidad" class="form-control">
+                      <option value="Radiografía RX">Radiografía Simple / Contrastada (RX)</option>
+                      <option value="Ecografía Pediátrica">Ecografía Pediátrica / Doppler</option>
+                      <option value="Tomografía Computada TAC">Tomografía Computada Multicorte (TAC)</option>
+                      <option value="Resonancia Magnética RMN">Resonancia Magnética Nuclear (RMN)</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group full-width">
+                    <label>Región Anatómica a Estudiar</label>
+                    <input type="text" id="i-region" class="form-control" placeholder="Ej: Tórax Frente y Perfil / Abdomen Completo / Fémur Derecho" required>
+                  </div>
+
+                  <div class="form-group full-width">
+                    <label>Indicación Clínica / Diagnóstico Presuntivo</label>
+                    <textarea id="i-motivo" class="form-control" placeholder="Describa síntomas, traumatismo previo o hallazgos clínicos que justifican el estudio..."></textarea>
+                  </div>
+
+                  <div class="form-group full-width">
+                    <label>Personal a Cargo Notificado en Sector Imágenes</label>
+                    <select id="i-staff-target" class="form-control">
+                      <!-- Dynamic Staff Options -->
+                    </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label>Email Sector Imágenes</label>
+                    <input type="email" id="i-email" class="form-control" value="imagenes.alassia@santafe.gob.ar" required>
+                  </div>
+
+                  <div class="form-group">
+                    <label>Médico Solicitante</label>
+                    <input type="text" id="i-medico" class="form-control" placeholder="Ej: Dr. Gonzalo Torres">
+                  </div>
+                </div>
+
+                <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+                  <button type="submit" class="btn-primary" style="flex: 1;">
+                    <i class="ri-send-plane-fill"></i> Solicitar Estudio y Enviar a Imágenes
+                  </button>
+                  <button type="button" class="btn-secondary" onclick="window.print()">
+                    <i class="ri-printer-line"></i> Imprimir Pedido
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <!-- Right Paper Live Sheet -->
+            <div class="digital-paper-container">
+              <div class="paper-sheet" id="paper-imagenes-preview">
+                <div class="paper-header">
+                  <div class="paper-logo">
+                    <i class="ri-body-scan-line" style="color: #7e22ce;"></i>
+                    <div class="paper-logo-text">
+                      <h3>Hospital de Niños Dr. Orlando Alassia</h3>
+                      <p>Servicio de Diagnóstico por Imágenes • Santa Fe</p>
+                    </div>
+                  </div>
+                  <div class="paper-doc-title">
+                    <h4>PEDIDO DE</h4>
+                    <span style="background: #f3e8ff; color: #7e22ce;">IMÁGENES</span>
+                  </div>
+                </div>
+
+                <div class="paper-section">
+                  <div class="paper-section-title">Datos del Paciente y Estudio</div>
+                  <div class="paper-field-grid">
+                    <div class="paper-field"><strong>Paciente:</strong> <span id="prev-i-nombre"> Valentina Morales</span></div>
+                    <div class="paper-field"><strong>DNI / HC:</strong> <span id="prev-i-dni"> 49.301.992 / HC-10492</span></div>
+                    <div class="paper-field"><strong>Servicio:</strong> <span id="prev-i-servicio"> Traumatología</span></div>
+                    <div class="paper-field"><strong>Estudio:</strong> <span id="prev-i-modalidad" style="color: #7e22ce; font-weight: 700;"> Radiografía RX</span></div>
+                  </div>
+                </div>
+
+                <div class="paper-section">
+                  <div class="paper-section-title">Región Anatómica e Indicación Clínica</div>
+                  <div class="paper-box-content" style="border-color: #c084fc; background-color: #faf5ff;">
+                    <strong style="color: #6b21a8;">Región: </strong><span id="prev-i-region">Tórax Frente y Perfil</span><br><br>
+                    <strong style="color: #6b21a8;">Indicación Clínica: </strong><span id="prev-i-motivo">Traumatismo cerrado de tórax con hipoventilación izquierda. Descartar neumotórax.</span>
+                  </div>
+                </div>
+
+                <div class="paper-signatures">
+                  <div class="signature-box">
+                    <div class="signature-line"></div>
+                    <p>Médico Solicitante<br><span id="prev-i-medico" style="font-weight: 400; font-size: 0.7rem;">Dr. Gonzalo Torres</span></p>
+                  </div>
+                  <div class="signature-box">
+                    <div class="signature-line"></div>
+                    <p>Médico Radiólogo / Imágenes<br><span style="font-weight: 400; font-size: 0.7rem;">Dr. Andrés Cavallo</span></p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- Nutrición Form (Restringido a Servicios Autorizados para Leches!) -->
+        <section id="tab-nutri" class="tab-content">
+          <div class="form-layout-grid">
+            <div class="form-container-card">
+              <div class="form-header">
+                <h2>Prescripción Nutricional / Fórmulas Lácteas</h2>
+                <span class="action-tag nutri">Formulario #3</span>
+              </div>
+
+              <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 0.75rem 1rem; border-radius: var(--radius-md); margin-bottom: 1.25rem; font-size: 0.8rem; color: #166534; display: flex; align-items: center; gap: 0.5rem;">
+                <i class="ri-shield-check-line" style="font-size: 1.2rem; color: #16a34a;"></i>
+                <span><strong>Emisión Habilitada:</strong> Únicamente servicios hospitalarios con autorización para prescribir leches y módulos lácteos.</span>
+              </div>
+
+              <form id="form-nutri-el" onsubmit="handleFormSubmit(event, 'Prescripción Nutricional')">
+                <div class="form-grid">
+                  <div class="form-group full-width">
+                    <label style="font-weight: 700; color: #15803d;"><i class="ri-hospital-line"></i> Servicio Solicitante Autorizado (Seleccioná tu Servicio)</label>
+                    <select id="n-servicio-select" class="form-control" style="font-weight: 700; border-color: #86efac; background-color: #f0fdf4;" onchange="updateNutriService(this.value)" required>
+                      <!-- Dynamic Authorized Milk Services -->
+                    </select>
+                    <input type="hidden" id="n-servicio" value="Gastroenterología Infantil">
+                  </div>
+
+                  <div class="form-group">
+                    <label>D.N.I. Nº del Paciente</label>
+                    <div style="display: flex; gap: 0.4rem;">
+                      <input type="text" id="n-dni" class="form-control" placeholder="Ej: 52.190.431" onkeydown="if(event.key==='Enter'){event.preventDefault();buscarPacientePorDNI('n-dni',{nombre:'n-nombre',edad:'n-edad',hc:'n-dni'});}">
+                      <button type="button" class="btn-secondary" style="padding: 0.4rem 0.65rem; font-size: 0.75rem; white-space: nowrap;" onclick="buscarPacientePorDNI('n-dni',{nombre:'n-nombre',edad:'n-edad',hc:'n-dni'})" title="Buscar paciente en Base diagnose (10.12.4.1)">
+                        <i class="ri-search-2-line"></i> Buscar
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label>Edad del Paciente</label>
+                    <input type="text" id="n-edad" class="form-control" placeholder="Ej: 8 meses">
+                  </div>
+
+                  <div class="form-group full-width">
+                    <label>Nombre y Apellido del Lactante / Paciente</label>
+                    <input type="text" id="n-nombre" class="form-control" placeholder="Ej: Joaquín Benjamín Silva" required>
+                  </div>
+
+                  <div class="form-group">
+                    <label>Peso Actual (PA)</label>
+                    <input type="text" id="n-pa" class="form-control" placeholder="Ej: 6.850 kg">
+                  </div>
+
+                  <div class="form-group">
+                    <label>Diagnóstico Nutricional</label>
+                    <input type="text" id="n-diag" class="form-control" placeholder="Ej: APLV / Lactante menor">
+                  </div>
+
+                  <!-- Prescripción 1 -->
+                  <div class="form-group full-width" style="border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 0.5rem;">
+                    <label style="color: var(--primary-600);">Rp1: Fórmula Láctea / Módulo Calórico Autorizado</label>
+                    <input type="text" id="n-rp1-formula" class="form-control" placeholder="Ej: Fórmula de Inicio Extensamente Hidrolizada (Sin Lactosa)" required>
+                  </div>
+
+                  <div class="form-group">
+                    <label>Dilución / Vol (cc)</label>
+                    <input type="text" id="n-rp1-vol" class="form-control" placeholder="Ej: Dilución 13.5% / 150 cc">
+                  </div>
+
+                  <div class="form-group">
+                    <label>Nº de Tomas & Vía</label>
+                    <input type="text" id="n-rp1-via" class="form-control" placeholder="Ej: 8 tomas cada 3hs (Vía VO)">
+                  </div>
+
+                  <!-- RECURRENCE TOGGLE NUTRICION -->
+                  <div class="form-group full-width">
+                    <label class="checkbox-toggle-card">
+                      <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <i class="ri-repeat-line" style="font-size: 1.2rem; color: #16a34a;"></i>
+                        <div>
+                          <strong style="color: var(--text-main); font-size: 0.85rem;">Fórmula de Retiro Mensual Programado (Lactario)</strong>
+                          <p style="font-size: 0.75rem; color: var(--text-muted);">Programa la entrega de latas/módulos mes a mes con aviso de ausentismo</p>
+                        </div>
+                      </div>
+                      <input type="checkbox" id="n-is-recurring">
+                    </label>
+                  </div>
+
+                  <div class="form-group" id="n-recurring-months-group" style="display: none;">
+                    <label>Duración del Esquema Nutricional</label>
+                    <select id="n-total-modulos" class="form-control">
+                      <option value="3">3 Meses (3 Entregas de Latas/Fórmula)</option>
+                      <option value="6" selected>6 Meses (6 Entregas de Latas/Fórmula)</option>
+                      <option value="12">12 Meses (12 Entregas de Latas/Fórmula)</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group" id="n-recurring-freq-group" style="display: none;">
+                    <label>Frecuencia de Retiro en Lactario</label>
+                    <input type="text" class="form-control" value="Cada 30 días en Lactario" readonly>
+                  </div>
+
+                  <div class="form-group full-width">
+                    <label>Personal a Cargo en Lactario Nutrición</label>
+                    <select id="n-staff-target" class="form-control">
+                      <!-- Dynamic Staff Options -->
+                    </select>
+                  </div>
+
+                  <div class="form-group full-width">
+                    <label>Email Destino Lactario / Farmacia</label>
+                    <input type="email" id="n-email" class="form-control" value="lactario.alassia@santafe.gob.ar" required>
+                  </div>
+
+                  <div class="form-group full-width">
+                    <label>Profesional Prescriptor Autorizado</label>
+                    <input type="text" id="n-medico" class="form-control" placeholder="Ej: Lic. Nutrición Paula Gómez (Mat. 941)">
+                  </div>
+                </div>
+
+                <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+                  <button type="submit" class="btn-primary" style="flex: 1;">
+                    <i class="ri-check-double-line"></i> Prescribir y Enviar por Email a Lactario
+                  </button>
+                  <button type="button" class="btn-secondary" onclick="window.print()">
+                    <i class="ri-printer-line"></i> Imprimir Recetario
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <!-- Right Paper Live Sheet -->
+            <div class="digital-paper-container">
+              <div class="paper-sheet" id="paper-nutri-preview">
+                <div class="paper-header">
+                  <div class="paper-logo">
+                    <i class="ri-drop-line"></i>
+                    <div class="paper-logo-text">
+                      <h3>Ministerio de Salud • Santa Fe</h3>
+                      <p>Hospital de Niños "Dr. Orlando Alassia"</p>
+                    </div>
+                  </div>
+                  <div class="paper-doc-title">
+                    <h4>RECETARIO</h4>
+                    <span>FÓRMULAS LÁCTEAS</span>
+                  </div>
+                </div>
+
+                <div class="paper-section">
+                  <div class="paper-section-title">Datos Nutricionales del Paciente</div>
+                  <div class="paper-field-grid">
+                    <div class="paper-field"><strong>Nombre y Apellido:</strong> <span id="prev-n-nombre"> Joaquín Benjamín Silva</span></div>
+                    <div class="paper-field"><strong>DNI Nº:</strong> <span id="prev-n-dni"> 52.190.431</span></div>
+                    <div class="paper-field"><strong>Edad / Sexo:</strong> <span id="prev-n-edad"> 8 meses (M)</span></div>
+                    <div class="paper-field"><strong>Servicio Solicitante:</strong> <span id="prev-n-servicio"> Nutrición y Lactario</span></div>
+                    <div class="paper-field"><strong>PA / Talla:</strong> <span id="prev-n-pa"> 6.850 kg</span></div>
+                    <div class="paper-field"><strong>Diagnóstico:</strong> <span id="prev-n-diag"> APLV / Lactante menor</span></div>
+                  </div>
+                </div>
+
+                <div class="paper-section">
+                  <div class="paper-section-title">Rp1: Prescripción Principal</div>
+                  <div class="paper-box-content">
+                    <strong id="prev-n-rp1-formula">Fórmula de Inicio Extensamente Hidrolizada</strong><br>
+                    <span>Dilución / Vol: </span><span id="prev-n-rp1-vol">Dilución 13.5% / 150 cc</span> | 
+                    <span>Tomas/Vía: </span><span id="prev-n-rp1-via">8 tomas cada 3hs (VO)</span>
+                  </div>
+                </div>
+
+                <p style="font-size: 0.7rem; color: #64748b; font-style: italic; margin-top: 1rem;">
+                  * Emisión restringida por norma del Hospital Alassia a servicios médicos autorizados para retiro en Lactario.
+                </p>
+
+                <div class="paper-signatures">
+                  <div class="signature-box" style="width: 100%;">
+                    <div class="signature-line"></div>
+                    <p>Firma y Sello Profesional Autorizado<br><span id="prev-n-medico" style="font-weight: 400; font-size: 0.7rem;">Lic. Nutrición Paula Gómez</span></p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- Detail Modal -->
+  <div class="modal-backdrop" id="detail-modal">
+    <div class="modal-card">
+      <button onclick="closeModal()" style="position: absolute; right: 1.5rem; top: 1.5rem; border: none; background: transparent; font-size: 1.5rem; cursor: pointer; color: var(--text-muted);">&times;</button>
+      <div id="modal-content">
+        <!-- Rendered sheet in modal -->
+      </div>
+      <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 1rem;">
+        <button class="btn-secondary" onclick="closeModal()">Cerrar</button>
+        <button class="btn-primary" onclick="window.print()"><i class="ri-printer-line"></i> Imprimir Copia Oficial</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Resolve Modal -->
+  <div class="modal-backdrop" id="resolve-modal">
+    <div class="modal-card" style="max-width: 650px;">
+      <button onclick="closeResolveModal()" style="position: absolute; right: 1.5rem; top: 1.5rem; border: none; background: transparent; font-size: 1.5rem; cursor: pointer; color: var(--text-muted);">&times;</button>
+      
+      <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem;">
+        <div style="width: 48px; height: 48px; border-radius: var(--radius-md); background: rgba(2, 132, 199, 0.12); color: var(--primary-600); display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+          <i class="ri-stethoscope-line"></i>
+        </div>
+        <div>
+          <h2 style="font-size: 1.25rem; color: var(--text-main);" id="resolve-modal-title">Cargar Dictamen Médico / Respuesta</h2>
+          <p style="font-size: 0.85rem; color: var(--text-muted);" id="resolve-modal-subtitle">Asignado a: Mateo Benítez (#CARD-2026-001)</p>
+        </div>
+      </div>
+
+      <form id="resolve-form" onsubmit="handleResolveSubmit(event)">
+        <input type="hidden" id="resolve-record-id">
+
+        <div class="form-group full-width" style="margin-bottom: 1rem;">
+          <label>Nuevo Estado de la Consulta</label>
+          <select id="resolve-status-select" class="form-control" style="font-weight: 700; color: var(--primary-700);">
+            <option value="Confirmado / Resuelto">🟢 Confirmado / Resuelto (Archivar de la Bandeja)</option>
+            <option value="En Proceso">🔵 En Proceso (En Revisión por Especialista)</option>
+            <option value="Pendiente">🟠 Pendiente (Aguardando Atender)</option>
+          </select>
+        </div>
+
+        <div class="form-group full-width" style="margin-bottom: 1rem;">
+          <label>Informe de Respuesta / Dictamen Médico del Especialista</label>
+          <textarea id="resolve-response-text" class="form-control" style="min-height: 120px;" placeholder="Escriba aquí los hallazgos del examen, resultados de ECG/Ecografía, dispensa de medicamentos o conducta clínica a seguir..." required></textarea>
+        </div>
+
+        <div class="form-group full-width" style="margin-bottom: 1.5rem;">
+          <label>Firma y Sello del Profesional que Responde</label>
+          <input type="text" id="resolve-doctor-name" class="form-control" placeholder="Ej: Dr. Orlando Alassia (Mat. 3410)" required>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 1rem;">
+          <button type="button" class="btn-secondary" onclick="closeResolveModal()">Cancelar</button>
+          <button type="submit" class="btn-success"><i class="ri-checkbox-circle-line"></i> Guardar Dictamen y Archivar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Login Modal -->
+  <div class="modal-backdrop" id="login-modal">
+    <div class="modal-card" style="max-width: 650px;">
+      <button onclick="closeLoginModal()" style="position: absolute; right: 1.5rem; top: 1.5rem; border: none; background: transparent; font-size: 1.5rem; cursor: pointer; color: var(--text-muted);">&times;</button>
+      <div style="text-align: center; margin-bottom: 1.5rem;">
+        <div class="brand-icon" style="margin: 0 auto 1rem; width: 56px; height: 56px; font-size: 1.8rem;">
+          <i class="ri-user-heart-line"></i>
+        </div>
+        <h2 style="font-size: 1.4rem;">Acceso al Sistema Hospital Alassia</h2>
+        <p style="font-size: 0.875rem; color: var(--text-muted);">Seleccioná el perfil profesional para simular la vista filtrada de su servicio:</p>
+      </div>
+
+      <div class="user-selector-grid" id="user-accounts-list">
+        <!-- Dynamic User Accounts List -->
+      </div>
+
+      <div style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border-color); text-align: center;">
+        <p style="font-size: 0.75rem; color: var(--text-muted);">
+          <i class="ri-shield-check-line" style="color: var(--emerald-500);"></i> Conexión Encriptada SSL • Red Intranet Hospital de Niños "Dr. Orlando Alassia"
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Staff Modal -->
+  <div class="modal-backdrop" id="add-staff-modal">
+    <div class="modal-card" style="max-width: 550px;">
+      <button onclick="closeAddStaffModal()" style="position: absolute; right: 1.5rem; top: 1.5rem; border: none; background: transparent; font-size: 1.5rem; cursor: pointer; color: var(--text-muted);">&times;</button>
+      <h2 style="font-size: 1.3rem; margin-bottom: 1rem;">Asignar Nuevo Personal a Servicio</h2>
+      <form id="add-staff-form" onsubmit="handleAddStaffSubmit(event)">
+        <div class="form-group full-width" style="margin-bottom: 1rem;">
+          <label>Servicio Hospitalario</label>
+          <select id="staff-service-select" class="form-control">
+            <!-- Dynamic Services Options -->
+          </select>
+        </div>
+        <div class="form-group full-width" style="margin-bottom: 1rem;">
+          <label>Nombre y Apellido del Profesional</label>
+          <input type="text" id="staff-name-input" class="form-control" placeholder="Ej: Farm. Carlos Villalba / Dr. Andrés Cavallo" required>
+        </div>
+        <div class="form-group full-width" style="margin-bottom: 1rem;">
+          <label>Especialidad / Cargo</label>
+          <input type="text" id="staff-role-input" class="form-control" placeholder="Ej: Jefe de Farmacia Hospitalaria / Radiólogo Especialista" required>
+        </div>
+        <div class="form-group full-width" style="margin-bottom: 1.5rem;">
+          <label>Nº de Matrícula Profesional</label>
+          <input type="text" id="staff-mat-input" class="form-control" placeholder="Ej: Mat. 1820">
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 1rem;">
+          <button type="button" class="btn-secondary" onclick="closeAddStaffModal()">Cancelar</button>
+          <button type="submit" class="btn-primary"><i class="ri-check-line"></i> Guardar y Asignar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Email Sent Modal -->
+  <div class="modal-backdrop" id="email-modal">
+    <div class="modal-card" style="max-width: 680px;">
+      <button onclick="closeEmailModal()" style="position: absolute; right: 1.5rem; top: 1.5rem; border: none; background: transparent; font-size: 1.5rem; cursor: pointer; color: var(--text-muted);">&times;</button>
+      <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+        <div style="width: 48px; height: 48px; border-radius: 50%; background: #dcfce7; color: #16a34a; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+          <i class="ri-mail-send-line"></i>
+        </div>
+        <div>
+          <h3 style="font-size: 1.2rem; color: var(--text-main);">Email Oficial Despachado</h3>
+          <p style="font-size: 0.85rem; color: var(--emerald-600); font-weight: 600;">Notificación enviada al servicio especialista y registrada en servidor SMTP Hospitalario</p>
+        </div>
+      </div>
+
+      <div class="email-preview-box" id="email-modal-body">
+        <!-- Live Email HTML Preview -->
+      </div>
+
+      <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 1rem;">
+        <button class="btn-primary" onclick="closeEmailModal()"><i class="ri-check-line"></i> Entendido</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
