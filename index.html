@@ -527,16 +527,77 @@
           </div>
         </section>
 
-        <!-- Tab 6: Panel de Administración -->
-        <section id="tab-admin" class="tab-content">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-            <div>
-              <h2 style="font-size: 1.3rem;">Panel de Administración de Servicios y Permisos</h2>
-              <p style="font-size: 0.85rem; color: var(--text-muted);">Configurá habilitaciones y autorizaciones especiales para recetas de leches y fórmulas lácteas.</p>
+          <!-- User Creation & Management Card -->
+          <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1.5rem; box-shadow: var(--shadow-sm);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+              <div>
+                <h3 style="font-size: 1.05rem; font-weight: 800;"><i class="ri-user-add-line" style="color: var(--primary-600);"></i> Alta de Nuevos Usuarios y Profesionales de Salud</h3>
+                <p style="font-size: 0.8rem; color: var(--text-muted);">Creá usuarios con D.N.I. y Contraseña para permitir el inicio de sesión de médicos y administradores.</p>
+              </div>
             </div>
-            <button class="btn-primary" onclick="openAddStaffModal()">
-              <i class="ri-user-add-line"></i> Asignar Nuevo Profesional a Servicio
-            </button>
+
+            <form id="create-user-form" onsubmit="handleCreateUserSubmit(event)">
+              <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                <div class="form-group">
+                  <label>D.N.I. (Usuario de Inicio de Sesión)</label>
+                  <input type="text" id="new-user-dni" class="form-control" placeholder="Ej: 32109888 (Sin puntos)" required>
+                </div>
+
+                <div class="form-group">
+                  <label>Contraseña / Clave Personal</label>
+                  <input type="password" id="new-user-pass" class="form-control" placeholder="••••••••" required>
+                </div>
+
+                <div class="form-group">
+                  <label>Nombre y Apellido del Profesional</label>
+                  <input type="text" id="new-user-name" class="form-control" placeholder="Ej: Dra. María Laura Rossi" required>
+                </div>
+
+                <div class="form-group">
+                  <label>Nº de Matrícula Profesional</label>
+                  <input type="text" id="new-user-mat" class="form-control" placeholder="Ej: Mat. 5819">
+                </div>
+
+                <div class="form-group">
+                  <label>Especialidad / Rol Hospitalario</label>
+                  <input type="text" id="new-user-role" class="form-control" placeholder="Ej: Médica Neonatóloga / Infectóloga" required>
+                </div>
+
+                <div class="form-group">
+                  <label>Servicio Asignado</label>
+                  <select id="new-user-service" class="form-control" required>
+                    <option value="Gastroenterología Infantil">Gastroenterología Infantil</option>
+                    <option value="Neonatología y UCNI">Neonatología y UCNI</option>
+                    <option value="Nutrición y Lactario">Nutrición y Lactario</option>
+                    <option value="Cardiología Infantil">Cardiología Infantil</option>
+                    <option value="Programa de Tratamientos Crónicos">Programa Crónicos</option>
+                    <option value="Internación General (Salas)">Internación General</option>
+                    <option value="Clínica Pediátrica">Clínica Pediátrica</option>
+                    <option value="Farmacia y Recetas Electrónicas">Farmacia Hospitalaria</option>
+                    <option value="Diagnóstico por Imágenes">Diagnóstico por Imágenes</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label>Correo Electrónico Oficial</label>
+                  <input type="email" id="new-user-email" class="form-control" placeholder="medico@santafe.gob.ar" required>
+                </div>
+
+                <div class="form-group">
+                  <label>¿Es Administrador General?</label>
+                  <select id="new-user-is-admin" class="form-control" style="font-weight: 700;">
+                    <option value="false" selected>No (Médico de Servicio / Especialista)</option>
+                    <option value="true">Sí (Dirección Médica / Administrador Total)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style="margin-top: 1.25rem; display: flex; justify-content: flex-end;">
+                <button type="submit" class="btn-primary" style="padding: 0.6rem 1.25rem;">
+                  <i class="ri-user-follow-line"></i> Crear Usuario y Guardar en Sistema
+                </button>
+              </div>
+            </form>
           </div>
 
           <!-- Form Permissions Control Grid -->

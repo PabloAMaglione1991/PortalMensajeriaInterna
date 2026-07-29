@@ -533,6 +533,16 @@ let records = INITIAL_DATA;
 localStorage.setItem('alassia_records', JSON.stringify(records));
 let auditLogs = JSON.parse(localStorage.getItem('alassia_audit_logs')) || INITIAL_LOGS;
 let notifications = JSON.parse(localStorage.getItem('alassia_notifs')) || INITIAL_NOTIFS;
+// Load any custom users created via Admin Panel
+let customUsers = JSON.parse(localStorage.getItem('alassia_custom_users')) || [];
+if (customUsers.length > 0) {
+  customUsers.forEach(cu => {
+    if (!DEMO_USERS.some(u => u.dni === cu.dni)) {
+      DEMO_USERS.unshift(cu);
+    }
+  });
+}
+
 let activeUser = JSON.parse(localStorage.getItem('alassia_user')) || DEMO_USERS[1];
 let isAuthenticated = JSON.parse(localStorage.getItem('alassia_auth')) || false;
 
@@ -748,6 +758,53 @@ function renderActiveUser() {
   if (!activeUser.isAdmin && activeTab && (activeTab.id === 'tab-admin' || activeTab.id === 'tab-logs')) {
     switchTab('tab-dashboard');
   }
+}
+
+/* Dynamic User Creation Handler (Admin Panel) */
+function handleCreateUserSubmit(e) {
+  e.preventDefault();
+  const dni = document.getElementById('new-user-dni').value.trim().replace(/\./g, '');
+  const pass = document.getElementById('new-user-pass').value.trim();
+  const name = document.getElementById('new-user-name').value.trim();
+  const mat = document.getElementById('new-user-mat').value.trim() || 'S/N';
+  const role = document.getElementById('new-user-role').value.trim();
+  const service = document.getElementById('new-user-service').value;
+  const email = document.getElementById('new-user-email').value.trim();
+  const isAdmin = document.getElementById('new-user-is-admin').value === 'true';
+
+  // Check if DNI already exists
+  if (DEMO_USERS.some(u => u.dni === dni)) {
+    showToast(`⚠️ El DNI ${dni} ya se encuentra registrado en el sistema.`, 'error');
+    return;
+  }
+
+  // Compute initials avatar
+  const initials = name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'MD';
+
+  const newUser = {
+    id: `user-${Date.now()}`,
+    dni: dni,
+    password: pass,
+    name: name,
+    role: `${role} • Mat. ${mat}`,
+    service: service,
+    avatar: initials,
+    isAdmin: isAdmin,
+    email: email
+  };
+
+  DEMO_USERS.unshift(newUser);
+  let customUsers = JSON.parse(localStorage.getItem('alassia_custom_users')) || [];
+  customUsers.unshift(newUser);
+  localStorage.setItem('alassia_custom_users', JSON.stringify(customUsers));
+
+  document.getElementById('create-user-form').reset();
+
+  logEvent('ADMIN', `Alta de nuevo usuario: ${name} (DNI ${dni}) para servicio ${service} [Admin: ${isAdmin ? 'SÍ' : 'NO'}]`);
+  showToast(`¡Usuario ${name} (DNI ${dni}) creado exitosamente!`);
+
+  // Re-render accounts list if open
+  openLoginModal();
 }
 
 function openLoginModal() {
