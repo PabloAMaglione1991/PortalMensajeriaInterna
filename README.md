@@ -205,43 +205,46 @@ sudo chown -R www-data:www-data /var/www/alassia-portal
 sudo chmod -R 755 /var/www/alassia-portal
 ```
 
-### Paso 5: Configuración del Virtual Host en NGINX
+### Paso 3: Configuración en Apache2 para Subdirectorio/Alias (/mensajeria)
 
-Editá `/etc/nginx/sites-available/alassia-portal`:
+Si ya tenés otro sistema corriendo en la raíz `http://10.12.4.221/`, podés desplegar este portal en `http://10.12.4.221/mensajeria` agregando una directiva **`Alias`** en Apache2 sin tocar tu proyecto actual.
 
-```nginx
-server {
-    listen 80;
-    server_name 10.12.4.50 alassia.santafe.gob.ar;
+1. Desplegá los archivos en `/var/www/mensajeria`:
+   ```bash
+   sudo mkdir -p /var/www/mensajeria
+   sudo cp -r * /var/www/mensajeria/
+   sudo chown -R www-data:www-data /var/www/mensajeria
+   sudo chmod -R 755 /var/www/mensajeria
+   ```
 
-    root /var/www/alassia-portal;
-    index index.html index.php;
+2. Editá la configuración de tu sitio actual en Apache:
+   ```bash
+   sudo nano /etc/apache2/sites-available/000-default.conf
+   ```
 
-    location / {
-        try_files $uri $uri/ /index.html;
-    }
+3. Agregá el bloque `Alias` dentro de `<VirtualHost *:80>`:
+   ```apache
+   # Alias para el Portal de Mensajería e Interconsultas
+   Alias /mensajeria /var/www/mensajeria
 
-    location ~ \.php$ {
-        include snippets/fastcgi-php.conf;
-        fastcgi_pass unix:/var/run/php/php8.1-fpm.sock;
-        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-        include fastcgi_params;
-    }
+   <Directory /var/www/mensajeria>
+       Options -Indexes +FollowSymLinks
+       AllowOverride All
+       Require all granted
+       DirectoryIndex index.html index.php
+   </Directory>
+   ```
 
-    location ~ /\.ht {
-        deny all;
-    }
-}
-```
+4. Habilitá el módulo rewrite y reiniciá Apache:
+   ```bash
+   sudo a2enmod rewrite
+   sudo apache2ctl configtest
+   sudo systemctl restart apache2
+   ```
 
-Habilitá el sitio en NGINX y reiniciá el servicio:
-
-```bash
-sudo ln -s /etc/nginx/sites-available/alassia-portal /etc/nginx/sites-enabled/
-sudo rm /etc/nginx/sites-enabled/default
-sudo nginx -t
-sudo systemctl restart nginx
-```
+Ahora las URLs serán:
+* **`http://10.12.4.221/`** → Tu proyecto original en producción (intacto).
+* **`http://10.12.4.221/mensajeria`** → El nuevo Portal Digital de Mensajería e Interconsultas Alassia.
 
 ### Paso 6: Verificación de Conectividad con la Base `diagnose` (10.12.4.1)
 
