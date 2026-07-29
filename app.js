@@ -732,6 +732,22 @@ function renderActiveUser() {
     const el = document.getElementById(id);
     if (el) el.textContent = activeUser.name;
   });
+
+  // Strict RBAC Visibility: Hide Admin Panel and Audit Logs from Sidebar for non-admin doctors
+  const adminNavBtn = document.querySelector('[data-tab="tab-admin"]');
+  const auditNavBtn = document.querySelector('[data-tab="tab-logs"]');
+  if (adminNavBtn && adminNavBtn.closest('li')) {
+    adminNavBtn.closest('li').style.display = activeUser.isAdmin ? 'block' : 'none';
+  }
+  if (auditNavBtn && auditNavBtn.closest('li')) {
+    auditNavBtn.closest('li').style.display = activeUser.isAdmin ? 'block' : 'none';
+  }
+
+  // If non-admin user is currently viewing an admin tab, automatically redirect to Dashboard
+  const activeTab = document.querySelector('.tab-content.active');
+  if (!activeUser.isAdmin && activeTab && (activeTab.id === 'tab-admin' || activeTab.id === 'tab-logs')) {
+    switchTab('tab-dashboard');
+  }
 }
 
 function openLoginModal() {
