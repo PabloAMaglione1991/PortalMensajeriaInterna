@@ -13,12 +13,16 @@ $dbname = 'diagnose';
 $user = 'gestion_';
 $password = 'GESTION_77';
 
-$dni = isset($_GET['dni']) ? trim($_GET['dni']) : '';
+// Limpiar parámetro DNI
+$rawInput = isset($_GET['dni']) ? trim($_GET['dni']) : '';
+$rawInput = str_replace(['debug=1', '&debug=1'], '', $rawInput);
+$dniLimpio = preg_replace('/[^0-9]/', '', $rawInput);
+$dniLike = "%" . $dniLimpio . "%";
 
-if (empty($dni)) {
+if (empty($dniLimpio)) {
     echo json_encode([
         'success' => false,
-        'message' => 'DNI no especificado.'
+        'message' => 'DNI no especificado o inválido.'
     ]);
     exit;
 }
@@ -33,15 +37,8 @@ function buscarEnBaseDeDatos($host, $dbname, $user, $password, $dni, $dniLimpio,
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
         ]);
 
-        $sql = "SELECT 
-                    CONCAT(p.ape_y_nom, ' ', IFNULL(p.st_nombre, '')) AS nombre_completo,
-                    p.nro_doc AS dni,
-                    p.nr0_hc AS hc,
-                    p.telefono,
-                    p.email,
-                    p.fnac AS fecha_nacimiento,
-                    p.sexo
-                FROM paciente p 
+        // Usar SELECT p.* para evitar errores por nombres de columnas específicas (ej: p.fnac)
+        $sql = "SELECT p.* FROM paciente p 
                 WHERE REPLACE(REPLACE(REPLACE(TRIM(p.nro_doc), '.', ''), '-', ''), ' ', '') = :dniLimpio
                    OR p.nro_doc = :dni
                    OR p.nro_doc LIKE :dniLike
@@ -56,9 +53,37 @@ function buscarEnBaseDeDatos($host, $dbname, $user, $password, $dni, $dniLimpio,
             ':dniLike' => $dniLike
         ]);
 
-        $res = $stmt->fetch(PDO::FETCH_ASSOC);
-        $debugLogs[] = "[$host / $dbname] Conexión ÉXITO. Filas coincidente: " . ($res ? '1' : '0');
-        return $res;
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($row) {
+            $debugLogs[] = "[$host / $dbname] Conexión ÉXITO. Paciente encontrado.";
+            
+            // Mapeo dinámico de campos resiliente a variaciones de esquema
+            $nombre = $row['ape_y_nom'] ?? $row['nombre_completo'] ?? $row['nombre'] ?? $row['apellido_y_nombre'] ?? '';
+            if (isset($row['st_nombre']) && !empty($row['st_nombre'])) {
+                $nombre .= ' ' . $row['st_nombre'];
+            }
+
+            $dniRes = $row['nro_doc'] ?? $row['dni'] ?? $row['documento'] ?? $dniLimpio;
+            $hcRes = $row['nr0_hc'] ?? $row['nro_hc'] ?? $row['hc'] ?? $row['historia_clinica'] ?? '';
+            $fnacRes = $row['fnac'] ?? $row['fecha_nac'] ?? $row['fecha_nacimiento'] ?? $row['fec_nac'] ?? $row['fechanac'] ?? '';
+            $telRes = $row['telefono'] ?? $row['tel'] ?? '';
+            $emailRes = $row['email'] ?? '';
+            $sexoRes = $row['sexo'] ?? $row['sex'] ?? 'M';
+
+            return [
+                'nombre' => trim($nombre),
+                'dni' => $dniRes,
+                'hc' => $hcRes,
+                'fecha_nacimiento' => $fnacRes,
+                'telefono' => $telRes,
+                'email' => $emailRes,
+                'sexo' => $sexoRes
+            ];
+        } else {
+            $debugLogs[] = "[$host / $dbname] Conexión ÉXITO. Filas coincidentes: 0";
+            return null;
+        }
     } catch (PDOException $e) {
         $debugLogs[] = "[$host / $dbname] Error PDO: " . $e->getMessage();
         return null;
@@ -66,31 +91,23 @@ function buscarEnBaseDeDatos($host, $dbname, $user, $password, $dni, $dniLimpio,
 }
 
 // 1. Intentar búsqueda en Base Central "diagnose" (10.12.4.1)
-$paciente = buscarEnBaseDeDatos('10.12.4.1', 'diagnose', 'gestion_', 'GESTION_77', $dni, $dniLimpio, $dniLike, $debugLogs);
+$paciente = buscarEnBaseDeDatos('10.12.4.1', 'diagnose', 'gestion_', 'GESTION_77', $rawInput, $dniLimpio, $dniLike, $debugLogs);
 
 // 2. Si no se encuentra en 10.12.4.1, intentar búsqueda en Base del Portal "alassia_mensajeria" (10.12.4.2)
 if (!$paciente) {
-    $paciente = buscarEnBaseDeDatos('10.12.4.2', 'alassia_mensajeria', 'gestion_', 'GESTION_77', $dni, $dniLimpio, $dniLike, $debugLogs);
+    $paciente = buscarEnBaseDeDatos('10.12.4.2', 'alassia_mensajeria', 'gestion_', 'GESTION_77', $rawInput, $dniLimpio, $dniLike, $debugLogs);
 }
 
 $response = [];
 if ($paciente) {
     $response = [
         'success' => true,
-        'paciente' => [
-            'nombre' => trim($paciente['nombre_completo']),
-            'dni' => $paciente['dni'],
-            'hc' => $paciente['hc'],
-            'telefono' => $paciente['telefono'],
-            'email' => $paciente['email'],
-            'fecha_nacimiento' => $paciente['fecha_nacimiento'],
-            'sexo' => $paciente['sexo']
-        ]
+        'paciente' => $paciente
     ];
 } else {
     $response = [
         'success' => false,
-        'message' => "Paciente con DNI/HC '$dni' no encontrado ni en base diagnose (10.12.4.1) ni en alassia_mensajeria (10.12.4.2)."
+        'message' => "Paciente con DNI/HC '$dniLimpio' no encontrado ni en base diagnose (10.12.4.1) ni en alassia_mensajeria (10.12.4.2)."
     ];
 }
 
