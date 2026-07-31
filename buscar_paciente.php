@@ -23,11 +23,10 @@ if (empty($dni)) {
     exit;
 }
 
-// Limpiar DNI de puntos, guiones o espacios
-$dniLimpio = preg_replace('/[^0-9]/', '', $dni);
-$dniLike = "%" . $dniLimpio . "%";
+$debugMode = isset($_GET['debug']) && $_GET['debug'] == '1';
+$debugLogs = [];
 
-function buscarEnBaseDeDatos($host, $dbname, $user, $password, $dni, $dniLimpio, $dniLike) {
+function buscarEnBaseDeDatos($host, $dbname, $user, $password, $dni, $dniLimpio, $dniLike, &$debugLogs) {
     try {
         $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8", $user, $password, [
             PDO::ATTR_TIMEOUT => 3,
@@ -57,22 +56,26 @@ function buscarEnBaseDeDatos($host, $dbname, $user, $password, $dni, $dniLimpio,
             ':dniLike' => $dniLike
         ]);
 
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        $res = $stmt->fetch(PDO::FETCH_ASSOC);
+        $debugLogs[] = "[$host / $dbname] Conexión ÉXITO. Filas coincidente: " . ($res ? '1' : '0');
+        return $res;
     } catch (PDOException $e) {
+        $debugLogs[] = "[$host / $dbname] Error PDO: " . $e->getMessage();
         return null;
     }
 }
 
 // 1. Intentar búsqueda en Base Central "diagnose" (10.12.4.1)
-$paciente = buscarEnBaseDeDatos('10.12.4.1', 'diagnose', 'gestion_', 'GESTION_77', $dni, $dniLimpio, $dniLike);
+$paciente = buscarEnBaseDeDatos('10.12.4.1', 'diagnose', 'gestion_', 'GESTION_77', $dni, $dniLimpio, $dniLike, $debugLogs);
 
 // 2. Si no se encuentra en 10.12.4.1, intentar búsqueda en Base del Portal "alassia_mensajeria" (10.12.4.2)
 if (!$paciente) {
-    $paciente = buscarEnBaseDeDatos('10.12.4.2', 'alassia_mensajeria', 'gestion_', 'GESTION_77', $dni, $dniLimpio, $dniLike);
+    $paciente = buscarEnBaseDeDatos('10.12.4.2', 'alassia_mensajeria', 'gestion_', 'GESTION_77', $dni, $dniLimpio, $dniLike, $debugLogs);
 }
 
+$response = [];
 if ($paciente) {
-    echo json_encode([
+    $response = [
         'success' => true,
         'paciente' => [
             'nombre' => trim($paciente['nombre_completo']),
@@ -83,11 +86,18 @@ if ($paciente) {
             'fecha_nacimiento' => $paciente['fecha_nacimiento'],
             'sexo' => $paciente['sexo']
         ]
-    ]);
+    ];
 } else {
-    echo json_encode([
+    $response = [
         'success' => false,
         'message' => "Paciente con DNI/HC '$dni' no encontrado ni en base diagnose (10.12.4.1) ni en alassia_mensajeria (10.12.4.2)."
-    ]);
+    ];
 }
+
+if ($debugMode || !$paciente) {
+    $response['debug'] = $debugLogs;
+}
+
+echo json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+exit;
 ?>
