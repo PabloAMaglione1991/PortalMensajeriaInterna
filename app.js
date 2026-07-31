@@ -2,7 +2,7 @@
 const APP_CONFIG = {
   ENV: 'production',                  // 'production' (versión real) o 'testing' (versión de pruebas)
   SHOW_DEMO_USERS_MODAL: false,       // En producción se oculta el selector con 1-clic
-  ALLOW_MOCK_PATIENTS_FALLBACK: true  // Permitir fallback de pacientes demo si falla la conexión BD
+  ALLOW_MOCK_PATIENTS_FALLBACK: false // En producción NO usar pacientes ficticios, buscar SOLO en base diagnose (10.12.4.1)
 };
 
 // Official Hospital Services with Authorized Milk Prescription Flags (autorizadoLeches)
@@ -229,23 +229,29 @@ async function buscarPacientePorDNI(dniInputId, fieldMap) {
     if (data && data.success && data.paciente) {
       applyPatientData(data.paciente, fieldMap);
       logEvent('CONSULTA', `Búsqueda exitosa de paciente DNI ${cleanDni} en base diagnose (10.12.4.1)`);
-      showToast(`✅ Paciente ${data.paciente.nombre} encontrado e importado desde base diagnose.`);
+      showToast(`✅ Paciente ${data.paciente.nombre} encontrado e importado desde la base diagnose (10.12.4.1).`);
+      return;
+    } else if (data && data.success === false && !APP_CONFIG.ALLOW_MOCK_PATIENTS_FALLBACK) {
+      showToast(`⚠️ ${data.message || `Paciente con DNI ${rawDni} no encontrado en la base diagnose (10.12.4.1).`}`);
       return;
     }
   } catch (err) {
-    console.log("Intranet API offline or PHP disabled, switching to local patient database...");
+    console.log("Intranet API offline or PHP error:", err);
   }
 
-  // Fallback to local demo patient dataset
-  const localMatch = DEMO_PATIENTS.find(p => p.dni === cleanDni || p.hc.toLowerCase().includes(cleanDni.toLowerCase()));
+  // Fallback to local demo patient dataset only if enabled in APP_CONFIG
+  if (APP_CONFIG.ALLOW_MOCK_PATIENTS_FALLBACK) {
+    const localMatch = DEMO_PATIENTS.find(p => p.dni === cleanDni || p.hc.toLowerCase().includes(cleanDni.toLowerCase()));
 
-  if (localMatch) {
-    applyPatientData(localMatch, fieldMap);
-    logEvent('CONSULTA', `Búsqueda local de paciente DNI ${cleanDni}`);
-    showToast(`✅ Paciente ${localMatch.nombre} cargado desde la base de datos.`);
-  } else {
-    showToast(`⚠️ No se encontró ningún paciente registrado con DNI ${rawDni}. Podés ingresar los datos manualmente.`);
+    if (localMatch) {
+      applyPatientData(localMatch, fieldMap);
+      logEvent('CONSULTA', `Búsqueda local de paciente DNI ${cleanDni}`);
+      showToast(`✅ Paciente ${localMatch.nombre} cargado desde la base local de pruebas.`);
+      return;
+    }
   }
+
+  showToast(`⚠️ No se encontró ningún paciente registrado con DNI ${rawDni} en la base diagnose (10.12.4.1). Podés ingresar los datos manualmente.`);
 }
 
 function applyPatientData(paciente, fieldMap) {
