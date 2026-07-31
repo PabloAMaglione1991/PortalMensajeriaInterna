@@ -1,6 +1,9 @@
-/* ==========================================================================
-   Application Logic, Services, DNI Auth & Audit Trail Engine - Hospital Alassia
-   ========================================================================== */
+/* Global Environment Switch: 'production' | 'testing' */
+const APP_CONFIG = {
+  ENV: 'production',                  // 'production' (versión real) o 'testing' (versión de pruebas)
+  SHOW_DEMO_USERS_MODAL: false,       // En producción se oculta el selector con 1-clic
+  ALLOW_MOCK_PATIENTS_FALLBACK: true  // Permitir fallback de pacientes demo si falla la conexión BD
+};
 
 // Official Hospital Services with Authorized Milk Prescription Flags (autorizadoLeches)
 const INITIAL_SERVICES = [
@@ -809,16 +812,23 @@ function handleCreateUserSubmit(e) {
 
 function openLoginModal() {
   const container = document.getElementById('user-accounts-list');
-  container.innerHTML = DEMO_USERS.map(u => `
-    <div class="user-card-option ${u.id === activeUser.id ? 'selected' : ''}" onclick="selectUser('${u.id}')">
-      <div class="user-avatar" style="width: 44px; height: 44px; font-size: 0.9rem;">${u.avatar}</div>
-      <div>
-        <h4 style="font-size: 0.9rem; margin-bottom: 2px;">${u.name}</h4>
-        <p style="font-size: 0.75rem; color: var(--text-muted);">${u.role}</p>
-        <span style="font-size: 0.7rem; color: var(--primary-600); font-weight: 600;">${u.service}</span>
+  const demoSection = container ? container.parentElement : null;
+
+  if (APP_CONFIG.ENV === 'production' && !APP_CONFIG.SHOW_DEMO_USERS_MODAL) {
+    if (demoSection) demoSection.style.display = 'none';
+  } else {
+    if (demoSection) demoSection.style.display = 'block';
+    container.innerHTML = DEMO_USERS.map(u => `
+      <div class="user-card-option ${u.id === activeUser.id ? 'selected' : ''}" onclick="selectUser('${u.id}')">
+        <div class="user-avatar" style="width: 44px; height: 44px; font-size: 0.9rem;">${u.avatar}</div>
+        <div>
+          <h4 style="font-size: 0.9rem; margin-bottom: 2px;">${u.name}</h4>
+          <p style="font-size: 0.75rem; color: var(--text-muted);">${u.role}</p>
+          <span style="font-size: 0.7rem; color: var(--primary-600); font-weight: 600;">${u.service}</span>
+        </div>
       </div>
-    </div>
-  `).join('');
+    `).join('');
+  }
 
   document.getElementById('login-modal').classList.add('active');
 }
@@ -1645,6 +1655,24 @@ function bindInputToText(inputId, previewId, fallbackText) {
 
   input.addEventListener('input', update);
   input.addEventListener('change', update);
+}
+
+function initRecurringFormToggles() {
+  const fRec = document.getElementById('f-is-recurring');
+  const fGroup = document.getElementById('f-recurring-months-group');
+  if (fRec && fGroup) {
+    fRec.addEventListener('change', () => {
+      fGroup.style.display = fRec.checked ? 'block' : 'none';
+    });
+  }
+
+  const nRec = document.getElementById('n-is-recurring');
+  const nGroup = document.getElementById('n-recurring-months-group');
+  if (nRec && nGroup) {
+    nRec.addEventListener('change', () => {
+      nGroup.style.display = nRec.checked ? 'block' : 'none';
+    });
+  }
 }
 
 /* Form Submissions */
