@@ -603,6 +603,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderAdminServicesGrid();
   renderAdminFormPermissions();
   updateFormAvailabilityState();
+  updateUserServiceDropdowns();
   populateStaffDropdowns();
   renderInbox();
   renderArchiveTable();
@@ -1266,10 +1267,90 @@ function renderAdminServicesGrid() {
         </ul>
       </div>
 
-      <button class="btn-secondary" style="width: 100%; font-size: 0.8rem; justify-content: center;" onclick="quickAddStaffTo('${s.id}')">
-        <i class="ri-user-add-line"></i> Asignar Profesional a ${s.code}
-      </button>
+      <div style="display: flex; gap: 0.5rem; margin-top: 0.85rem;">
+        <button class="btn-secondary" style="flex: 1; font-size: 0.775rem; justify-content: center;" onclick="quickAddStaffTo('${s.id}')">
+          <i class="ri-user-add-line"></i> Asignar Profesional
+        </button>
+        <button class="btn-secondary" style="color: var(--rose-600); border-color: var(--rose-300); font-size: 0.775rem; padding: 0.4rem 0.65rem;" onclick="deleteService('${s.id}')" title="Eliminar servicio">
+          <i class="ri-delete-bin-line"></i>
+        </button>
+      </div>
     </div>
+  `).join('');
+}
+
+function handleCreateServiceSubmit(e) {
+  e.preventDefault();
+
+  const name = document.getElementById('new-service-name').value.trim();
+  const code = document.getElementById('new-service-code').value.trim().toUpperCase();
+  const headOfService = document.getElementById('new-service-head').value.trim();
+  const email = document.getElementById('new-service-email').value.trim();
+  const autorizadoLeches = document.getElementById('new-service-milk-auth').value === 'true';
+  const reportesHabilitados = document.getElementById('new-service-report-auth').value === 'true';
+
+  if (!name || !code) {
+    showToast('⚠️ Por favor completa el nombre y la sigla del servicio.');
+    return;
+  }
+
+  const existing = services.find(s => s.code === code || s.name.toLowerCase() === name.toLowerCase());
+  if (existing) {
+    showToast(`⚠️ Ya existe un servicio registrado con el código '${code}' o el nombre '${name}'.`);
+    return;
+  }
+
+  const newId = `serv-${code.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+  const newServiceObj = {
+    id: newId,
+    name: name,
+    code: code,
+    email: email,
+    headOfService: headOfService,
+    enabled: true,
+    autorizadoLeches: autorizadoLeches,
+    reportesHabilitados: reportesHabilitados,
+    staff: []
+  };
+
+  services.push(newServiceObj);
+  localStorage.setItem('alassia_services', JSON.stringify(services));
+
+  logEvent('ADMIN', `Nuevo servicio hospitalario dado de alta: ${name} (${code})`);
+
+  document.getElementById('create-service-form').reset();
+  renderAdminServicesGrid();
+  renderServicesGrid();
+  populateStaffDropdowns();
+  updateUserServiceDropdowns();
+
+  showToast(`¡Servicio ${name} (${code}) creado y habilitado exitosamente!`);
+}
+
+function deleteService(serviceId) {
+  const serv = services.find(s => s.id === serviceId);
+  if (!serv) return;
+
+  if (confirm(`¿Estás seguro de que deseas eliminar el servicio '${serv.name}' (${serv.code})?`)) {
+    services = services.filter(s => s.id !== serviceId);
+    localStorage.setItem('alassia_services', JSON.stringify(services));
+
+    logEvent('ADMIN', `Servicio eliminado del sistema: ${serv.name} (${serv.code})`);
+    renderAdminServicesGrid();
+    renderServicesGrid();
+    populateStaffDropdowns();
+    updateUserServiceDropdowns();
+
+    showToast(`Servicio '${serv.name}' eliminado del portal.`);
+  }
+}
+
+function updateUserServiceDropdowns() {
+  const userServSelect = document.getElementById('new-user-service');
+  if (!userServSelect) return;
+
+  userServSelect.innerHTML = services.map(s => `
+    <option value="${s.name}">${s.name} (${s.code})</option>
   `).join('');
 }
 

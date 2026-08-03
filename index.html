@@ -656,6 +656,62 @@
             </div>
           </div>
 
+          <!-- Service Creation Form Card (Service CRUD) -->
+          <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1.5rem; box-shadow: var(--shadow-sm);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+              <div>
+                <h3 style="font-size: 1.05rem; font-weight: 800;"><i class="ri-hospital-line" style="color: var(--primary-600);"></i> Alta y Creación de Nuevo Servicio Hospitalario</h3>
+                <p style="font-size: 0.8rem; color: var(--text-muted);">Registrá un nuevo departamento o área del hospital para asignación de profesionales y recetas.</p>
+              </div>
+            </div>
+
+            <form id="create-service-form" onsubmit="handleCreateServiceSubmit(event)">
+              <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                <div class="form-group">
+                  <label>Nombre del Servicio</label>
+                  <input type="text" id="new-service-name" class="form-control" placeholder="Ej: Neurología Pediátrica" required>
+                </div>
+
+                <div class="form-group">
+                  <label>Código / Sigla Oficial</label>
+                  <input type="text" id="new-service-code" class="form-control" placeholder="Ej: NEURO" required>
+                </div>
+
+                <div class="form-group">
+                  <label>Jefe / Coordinador de Servicio</label>
+                  <input type="text" id="new-service-head" class="form-control" placeholder="Ej: Dr. Carlos Sola" required>
+                </div>
+
+                <div class="form-group">
+                  <label>Email Oficial del Servicio</label>
+                  <input type="email" id="new-service-email" class="form-control" placeholder="neurologia.alassia@santafe.gob.ar" required>
+                </div>
+
+                <div class="form-group">
+                  <label>Recetas de Leches / Fórmulas</label>
+                  <select id="new-service-milk-auth" class="form-control">
+                    <option value="true">🥛 Autorizado</option>
+                    <option value="false" selected>🚫 Restringido</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label>Reportes & Métricas del Sector</label>
+                  <select id="new-service-report-auth" class="form-control">
+                    <option value="true" selected>📊 Habilitado</option>
+                    <option value="false">🚫 Deshabilitado</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style="margin-top: 1.25rem; display: flex; justify-content: flex-end;">
+                <button type="submit" class="btn-primary" style="padding: 0.6rem 1.25rem;">
+                  <i class="ri-add-circle-line"></i> Guardar y Dar de Alta Servicio
+                </button>
+              </div>
+            </form>
+          </div>
+
           <h3 style="font-size: 1.05rem; font-weight: 800; margin-bottom: 1rem;"><i class="ri-hospital-line" style="color: var(--primary-600);"></i> Habilitación de Servicios y Autorización de Leches</h3>
 
           <div class="services-grid" id="admin-services-container">
