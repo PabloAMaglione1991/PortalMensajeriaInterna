@@ -6,6 +6,8 @@
   <title>Portal de Mensajería e Interconsultas - Hospital de Niños Dr. Orlando Alassia</title>
   <!-- Remixicon for modern medical icons -->
   <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+  <!-- html2pdf for direct PDF file downloads without print modals -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -250,10 +252,10 @@
         <section id="tab-dashboard" class="tab-content active">
           <div class="welcome-banner">
             <h2>Sistema Digital de Mensajería e Interconsultas</h2>
-            <p>Digitalización oficial del Hospital de Niños "Dr. Orlando Alassia". Prescripción de fórmulas lácteas restringida exclusivamente a servicios médicos autorizados.</p>
+            <p>Plataforma clínica del Hospital de Niños "Dr. Orlando Alassia". Prescripción de leches y fórmulas lácteas habilitada únicamente para servicios médicos autorizados.</p>
           </div>
 
-          <div class="quick-stats-grid">
+          <div class="quick-stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
             <div class="stat-card">
               <div class="stat-icon blue">
                 <i class="ri-file-text-line"></i>
@@ -283,29 +285,19 @@
                 <p>Retiros Mensuales Activos</p>
               </div>
             </div>
-
-            <div class="stat-card">
-              <div class="stat-icon rose">
-                <i class="ri-shield-user-line"></i>
-              </div>
-              <div class="stat-info">
-                <h3 id="stat-authorized-leches">5</h3>
-                <p>Servicios Autorizados Leches</p>
-              </div>
-            </div>
           </div>
 
-          <h2 style="margin-bottom: 1.25rem; font-size: 1.2rem;">Crear Nueva Solicitud Digital</h2>
+          <h2 style="margin-bottom: 1rem; font-size: 1.15rem; font-weight: 700;">Emisión de Solicitudes Digitales</h2>
           <div class="actions-grid">
             
             <div class="action-card">
               <div>
                 <div class="action-card-header">
                   <span class="action-tag cardio">Especialidad</span>
-                  <i class="ri-heart-pulse-fill" style="font-size: 1.5rem; color: #dc2626;"></i>
+                  <i class="ri-heart-pulse-fill" style="font-size: 1.4rem; color: #dc2626;"></i>
                 </div>
-                <h3>Interconsulta con Cardiología</h3>
-                <p>Solicitud de evaluación cardiológica infantil, electrocardiograma, ecocardiograma e informe especializado.</p>
+                <h3>Interconsulta Cardiología</h3>
+                <p>Evaluación cardiológica pediátrica, ECG y Ecocardiograma.</p>
               </div>
               <button class="btn-primary" onclick="switchTab('tab-cardio')">
                 <i class="ri-add-line"></i> Completar Formulario
@@ -316,10 +308,10 @@
               <div>
                 <div class="action-card-header">
                   <span class="action-tag general">General</span>
-                  <i class="ri-stethoscope-fill" style="font-size: 1.5rem; color: #0284c7;"></i>
+                  <i class="ri-stethoscope-fill" style="font-size: 1.4rem; color: #0284c7;"></i>
                 </div>
-                <h3>Interconsulta Médica General</h3>
-                <p>Pedido formal entre servicios/salas del hospital (Pediatría, Cirugía, Traumatología, Neurología).</p>
+                <h3>Interconsulta General</h3>
+                <p>Pedido formal entre servicios y salas de internación.</p>
               </div>
               <button class="btn-primary" onclick="switchTab('tab-general')">
                 <i class="ri-add-line"></i> Completar Formulario
@@ -330,10 +322,10 @@
               <div>
                 <div class="action-card-header">
                   <span class="action-tag farmacia">Farmacia</span>
-                  <i class="ri-capsule-fill" style="font-size: 1.5rem; color: #d97706;"></i>
+                  <i class="ri-capsule-fill" style="font-size: 1.4rem; color: #d97706;"></i>
                 </div>
-                <h3>Receta Electrónica de Farmacia</h3>
-                <p>Emisión digital de prescripciones de medicamentos hospitalarios y tratamientos crónicos con retiro mensual.</p>
+                <h3>Receta Electrónica Farmacia</h3>
+                <p>Prescripción digital de medicamentos y tratamientos crónicos.</p>
               </div>
               <button class="btn-primary" onclick="switchTab('tab-farmacia')">
                 <i class="ri-add-line"></i> Prescribir Receta
@@ -343,11 +335,11 @@
             <div class="action-card">
               <div>
                 <div class="action-card-header">
-                  <span class="action-tag imagenes">Radiodiagnóstico</span>
-                  <i class="ri-body-scan-fill" style="font-size: 1.5rem; color: #7e22ce;"></i>
+                  <span class="action-tag imagenes">Imágenes</span>
+                  <i class="ri-body-scan-fill" style="font-size: 1.4rem; color: #7e22ce;"></i>
                 </div>
                 <h3>Solicitud de Imágenes</h3>
-                <p>Pedido de ecografía, radiografía (RX), tomografía (TAC) y resonancia (RMN) para el Sector de Imágenes.</p>
+                <p>Ecografía, radiografía (RX), tomografía (TAC) y resonancia (RMN).</p>
               </div>
               <button class="btn-primary" onclick="switchTab('tab-imagenes')">
                 <i class="ri-add-line"></i> Pedir Estudio
@@ -358,10 +350,10 @@
               <div>
                 <div class="action-card-header">
                   <span class="action-tag nutri">Nutrición Exclusivo</span>
-                  <i class="ri-drop-fill" style="font-size: 1.5rem; color: #16a34a;"></i>
+                  <i class="ri-drop-fill" style="font-size: 1.4rem; color: #16a34a;"></i>
                 </div>
                 <h3>Prescripción Fórmulas Lácteas</h3>
-                <p>Recetario oficial de leches habilitado únicamente para servicios autorizados por el hospital.</p>
+                <p>Recetario oficial de leches habilitado para servicios autorizados.</p>
               </div>
               <button class="btn-primary" onclick="switchTab('tab-nutri')">
                 <i class="ri-add-line"></i> Prescribir Fórmula Láctea
@@ -418,8 +410,8 @@
                 <h2>Archivo de Interconsultas y Recetas Resueltas</h2>
                 <p style="font-size: 0.8rem; color: var(--text-muted);">Historial permanente de solicitudes confirmadas y finalizadas con informe médico firmado.</p>
               </div>
-              <button class="btn-secondary" onclick="window.print()">
-                <i class="ri-printer-line"></i> Imprimir Archivo
+              <button class="btn-secondary" onclick="exportToPDF('#tab-archive .table-card', 'archivo_interconsultas_alassia.pdf')">
+                <i class="ri-file-pdf-2-line"></i> Descargar PDF Archivo
               </button>
             </div>
 
@@ -469,8 +461,8 @@
               <h2 style="font-size: 1.3rem;">Reporte Oficial de Entregas Mensuales y Ausentismo</h2>
               <p style="font-size: 0.85rem; color: var(--text-muted);">Consolidado estadístico del Servicio de Farmacia, Lactario y Diagnóstico por Imágenes.</p>
             </div>
-            <button class="btn-primary" onclick="window.print()">
-              <i class="ri-printer-line"></i> Exportar / Imprimir Reporte Mensual
+            <button class="btn-primary" onclick="exportToPDF('#report-print-area', 'reporte_mensual_alassia.pdf')">
+              <i class="ri-file-pdf-2-line"></i> Exportar PDF Reporte
             </button>
           </div>
 
@@ -775,8 +767,8 @@
                   <button type="submit" class="btn-primary" style="flex: 1;">
                     <i class="ri-send-plane-fill"></i> Registrar y Notificar Personal
                   </button>
-                  <button type="button" class="btn-secondary" onclick="window.print()">
-                    <i class="ri-printer-line"></i> Imprimir Sheet
+                  <button type="button" class="btn-secondary" onclick="exportToPDF('#paper-cardio-preview', 'interconsulta_cardiologia.pdf')">
+                    <i class="ri-file-pdf-2-line"></i> Descargar PDF
                   </button>
                 </div>
               </form>
@@ -907,8 +899,8 @@
                   <button type="submit" class="btn-primary" style="flex: 1;">
                     <i class="ri-send-plane-fill"></i> Registrar y Notificar Personal Receptor
                   </button>
-                  <button type="button" class="btn-secondary" onclick="window.print()">
-                    <i class="ri-printer-line"></i> Imprimir Formulario
+                  <button type="button" class="btn-secondary" onclick="exportToPDF('#paper-general-preview', 'interconsulta_general.pdf')">
+                    <i class="ri-file-pdf-2-line"></i> Descargar PDF
                   </button>
                 </div>
               </form>
@@ -1071,8 +1063,8 @@
                   <button type="submit" class="btn-primary" style="flex: 1;">
                     <i class="ri-send-plane-fill"></i> Emitir Receta y Enviar a Farmacia
                   </button>
-                  <button type="button" class="btn-secondary" onclick="window.print()">
-                    <i class="ri-printer-line"></i> Imprimir Receta
+                  <button type="button" class="btn-secondary" onclick="exportToPDF('#paper-farmacia-preview', 'receta_farmacia.pdf')">
+                    <i class="ri-file-pdf-2-line"></i> Descargar PDF
                   </button>
                 </div>
               </form>
@@ -1203,8 +1195,8 @@
                   <button type="submit" class="btn-primary" style="flex: 1;">
                     <i class="ri-send-plane-fill"></i> Solicitar Estudio y Enviar a Imágenes
                   </button>
-                  <button type="button" class="btn-secondary" onclick="window.print()">
-                    <i class="ri-printer-line"></i> Imprimir Pedido
+                  <button type="button" class="btn-secondary" onclick="exportToPDF('#paper-imagenes-preview', 'solicitud_imagenes.pdf')">
+                    <i class="ri-file-pdf-2-line"></i> Descargar PDF
                   </button>
                 </div>
               </form>
@@ -1381,8 +1373,8 @@
                   <button type="submit" class="btn-primary" style="flex: 1;">
                     <i class="ri-check-double-line"></i> Prescribir y Enviar por Email a Lactario
                   </button>
-                  <button type="button" class="btn-secondary" onclick="window.print()">
-                    <i class="ri-printer-line"></i> Imprimir Recetario
+                  <button type="button" class="btn-secondary" onclick="exportToPDF('#paper-nutri-preview', 'prescripcion_nutricional_leches.pdf')">
+                    <i class="ri-file-pdf-2-line"></i> Descargar PDF
                   </button>
                 </div>
               </form>
@@ -1455,7 +1447,7 @@
       </div>
       <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 1rem;">
         <button class="btn-secondary" onclick="closeModal()">Cerrar</button>
-        <button class="btn-primary" onclick="window.print()"><i class="ri-printer-line"></i> Imprimir Copia Oficial</button>
+        <button class="btn-primary" onclick="exportToPDF('#modal-content', 'solicitud_detalle_alassia.pdf')"><i class="ri-file-pdf-2-line"></i> Descargar PDF Copia Oficial</button>
       </div>
     </div>
   </div>

@@ -716,9 +716,56 @@ function filterLogs(category) {
   renderAuditLogs(category);
 }
 
+/* PDF Export Engine (No Physical Print Dialogs) */
+function exportToPDF(selector, filename = 'documento_alassia.pdf') {
+  const el = typeof selector === 'string' ? document.querySelector(selector) : selector;
+  if (!el) {
+    showToast('⚠️ No se encontró el documento para generar el PDF.');
+    return;
+  }
+
+  showToast('📄 Generando y descargando PDF...');
+
+  if (typeof html2pdf !== 'undefined') {
+    const opt = {
+      margin:       0.3,
+      filename:     filename,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2, useCORS: true },
+      jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+    };
+
+    html2pdf().set(opt).from(el).save().then(() => {
+      showToast(`✅ PDF '${filename}' descargado exitosamente.`);
+      logEvent('CONSULTA', `Descarga de PDF realizada: ${filename}`);
+    }).catch(err => {
+      console.error('Error al generar PDF:', err);
+      showToast('⚠️ Error al generar el PDF.');
+    });
+  } else {
+    const win = window.open('', '_blank');
+    if (win) {
+      win.document.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>${filename}</title>
+            <link rel="stylesheet" href="styles.css">
+            <style>body { padding: 2rem; background: #fff; }</style>
+          </head>
+          <body>
+            ${el.outerHTML}
+          </body>
+        </html>
+      `);
+      win.document.close();
+      showToast('📄 Vista limpia abierta en nueva pestaña.');
+    }
+  }
+}
+
 function exportAuditLog() {
-  window.print();
-  showToast('Exportando Registro de Auditoría Hospitalaria...');
+  exportToPDF('#audit-table-body', 'registro_auditoria_alassia.pdf');
 }
 
 /* Authentication & Profile Switching (RBAC) */
