@@ -799,21 +799,68 @@ function renderActiveUser() {
     if (el) el.textContent = activeUser.name;
   });
 
-  // Strict RBAC Visibility: Hide Admin Panel and Audit Logs from Sidebar for non-admin doctors
-  const adminNavBtn = document.querySelector('[data-tab="tab-admin"]');
-  const auditNavBtn = document.querySelector('[data-tab="tab-logs"]');
-  if (adminNavBtn && adminNavBtn.closest('li')) {
-    adminNavBtn.closest('li').style.display = activeUser.isAdmin ? 'block' : 'none';
-  }
-  if (auditNavBtn && auditNavBtn.closest('li')) {
-    auditNavBtn.closest('li').style.display = activeUser.isAdmin ? 'block' : 'none';
-  }
+  // Strict Role-Based Sidebar & Dashboard Action Filtering (Ultra Simplicity)
+  applyRoleContextualFiltering();
 
   // If non-admin user is currently viewing an admin tab, automatically redirect to Dashboard
   const activeTab = document.querySelector('.tab-content.active');
   if (!activeUser.isAdmin && activeTab && (activeTab.id === 'tab-admin' || activeTab.id === 'tab-logs')) {
     switchTab('tab-dashboard');
   }
+}
+
+function applyRoleContextualFiltering() {
+  if (!activeUser) return;
+
+  const serviceName = (activeUser.service || '').toLowerCase();
+  const isAdmin = activeUser.isAdmin;
+
+  // Define allowable form tabs per role
+  const roleTabMap = {
+    'cardio': isAdmin || serviceName.includes('cardio') || serviceName.includes('pediatría') || serviceName.includes('internación') || serviceName.includes('todos'),
+    'general': true, // Todos los médicos pueden realizar interconsulta general
+    'farmacia': isAdmin || serviceName.includes('farmacia') || serviceName.includes('crónicos') || serviceName.includes('pediatría') || serviceName.includes('todos'),
+    'imagenes': isAdmin || serviceName.includes('imágenes') || serviceName.includes('internación') || serviceName.includes('pediatría') || serviceName.includes('todos'),
+    'nutri': isAdmin || serviceName.includes('nutri') || serviceName.includes('gastro') || serviceName.includes('neo') || serviceName.includes('crónicos') || serviceName.includes('internación') || serviceName.includes('todos'),
+    'admin': isAdmin,
+    'logs': isAdmin,
+    'reportes': isAdmin || serviceName.includes('farmacia') || serviceName.includes('nutri') || serviceName.includes('imágenes')
+  };
+
+  // 1. Ocultar del menú lateral (Sidebar) los ítems que no corresponden al rol
+  Object.keys(roleTabMap).forEach(key => {
+    const tabId = `tab-${key}`;
+    const btn = document.querySelector(`[data-tab="${tabId}"]`);
+    if (btn && btn.closest('li')) {
+      const isAllowed = roleTabMap[key];
+      btn.closest('li').style.display = isAllowed ? 'block' : 'none';
+    }
+  });
+
+  // 2. Ocultar del Dashboard las tarjetas de emisión que no corresponden al rol
+  const actionCards = document.querySelectorAll('#tab-dashboard .action-card');
+  actionCards.forEach(card => {
+    const tagEl = card.querySelector('.action-tag');
+    if (!tagEl) return;
+    const tagClass = tagEl.className.toLowerCase();
+
+    let show = false;
+    if (isAdmin) {
+      show = true;
+    } else if (tagClass.includes('cardio')) {
+      show = roleTabMap['cardio'];
+    } else if (tagClass.includes('general')) {
+      show = true;
+    } else if (tagClass.includes('farmacia')) {
+      show = roleTabMap['farmacia'];
+    } else if (tagClass.includes('imagenes')) {
+      show = roleTabMap['imagenes'];
+    } else if (tagClass.includes('nutri')) {
+      show = roleTabMap['nutri'];
+    }
+
+    card.style.display = show ? 'flex' : 'none';
+  });
 }
 
 /* Dynamic User Creation Handler (Admin Panel) */
