@@ -1379,6 +1379,80 @@ textarea.form-control {
   .table-responsive { max-height: calc(100vh - 200px); }
 }
 
+/* ==========================================================================
+   Widescreen & Multi-Monitor Space Optimization (1080p, 1440p, 2K, 4K Displays)
+   ========================================================================== */
+@media (min-width: 1400px) {
+  .sidebar {
+    width: 270px;
+    min-width: 270px;
+  }
+  .content-body {
+    padding: 1.75rem 2.5rem;
+  }
+  .welcome-banner {
+    padding: 1.75rem 2.25rem;
+  }
+  .welcome-banner h2 {
+    font-size: 1.45rem;
+  }
+  .welcome-banner p {
+    font-size: 0.925rem;
+    max-width: 850px;
+  }
+  .actions-grid {
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+  }
+  .form-layout-grid {
+    grid-template-columns: minmax(420px, 1fr) minmax(500px, 1.2fr);
+    gap: 2rem;
+  }
+  .paper-sheet {
+    padding: 2rem;
+    font-size: 0.875rem;
+  }
+  .custom-table th, .custom-table td {
+    padding: 0.85rem 1.15rem;
+    font-size: 0.875rem;
+  }
+  .quick-stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.25rem;
+  }
+  .modal-card {
+    max-width: 880px;
+  }
+}
+
+@media (min-width: 1800px) {
+  .sidebar {
+    width: 290px;
+    min-width: 290px;
+  }
+  .content-body {
+    padding: 2.25rem 3.5rem;
+  }
+  .actions-grid {
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    gap: 1.75rem;
+  }
+  .form-layout-grid {
+    grid-template-columns: minmax(480px, 1fr) minmax(580px, 1.25fr);
+    gap: 2.5rem;
+  }
+  .paper-sheet {
+    padding: 2.25rem;
+    font-size: 0.925rem;
+  }
+  .form-container-card {
+    padding: 1.75rem;
+  }
+  .modal-card {
+    max-width: 1000px;
+  }
+}
+
 /* Print Overrides */
 @media print {
   body * {
