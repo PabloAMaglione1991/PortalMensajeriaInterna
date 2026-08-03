@@ -191,16 +191,15 @@
       </nav>
 
       <div class="sidebar-footer" style="display: flex; gap: 0.5rem; align-items: center;">
-        <button class="user-profile-btn" style="flex: 1;" onclick="openLoginModal()" title="Cambiar perfil activo">
+        <div class="user-profile-card" style="flex: 1; display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0.75rem; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md);">
           <div class="user-avatar" id="current-user-avatar">OA</div>
-          <div class="user-info">
-            <h4 id="current-user-name">Dr. Orlando Alassia</h4>
-            <p id="current-user-role">Pediatría • Mat. 3410</p>
+          <div class="user-info" style="overflow: hidden;">
+            <h4 id="current-user-name" style="font-size: 0.825rem; font-weight: 700; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Dr. Orlando Alassia</h4>
+            <p id="current-user-role" style="font-size: 0.725rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Pediatría • Mat. 3410</p>
           </div>
-          <i class="ri-swap-line" style="margin-left: auto; color: var(--slate-400);"></i>
-        </button>
-        <button class="btn-icon" style="background: var(--slate-100); color: var(--rose-600);" onclick="logoutUser()" title="Bloquear / Cerrar Sesión">
-          <i class="ri-logout-box-r-line"></i>
+        </div>
+        <button class="btn-secondary" style="padding: 0.55rem; color: var(--rose-600); border-color: rgba(225, 29, 72, 0.2); background: rgba(225, 29, 72, 0.05);" onclick="logoutUser()" title="Cerrar Sesión">
+          <i class="ri-logout-box-r-line" style="font-size: 1.1rem;"></i>
         </button>
       </div>
     </aside>

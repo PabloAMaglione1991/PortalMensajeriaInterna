@@ -804,7 +804,7 @@ function renderActiveUser() {
 
   // If non-admin user is currently viewing an admin tab, automatically redirect to Dashboard
   const activeTab = document.querySelector('.tab-content.active');
-  if (!activeUser.isAdmin && activeTab && (activeTab.id === 'tab-admin' || activeTab.id === 'tab-logs')) {
+  if (!activeUser.isAdmin && activeTab && (activeTab.id === 'tab-admin' || activeTab.id === 'tab-logs' || activeTab.id === 'tab-services')) {
     switchTab('tab-dashboard');
   }
 }
@@ -815,6 +815,13 @@ function applyRoleContextualFiltering() {
   const serviceName = (activeUser.service || '').toLowerCase();
   const isAdmin = activeUser.isAdmin;
 
+  // Check if user's service has any active recurring withdrawal records
+  const userHasRecurring = records.some(r => {
+    if (!r.isRecurring) return false;
+    const recServ = (r.servicio || r.destino || '').toLowerCase();
+    return recServ.includes(serviceName) || serviceName.includes(recServ);
+  });
+
   // Define allowable form tabs per role
   const roleTabMap = {
     'cardio': isAdmin || serviceName.includes('cardio') || serviceName.includes('pediatría') || serviceName.includes('internación') || serviceName.includes('todos'),
@@ -822,6 +829,8 @@ function applyRoleContextualFiltering() {
     'farmacia': isAdmin || serviceName.includes('farmacia') || serviceName.includes('crónicos') || serviceName.includes('pediatría') || serviceName.includes('todos'),
     'imagenes': isAdmin || serviceName.includes('imágenes') || serviceName.includes('internación') || serviceName.includes('pediatría') || serviceName.includes('todos'),
     'nutri': isAdmin || serviceName.includes('nutri') || serviceName.includes('gastro') || serviceName.includes('neo') || serviceName.includes('crónicos') || serviceName.includes('internación') || serviceName.includes('todos'),
+    'recurrencia': isAdmin || serviceName.includes('farmacia') || serviceName.includes('nutri') || serviceName.includes('crónicos') || userHasRecurring,
+    'services': isAdmin, // Servicios & Personal EXCLUSIVO ADMIN
     'admin': isAdmin,
     'logs': isAdmin,
     'reportes': isAdmin || serviceName.includes('farmacia') || serviceName.includes('nutri') || serviceName.includes('imágenes')
