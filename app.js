@@ -861,6 +861,29 @@ function applyRoleContextualFiltering() {
 
     card.style.display = show ? 'flex' : 'none';
   });
+
+  // 3. Ocultar estadísticas globales del Dashboard para médicos no administradores
+  const quickStatsGrid = document.querySelector('#tab-dashboard .quick-stats-grid');
+  const welcomeBanner = document.querySelector('#tab-dashboard .welcome-banner');
+  if (quickStatsGrid) {
+    quickStatsGrid.style.display = isAdmin ? 'grid' : 'none';
+  }
+  if (welcomeBanner) {
+    const h2 = welcomeBanner.querySelector('h2');
+    const p = welcomeBanner.querySelector('p');
+    if (!isAdmin) {
+      if (h2) h2.textContent = `Servicio: ${activeUser.service}`;
+      if (p) p.textContent = `Bienvenido/a ${activeUser.name}. Panel simplificado para emisión directa de solicitudes e interconsultas de tu área.`;
+    } else {
+      if (h2) h2.textContent = `Sistema Digital de Mensajería e Interconsultas`;
+      if (p) p.textContent = `Plataforma clínica del Hospital de Niños "Dr. Orlando Alassia". Modo Administrador General.`;
+    }
+  }
+
+  // 4. Renderizar tabla CRUD de usuarios si el perfil activo es Admin
+  if (isAdmin) {
+    renderUserCrudTable();
+  }
 }
 
 /* Dynamic User Creation Handler (Admin Panel) */
@@ -906,8 +929,47 @@ function handleCreateUserSubmit(e) {
   logEvent('ADMIN', `Alta de nuevo usuario: ${name} (DNI ${dni}) para servicio ${service} [Admin: ${isAdmin ? 'SÍ' : 'NO'}]`);
   showToast(`¡Usuario ${name} (DNI ${dni}) creado exitosamente!`);
 
-  // Re-render accounts list if open
-  openLoginModal();
+  renderUserCrudTable();
+}
+
+function renderUserCrudTable() {
+  const tbody = document.getElementById('admin-users-crud-body');
+  if (!tbody) return;
+
+  tbody.innerHTML = DEMO_USERS.map(u => `
+    <tr>
+      <td><span style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--primary-600);">${u.dni}</span></td>
+      <td><strong>${u.name}</strong></td>
+      <td>${u.service}</td>
+      <td>${u.role}</td>
+      <td>
+        ${u.isAdmin 
+          ? `<span class="action-tag cardio" style="font-size: 0.7rem;"><i class="ri-shield-keyhole-line"></i> Administrador General</span>`
+          : `<span class="action-tag general" style="font-size: 0.7rem;"><i class="ri-stethoscope-line"></i> Médico de Servicio</span>`}
+      </td>
+      <td>
+        ${activeUser && u.dni === activeUser.dni 
+          ? `<span style="font-size: 0.75rem; color: var(--text-muted); font-style: italic;">Sesión Actual</span>`
+          : `<button class="btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; color: var(--rose-600);" onclick="deleteUserByDNI('${u.dni}')"><i class="ri-delete-bin-line"></i> Eliminar</button>`}
+      </td>
+    </tr>
+  `).join('');
+}
+
+function deleteUserByDNI(dni) {
+  if (!confirm(`¿Estás seguro de eliminar al usuario con DNI ${dni}?`)) return;
+
+  const idx = DEMO_USERS.findIndex(u => u.dni === dni);
+  if (idx !== -1) {
+    const deleted = DEMO_USERS.splice(idx, 1)[0];
+    let customUsers = JSON.parse(localStorage.getItem('alassia_custom_users')) || [];
+    customUsers = customUsers.filter(u => u.dni !== dni);
+    localStorage.setItem('alassia_custom_users', JSON.stringify(customUsers));
+
+    logEvent('ADMIN', `Baja de usuario DNI ${dni} (${deleted.name})`);
+    showToast(`Usuario DNI ${dni} eliminado del sistema.`);
+    renderUserCrudTable();
+  }
 }
 
 function openLoginModal() {
@@ -1382,11 +1444,30 @@ function renderArchiveTable() {
   let resolvedRecords = records.filter(r => r.estado.includes('Confirmado') || r.estado === 'Completada' || r.estado === 'Tratamiento Completado');
 
   if (activeUser && !activeUser.isAdmin) {
+    const userServ = activeUser.service.toLowerCase();
     resolvedRecords = resolvedRecords.filter(r => {
       const targetServ = (r.servicio || r.destino || '').toLowerCase();
-      const userServ = activeUser.service.toLowerCase();
+      const recType = (r.tipo || r.type || '').toLowerCase();
+
+      if (userServ.includes('cardio')) return targetServ.includes('cardio') || recType.includes('cardio');
+      if (userServ.includes('nutri') || userServ.includes('lactario')) return targetServ.includes('nutri') || recType.includes('leche') || recType.includes('nutri');
+      if (userServ.includes('farmacia')) return targetServ.includes('farmacia') || recType.includes('receta') || recType.includes('farmacia');
+      if (userServ.includes('imágenes')) return targetServ.includes('imágenes') || recType.includes('imágenes');
+
       return targetServ.includes(userServ) || userServ.includes(targetServ);
     });
+  }
+
+  if (resolvedRecords.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="8" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+          <i class="ri-folder-open-line" style="font-size: 2rem; color: var(--slate-400); display: block; margin-bottom: 0.5rem;"></i>
+          No hay solicitudes resueltas ni archivadas para el servicio <strong>${activeUser ? activeUser.service : ''}</strong>.
+        </td>
+      </tr>
+    `;
+    return;
   }
 
   tbody.innerHTML = resolvedRecords.map(r => `

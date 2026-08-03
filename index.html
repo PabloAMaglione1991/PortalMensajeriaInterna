@@ -531,7 +531,17 @@
           </div>
         </section>
 
-          <!-- User Creation & Management Card -->
+        <!-- Tab 6: Administración General (CRUD Usuarios & Permisos) -->
+        <section id="tab-admin" class="tab-content">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <div>
+              <h2 style="font-size: 1.3rem;">Gestión de Usuarios y Accesos al Portal (CRUD)</h2>
+              <p style="font-size: 0.85rem; color: var(--text-muted);">Módulo exclusivo de administración centralizada de cuentas de médicos y claves de inicio de sesión.</p>
+            </div>
+            <span class="role-active-tag cardio" style="font-size: 0.8rem;"><i class="ri-shield-keyhole-line"></i> Exclusivo Dirección / Admin</span>
+          </div>
+
+          <!-- User Creation Card -->
           <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1.5rem; box-shadow: var(--shadow-sm);">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
               <div>
@@ -578,12 +588,12 @@
                     <option value="Internación General (Salas)">Internación General</option>
                     <option value="Clínica Pediátrica">Clínica Pediátrica</option>
                     <option value="Farmacia y Recetas Electrónicas">Farmacia Hospitalaria</option>
-                    <option value="Diagnóstico por Imágenes">Diagnóstico por Imágenes</option>
+                    <option value="Servicio de Diagnóstico por Imágenes">Diagnóstico por Imágenes</option>
                   </select>
                 </div>
 
                 <div class="form-group">
-                  <label>Correo Electrónico Oficial</label>
+                  <label>Email de Notificaciones</label>
                   <input type="email" id="new-user-email" class="form-control" placeholder="medico@santafe.gob.ar" required>
                 </div>
 
@@ -602,6 +612,34 @@
                 </button>
               </div>
             </form>
+          </div>
+
+          <!-- User CRUD Directory Table -->
+          <div class="table-card" style="margin-bottom: 1.5rem;">
+            <div class="table-header">
+              <div>
+                <h3>Directorio y CRUD de Cuentas de Usuarios Habilitadas</h3>
+                <p style="font-size: 0.8rem; color: var(--text-muted);">Gestión de cuentas activas, roles y restablecimiento de credenciales</p>
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="custom-table">
+                <thead>
+                  <tr>
+                    <th>D.N.I. (Usuario)</th>
+                    <th>Profesional</th>
+                    <th>Servicio Asignado</th>
+                    <th>Especialidad / Rol</th>
+                    <th>Nivel de Acceso</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-users-crud-body">
+                  <!-- Dynamic CRUD User Rows -->
+                </tbody>
+              </table>
+            </div>
           </div>
 
           <!-- Form Permissions Control Grid -->
