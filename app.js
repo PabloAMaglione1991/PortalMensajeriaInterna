@@ -2027,11 +2027,39 @@ function renderRecurringSection() {
   const container = document.getElementById('recurring-cards-container');
   if (!container) return;
 
-  const recurringRecords = records.filter(r => r.isRecurring);
+  let recurringRecords = records.filter(r => r.isRecurring);
+
+  // Strict RBAC Filtering per role/service: Nutrición sees leches, Farmacia sees recetas, etc.
+  if (activeUser && !activeUser.isAdmin) {
+    const userServ = (activeUser.service || '').toLowerCase();
+    recurringRecords = recurringRecords.filter(r => {
+      const recServ = (r.servicio || r.destino || '').toLowerCase();
+      const recType = (r.tipo || r.type || '').toLowerCase();
+
+      if (userServ.includes('nutri') || userServ.includes('lactario')) {
+        return recServ.includes('nutri') || recType.includes('leche') || recType.includes('nutri');
+      }
+      if (userServ.includes('farmacia')) {
+        return recServ.includes('farmacia') || recType.includes('receta') || recType.includes('farmacia');
+      }
+      if (userServ.includes('cardio')) {
+        return recServ.includes('cardio') || recType.includes('cardio');
+      }
+      if (userServ.includes('imágenes')) {
+        return recServ.includes('imágenes') || recType.includes('imágenes');
+      }
+
+      return recServ.includes(userServ) || userServ.includes(recServ);
+    });
+  }
+
   const todayStr = new Date().toISOString().split('T')[0];
 
   if (recurringRecords.length === 0) {
-    container.innerHTML = `<div style="grid-column: span 3; padding: 2rem; text-align: center; color: var(--text-muted);">No hay tratamientos crónicos ni retiros mensuales activos.</div>`;
+    container.innerHTML = `<div style="grid-column: span 3; padding: 2.5rem; text-align: center; color: var(--text-muted); background: var(--card-bg); border-radius: var(--radius-lg); border: 1px dashed var(--border-color);">
+      <i class="ri-shield-check-line" style="font-size: 2.2rem; color: var(--emerald-500); display: block; margin-bottom: 0.5rem;"></i>
+      No hay controles de retiros ni tratamientos crónicos asignados al servicio <strong>${activeUser ? activeUser.service : ''}</strong>.
+    </div>`;
     return;
   }
 
