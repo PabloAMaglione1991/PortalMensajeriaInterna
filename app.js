@@ -125,6 +125,19 @@ const INITIAL_SERVICES = [
       { name: "Dr. Andrés Cavallo", role: "Jefe de Diagnóstico por Imágenes", mat: "3105", avatar: "AC" },
       { name: "Dra. Elena Ramos", role: "Radióloga Pediátrica • Ultrasonografía", mat: "4019", avatar: "ER" }
     ]
+  },
+  {
+    id: "serv-social",
+    name: "Servicio Social Hospitalario",
+    code: "SOC",
+    email: "servicio.social@santafe.gob.ar",
+    headOfService: "Lic. Viviana Roldán",
+    enabled: true,
+    autorizadoLeches: false,
+    staff: [
+      { name: "Lic. Viviana Roldán", role: "Jefa de Servicio Social Hospitalario", mat: "1420", avatar: "VR" },
+      { name: "Lic. Claudio Giménez", role: "Trabajador Social Pediátrico", mat: "1890", avatar: "CG" }
+    ]
   }
 ];
 
@@ -194,6 +207,17 @@ const DEMO_USERS = [
     avatar: "AC",
     email: "andres.cavallo@santafe.gob.ar",
     service: "Diagnóstico por Imágenes",
+    isAdmin: false
+  },
+  {
+    id: "user-social",
+    dni: "28410999",
+    password: "social123",
+    name: "Lic. Viviana Roldán",
+    role: "Jefa de Servicio Social Hospitalario (Mat. 1420)",
+    avatar: "VR",
+    email: "viviana.roldan@santafe.gob.ar",
+    service: "Servicio Social Hospitalario",
     isAdmin: false
   }
 ];
@@ -2255,15 +2279,41 @@ function triggerAbsenteeismAlert(id) {
   const record = records.find(r => r.id === id);
   if (!record) return;
 
-  logEvent('ALARMA', `Alerta de inasistencia/ausentismo despachada a Trabajo Social para paciente ${record.paciente} (${record.id})`);
+  const alertId = `SOC-${Math.floor(1000 + Math.random() * 9000)}`;
+  const todayStr = new Date().toISOString().split('T')[0];
+
+  const socialRecord = {
+    id: alertId,
+    type: "Intervención Servicio Social",
+    paciente: record.paciente,
+    dni: record.dni,
+    hc: record.hc,
+    servicio: "Servicio Social Hospitalario",
+    destino: "Servicio Social Hospitalario",
+    motivo: `Ausentismo en retiro de insumo / fórmula láctea (Tratamiento ID: ${record.id}). Debía retirar el ${record.proximoRetiro}.`,
+    staffAssigned: "Lic. Viviana Roldán (Servicio Social)",
+    fecha: todayStr,
+    estado: "Pendiente",
+    medico: activeUser ? activeUser.name : "Sistema Alassia",
+    respuestaMedica: "",
+    medicoRespondedor: "",
+    targetService: "Servicio Social Hospitalario"
+  };
+
+  records.unshift(socialRecord);
+  localStorage.setItem('alassia_records', JSON.stringify(records));
+
+  logEvent('ALARMA', `Alerta de inasistencia/ausentismo despachada EXCLUSIVAMENTE a Servicio Social para paciente ${record.paciente} (${record.id})`);
 
   addNotification({
-    title: `🚨 ALERTA TRABAJO SOCIAL DESPACHADA`,
-    text: `Solicitado contacto con la familia de ${record.paciente} por inasistencia al retiro de su tratamiento (${record.id}).`,
+    targetService: "Servicio Social Hospitalario",
+    title: `🚨 ALERTA AUSENTISMO • TRABAJO SOCIAL`,
+    text: `Solicitada intervención social para ${record.paciente} (DNI ${record.dni}) por ausentismo en tratamiento (${record.id}).`,
     time: "Ahora"
   });
 
-  showToast(`Alerta de inasistencia despachada a Trabajo Social y Pediatría para ${record.paciente}`);
+  renderInbox();
+  showToast(`📢 Alerta despachada exclusivamente al perfil de Servicio Social Hospitalario (${record.paciente}).`);
 }
 
 function checkAllAlarms() {
@@ -2278,6 +2328,7 @@ function addNotification(notifObj) {
     title: notifObj.title,
     text: notifObj.text,
     time: notifObj.time,
+    targetService: notifObj.targetService || null,
     unread: true
   });
   localStorage.setItem('alassia_notifs', JSON.stringify(notifications));
@@ -2289,15 +2340,26 @@ function renderNotifications() {
   const dot = document.getElementById('notif-dot');
   if (!notifList) return;
 
-  const unreadCount = notifications.filter(n => n.unread).length;
+  let visibleNotifs = notifications;
+
+  if (activeUser && !activeUser.isAdmin) {
+    const userServ = (activeUser.service || '').toLowerCase();
+    visibleNotifs = notifications.filter(n => {
+      if (!n.targetService) return true;
+      const targetServ = n.targetService.toLowerCase();
+      return targetServ.includes(userServ) || userServ.includes(targetServ);
+    });
+  }
+
+  const unreadCount = visibleNotifs.filter(n => n.unread).length;
   if (dot) dot.style.display = unreadCount > 0 ? 'block' : 'none';
 
-  if (notifications.length === 0) {
-    notifList.innerHTML = `<div style="padding: 1.5rem; text-align: center; color: var(--text-muted); font-size: 0.85rem;">No hay notificaciones pendientes.</div>`;
+  if (visibleNotifs.length === 0) {
+    notifList.innerHTML = `<div style="padding: 1.5rem; text-align: center; color: var(--text-muted); font-size: 0.85rem;">No hay notificaciones pendientes para tu servicio.</div>`;
     return;
   }
 
-  notifList.innerHTML = notifications.map(n => `
+  notifList.innerHTML = visibleNotifs.map(n => `
     <div class="notif-item ${n.unread ? 'unread' : ''}">
       <div class="notif-icon">
         <i class="ri-notification-badge-line"></i>
