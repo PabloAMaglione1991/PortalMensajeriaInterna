@@ -49,7 +49,14 @@ En la pestaña **Retiros Mensuales & Alarmas** (disponible para servicios que ad
 
 ---
 
-## 🚪 5. Cierre de Sesión Seguro
+## 📊 5. Reportes y Métricas Estadísticas por Sector
+* **Habilitación desde el Panel Admin:** La Administración General puede activar o desactivar la pestaña de *Reportes y Métricas* para cada servicio hospitalario en particular.
+* **Aislamiento por Especialidad:** Si la pestaña está habilitada para tu servicio (por ejemplo, *Nutrición* o *Farmacia*), los contadores y registros mostrados en la solapa de Reportes corresponden **ÚNICAMENTE Y EXCLUSIVAMENTE a la actividad de tu sector**.
+* **Acceso Restringido:** Si el Admin deshabilitó los reportes para tu servicio, la solapa no aparecerá en tu menú lateral y no podrás acceder a estadísticas ajenas.
+
+---
+
+## 🚪 6. Cierre de Sesión Seguro
 Al finalizar tu turno o guardia:
 * Dirigite al pie del menú lateral.
 * Encontraras tu tarjeta profesional fija con tu nombre y matrícula.

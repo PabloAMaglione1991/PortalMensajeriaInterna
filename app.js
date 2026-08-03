@@ -826,10 +826,23 @@ function renderActiveUser() {
   // Strict Role-Based Sidebar & Dashboard Action Filtering (Ultra Simplicity)
   applyRoleContextualFiltering();
 
-  // If non-admin user is currently viewing an admin tab, automatically redirect to Dashboard
+  // Check if active user's service has Reportes habilitados by Admin
+  const serviceName = (activeUser.service || '').toLowerCase();
+  const activeServiceObj = (services || []).find(s => {
+    const sName = (s.name || '').toLowerCase();
+    return sName.includes(serviceName) || serviceName.includes(sName);
+  });
+  const serviceReportEnabled = activeServiceObj ? (activeServiceObj.reportesHabilitados !== false) : true;
+
+  // If non-admin user is currently viewing an admin tab or disabled report, automatically redirect to Dashboard
   const activeTab = document.querySelector('.tab-content.active');
-  if (!activeUser.isAdmin && activeTab && (activeTab.id === 'tab-admin' || activeTab.id === 'tab-logs' || activeTab.id === 'tab-services')) {
-    switchTab('tab-dashboard');
+  if (!activeUser.isAdmin && activeTab) {
+    if (activeTab.id === 'tab-admin' || activeTab.id === 'tab-logs' || activeTab.id === 'tab-services') {
+      switchTab('tab-dashboard');
+    } else if (activeTab.id === 'tab-reportes' && !serviceReportEnabled) {
+      showToast(`⚠️ Los reportes estadísticos para el servicio ${activeUser.service} han sido deshabilitados por la Administración.`);
+      switchTab('tab-dashboard');
+    }
   }
 }
 
@@ -838,6 +851,13 @@ function applyRoleContextualFiltering() {
 
   const serviceName = (activeUser.service || '').toLowerCase();
   const isAdmin = activeUser.isAdmin;
+
+  // Check if active user's service has Reportes habilitados by Admin
+  const activeServiceObj = (services || []).find(s => {
+    const sName = (s.name || '').toLowerCase();
+    return sName.includes(serviceName) || serviceName.includes(sName);
+  });
+  const serviceReportEnabled = activeServiceObj ? (activeServiceObj.reportesHabilitados !== false) : true;
 
   // Check if user's service has any active recurring withdrawal records
   const userHasRecurring = records.some(r => {
@@ -853,11 +873,12 @@ function applyRoleContextualFiltering() {
     'farmacia': isAdmin || serviceName.includes('farmacia') || serviceName.includes('crónicos') || serviceName.includes('pediatría') || serviceName.includes('todos'),
     'imagenes': isAdmin || serviceName.includes('imágenes') || serviceName.includes('internación') || serviceName.includes('pediatría') || serviceName.includes('todos'),
     'nutri': isAdmin || serviceName.includes('nutri') || serviceName.includes('gastro') || serviceName.includes('neo') || serviceName.includes('crónicos') || serviceName.includes('internación') || serviceName.includes('todos'),
+    'social': isAdmin || serviceName.includes('social') || serviceName.includes('trabajo'),
     'recurrencia': isAdmin || serviceName.includes('farmacia') || serviceName.includes('nutri') || serviceName.includes('crónicos') || userHasRecurring,
     'services': isAdmin, // Servicios & Personal EXCLUSIVO ADMIN
     'admin': isAdmin,
     'logs': isAdmin,
-    'reportes': isAdmin || serviceName.includes('farmacia') || serviceName.includes('nutri') || serviceName.includes('imágenes')
+    'reportes': isAdmin || serviceReportEnabled
   };
 
   // 1. Ocultar del menú lateral (Sidebar) los ítems que no corresponden al rol
@@ -1204,12 +1225,22 @@ function renderAdminServicesGrid() {
         </p>
 
         <!-- Milk Authorization Toggle -->
-        <div style="background: var(--slate-50); border: 1px solid var(--border-color); padding: 0.6rem 0.85rem; border-radius: var(--radius-md); margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between;">
-          <div style="font-size: 0.775rem;">
+        <div style="background: var(--slate-50); border: 1px solid var(--border-color); padding: 0.5rem 0.75rem; border-radius: var(--radius-md); margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between;">
+          <div style="font-size: 0.75rem;">
             <strong>Recetas de Leches/Fórmulas:</strong>
           </div>
           <button class="service-toggle-btn ${s.autorizadoLeches ? 'enabled' : 'disabled'}" style="font-size: 0.7rem;" onclick="toggleMilkAuth('${s.id}')">
             ${s.autorizadoLeches ? '🥛 AUTORIZADO' : '🚫 RESTRINGIDO'}
+          </button>
+        </div>
+
+        <!-- Sector Reports Authorization Toggle -->
+        <div style="background: var(--slate-50); border: 1px solid var(--border-color); padding: 0.5rem 0.75rem; border-radius: var(--radius-md); margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between;">
+          <div style="font-size: 0.75rem;">
+            <strong>Reportes & Métricas del Sector:</strong>
+          </div>
+          <button class="service-toggle-btn ${s.reportesHabilitados !== false ? 'enabled' : 'disabled'}" style="font-size: 0.7rem;" onclick="toggleReportAuth('${s.id}')">
+            ${s.reportesHabilitados !== false ? '📊 HABILITADO' : '🚫 DESHABILITADO'}
           </button>
         </div>
 
@@ -1268,6 +1299,19 @@ function toggleMilkAuth(serviceId) {
 
     logEvent('ADMIN', `Permiso para recetas de leches en ${service.name}: ${service.autorizadoLeches ? 'AUTORIZADO' : 'RESTRINGIDO'}`);
     showToast(`Permiso para recetas de leches en ${service.name}: ${service.autorizadoLeches ? 'AUTORIZADO' : 'RESTRINGIDO'}`);
+  }
+}
+
+function toggleReportAuth(serviceId) {
+  const service = services.find(s => s.id === serviceId);
+  if (service) {
+    service.reportesHabilitados = service.reportesHabilitados === false ? true : false;
+    localStorage.setItem('alassia_services', JSON.stringify(services));
+    renderAdminServicesGrid();
+    applyRoleContextualFiltering();
+
+    logEvent('ADMIN', `Reportes & Métricas para ${service.name}: ${service.reportesHabilitados ? 'HABILITADOS' : 'DESHABILITADOS'}`);
+    showToast(`Reportes & Métricas para ${service.name}: ${service.reportesHabilitados ? 'HABILITADOS' : 'DESHABILITADOS'}`);
   }
 }
 
@@ -1526,17 +1570,47 @@ function renderReportSection() {
   const tbody = document.getElementById('report-table-body');
   if (!tbody) return;
 
-  const totalDispenses = records.filter(r => r.type === 'Receta Electrónica' || r.type === 'Prescripción Nutricional').length;
-  const nutriCount = records.filter(r => r.type === 'Prescripción Nutricional').length;
-  const farmCount = records.filter(r => r.type === 'Receta Electrónica').length;
-  const overdueCount = records.filter(r => r.isRecurring && r.proximoRetiro < new Date().toISOString().split('T')[0]).length;
+  let reportRecords = records;
+
+  if (activeUser && !activeUser.isAdmin) {
+    const userServ = activeUser.service.toLowerCase();
+    reportRecords = records.filter(r => {
+      const targetServ = (r.servicio || r.destino || '').toLowerCase();
+      const recType = (r.tipo || r.type || '').toLowerCase();
+
+      if (userServ.includes('cardio')) return targetServ.includes('cardio') || recType.includes('cardio');
+      if (userServ.includes('nutri') || userServ.includes('lactario')) return targetServ.includes('nutri') || recType.includes('leche') || recType.includes('nutri');
+      if (userServ.includes('farmacia')) return targetServ.includes('farmacia') || recType.includes('receta') || recType.includes('farmacia');
+      if (userServ.includes('imágenes')) return targetServ.includes('imágenes') || recType.includes('imágenes');
+      if (userServ.includes('social')) return targetServ.includes('social') || recType.includes('social');
+
+      return targetServ.includes(userServ) || userServ.includes(targetServ);
+    });
+  }
+
+  const totalDispenses = reportRecords.filter(r => r.type === 'Receta Electrónica' || r.type === 'Prescripción Nutricional' || r.type === 'Solicitud de Imágenes' || r.type === 'Interconsulta Cardiología').length;
+  const nutriCount = reportRecords.filter(r => r.type === 'Prescripción Nutricional').length;
+  const farmCount = reportRecords.filter(r => r.type === 'Receta Electrónica').length;
+  const overdueCount = reportRecords.filter(r => r.isRecurring && r.proximoRetiro < new Date().toISOString().split('T')[0]).length;
 
   document.getElementById('rep-total-dispensa').textContent = totalDispenses;
   document.getElementById('rep-nutri-count').textContent = nutriCount;
   document.getElementById('rep-farm-count').textContent = farmCount;
   document.getElementById('rep-overdue-count').textContent = overdueCount;
 
-  tbody.innerHTML = records.map(r => `
+  if (reportRecords.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="7" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+          <i class="ri-bar-chart-2-line" style="font-size: 2rem; color: var(--slate-400); display: block; margin-bottom: 0.5rem;"></i>
+          No hay atenciones ni métricas registradas este mes para el servicio <strong>${activeUser ? activeUser.service : ''}</strong>.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = reportRecords.map(r => `
     <tr>
       <td><span style="font-family: 'JetBrains Mono', monospace; font-weight: 700;">${r.id}</span></td>
       <td>${r.paciente} (HC: ${r.hc})</td>
