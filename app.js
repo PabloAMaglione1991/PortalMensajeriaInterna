@@ -2395,6 +2395,12 @@ function renderRecurringSection() {
             <i class="ri-check-double-line"></i> Registrar Entrega (Módulo ${r.moduloActual}/${r.totalModulos})
           </button>
 
+          ${r.moduloActual > 1 ? `
+            <button class="btn-secondary" style="color: var(--amber-600); border-color: var(--amber-400); font-size: 0.775rem; padding: 0.55rem;" onclick="revertLastDispense('${r.id}')" title="Deshacer última entrega de módulo en caso de error">
+              <i class="ri-history-line"></i> Deshacer Entrega
+            </button>
+          ` : ''}
+
           ${isOverdue ? `
             <button class="btn-secondary" style="color: var(--rose-600); border-color: var(--rose-500); font-size: 0.775rem; padding: 0.55rem;" onclick="triggerAbsenteeismAlert('${r.id}')" title="Notificar a Servicio Social">
               <i class="ri-alarm-warning-line"></i> Alerta Trabajo Social
@@ -2431,6 +2437,7 @@ function dispenseNextModule(id) {
   logEvent('DISPENSA', `Dispensa registrada: Módulo ${record.moduloActual}/${record.totalModulos} para paciente ${record.paciente} (${record.id})`);
 
   addNotification({
+    targetService: record.destino || record.servicio,
     title: `Entrega Registrada: Módulo ${record.moduloActual}/${record.totalModulos}`,
     text: `Paciente ${record.paciente} (${record.id}). Próxima entrega programada para ${record.proximoRetiro}.`,
     time: "Ahora"
@@ -2440,6 +2447,51 @@ function dispenseNextModule(id) {
   renderInbox();
   renderReportSection();
   showToast(`¡Entrega de Módulo ${record.moduloActual}/${record.totalModulos} registrada con éxito para ${record.paciente}!`);
+}
+
+/* Revert Last Dispensed Module Action */
+function revertLastDispense(id) {
+  const record = records.find(r => r.id === id);
+  if (!record) return;
+
+  if (record.moduloActual <= 1) {
+    showToast(`⚠️ No hay entregas previas para revertir en el tratamiento de ${record.paciente}. Está en el Módulo inicial (1/${record.totalModulos}).`);
+    return;
+  }
+
+  if (!confirm(`¿Estás seguro de que deseas DESHACER la última entrega del Módulo ${record.moduloActual} para ${record.paciente}?`)) {
+    return;
+  }
+
+  const prevModule = record.moduloActual;
+  record.moduloActual -= 1;
+
+  // Revert next delivery date to today
+  const todayStr = new Date().toISOString().split('T')[0];
+  record.proximoRetiro = todayStr;
+
+  if (record.estado === "Tratamiento Completado") {
+    record.estado = "En Proceso";
+  }
+
+  localStorage.setItem('alassia_records', JSON.stringify(records));
+
+  logEvent('DISPENSA', `REVERSIÓN DE ENTREGA: Módulo ${prevModule} deshecho para paciente ${record.paciente} (${record.id}). Retorno a Módulo ${record.moduloActual}/${record.totalModulos}.`);
+
+  addNotification({
+    targetService: record.destino || record.servicio,
+    title: `↩️ ENTREGA DESHECHA / REVERTIDA`,
+    text: `Se revirtió la entrega del Módulo ${prevModule} para ${record.paciente} (${record.id}). Vuelve a estar disponible para retirar Módulo ${record.moduloActual}.`,
+    time: "Ahora"
+  });
+
+  renderRecurringSection();
+  renderInbox();
+  renderArchiveTable();
+  renderReportSection();
+  updateStats();
+
+  showToast(`↩️ ¡Entrega del Módulo ${prevModule} deshecha con éxito! ${record.paciente} volvió al Módulo ${record.moduloActual}/${record.totalModulos}.`);
 }
 
 function triggerAbsenteeismAlert(id) {
