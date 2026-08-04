@@ -1541,6 +1541,46 @@ function handleAddStaffSubmit(e) {
   }
 }
 
+/* Helper: Delivery Authorization Check */
+function canUserDeliverRecord(r, user) {
+  if (!user) return false;
+  if (user.isAdmin) return true; // Admin has full delivery override permission
+
+  const userServ = (user.service || '').toLowerCase();
+  const destServ = (r.destino || '').toLowerCase();
+  const recType = (r.type || r.tipo || '').toLowerCase();
+
+  // 1. Direct match: user service is the destination service
+  if (destServ.length > 0 && (destServ.includes(userServ) || userServ.includes(destServ))) {
+    return true;
+  }
+
+  // 2. Specialty mapping for destination service
+  if (userServ.includes('cardio') && recType.includes('cardio')) return true;
+  if ((userServ.includes('nutri') || userServ.includes('lactario')) && (recType.includes('nutri') || recType.includes('leche') || recType.includes('prescripción'))) return true;
+  if (userServ.includes('farmacia') && (recType.includes('farmacia') || recType.includes('receta'))) return true;
+  if (userServ.includes('imágenes') && recType.includes('imágenes')) return true;
+  if (userServ.includes('social') && recType.includes('social')) return true;
+
+  return false;
+}
+
+let currentInboxScope = 'all';
+
+function setInboxScope(scope) {
+  currentInboxScope = scope;
+  
+  const btnAll = document.getElementById('scope-btn-all');
+  const btnRec = document.getElementById('scope-btn-received');
+  const btnSent = document.getElementById('scope-btn-sent');
+
+  if (btnAll) btnAll.className = scope === 'all' ? 'btn-secondary active' : 'btn-secondary';
+  if (btnRec) btnRec.className = scope === 'received' ? 'btn-secondary active' : 'btn-secondary';
+  if (btnSent) btnSent.className = scope === 'sent' ? 'btn-secondary active' : 'btn-secondary';
+
+  renderInbox();
+}
+
 /* Helper: Robust Service Matching for Inbox, Archive, Reports and Badges */
 function isRecordForService(r, userServiceName) {
   if (!userServiceName) return true;
@@ -1575,10 +1615,17 @@ function renderInbox(filterType = 'all') {
 
   if (activeUser && !activeUser.isAdmin) {
     pendingRecords = pendingRecords.filter(r => isRecordForService(r, activeUser.service));
+
+    if (currentInboxScope === 'received') {
+      pendingRecords = pendingRecords.filter(r => canUserDeliverRecord(r, activeUser));
+    } else if (currentInboxScope === 'sent') {
+      pendingRecords = pendingRecords.filter(r => !canUserDeliverRecord(r, activeUser));
+    }
   }
 
   if (filterType !== 'all') {
-    pendingRecords = pendingRecords.filter(r => r.type.includes(filterType));
+    const fLower = filterType.toLowerCase();
+    pendingRecords = pendingRecords.filter(r => r.type.toLowerCase().includes(fLower));
   }
 
   if (pendingRecords.length === 0) {
@@ -1586,7 +1633,7 @@ function renderInbox(filterType = 'all') {
       <tr>
         <td colspan="8" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
           <i class="ri-checkbox-circle-line" style="font-size: 2rem; color: var(--emerald-500); display: block; margin-bottom: 0.5rem;"></i>
-          ¡No hay solicitudes pendientes para este servicio! Todo fue resuelto o archivado.
+          ¡No hay solicitudes registradas en este filtro! Todo está al día o resuelto.
         </td>
       </tr>
     `;
@@ -1595,36 +1642,71 @@ function renderInbox(filterType = 'all') {
     return;
   }
 
-  tbody.innerHTML = pendingRecords.map(r => `
-    <tr>
-      <td><span style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--primary-600);">${r.id}</span></td>
-      <td>
-        <strong>${r.type}</strong>
-        ${r.isRecurring ? `<br><span style="font-size: 0.7rem; color: #b45309; font-weight: 700;"><i class="ri-repeat-line"></i> Módulo ${r.moduloActual}/${r.totalModulos}</span>` : ''}
-      </td>
-      <td>${r.paciente}</td>
-      <td>${r.destino || r.servicio || 'General'}</td>
-      <td><strong style="color: var(--primary-700);"><i class="ri-team-line"></i> ${r.staffAssigned || 'Equipo del Servicio'}</strong></td>
-      <td>${r.fecha}</td>
-      <td>
-        <select class="status-select-inline" onchange="changeStatusInline('${r.id}', this.value)">
-          <option value="Pendiente" ${r.estado === 'Pendiente' ? 'selected' : ''}>🟠 Pendiente</option>
-          <option value="En Proceso" ${r.estado === 'En Proceso' ? 'selected' : ''}>🔵 En Proceso</option>
-          <option value="Confirmado / Resuelto">🟢 Confirmado (Archivar)</option>
-        </select>
-      </td>
-      <td>
-        <div style="display: flex; gap: 0.4rem;">
-          <button class="btn-secondary" style="padding: 0.35rem 0.65rem; font-size: 0.775rem;" onclick="viewRecordDetail('${r.id}')" title="Ver Hoja Digital">
-            <i class="ri-eye-line"></i> Sheet
-          </button>
-          <button class="btn-success" style="padding: 0.35rem 0.65rem; font-size: 0.775rem;" onclick="openResolveModal('${r.id}')" title="Registrar Entrega / Responder">
-            <i class="ri-check-double-line"></i> Entregar
-          </button>
-        </div>
-      </td>
-    </tr>
-  `).join('');
+  tbody.innerHTML = pendingRecords.map(r => {
+    const canDeliver = canUserDeliverRecord(r, activeUser);
+    const origName = r.servicio || 'Servicio Emisor';
+    const destName = r.destino || r.servicio || 'Servicio Receptor';
+
+    const originDestHtml = canDeliver ? `
+      <div>
+        <span class="action-tag nutri" style="font-size: 0.675rem; padding: 2px 6px;"><i class="ri-inbox-archive-line"></i> RECIBIDO DE:</span>
+        <div style="font-weight: 600; font-size: 0.8rem; color: var(--text-main); margin-top: 2px;">${origName}</div>
+      </div>
+    ` : `
+      <div>
+        <span class="action-tag general" style="font-size: 0.675rem; padding: 2px 6px; background: var(--slate-100); color: var(--slate-700);"><i class="ri-send-plane-line"></i> ENVIADO A:</span>
+        <div style="font-weight: 600; font-size: 0.8rem; color: var(--primary-700); margin-top: 2px;">${destName}</div>
+      </div>
+    `;
+
+    const statusHtml = canDeliver ? `
+      <select class="status-select-inline" onchange="changeStatusInline('${r.id}', this.value)">
+        <option value="Pendiente" ${r.estado === 'Pendiente' ? 'selected' : ''}>🟠 Pendiente</option>
+        <option value="En Proceso" ${r.estado === 'En Proceso' ? 'selected' : ''}>🔵 En Proceso</option>
+        <option value="Confirmado / Resuelto">🟢 Confirmado (Archivar)</option>
+      </select>
+    ` : `
+      <span class="action-tag cardio" style="font-size: 0.775rem; padding: 0.35rem 0.65rem;">
+        <i class="ri-time-line"></i> ${r.estado} (En Seguimiento)
+      </span>
+    `;
+
+    const actionsHtml = canDeliver ? `
+      <div style="display: flex; gap: 0.4rem;">
+        <button class="btn-secondary" style="padding: 0.35rem 0.65rem; font-size: 0.775rem;" onclick="viewRecordDetail('${r.id}')" title="Ver Hoja Digital">
+          <i class="ri-eye-line"></i> Sheet
+        </button>
+        <button class="btn-success" style="padding: 0.35rem 0.65rem; font-size: 0.775rem;" onclick="openResolveModal('${r.id}')" title="Registrar Entrega / Responder">
+          <i class="ri-check-double-line"></i> Entregar
+        </button>
+      </div>
+    ` : `
+      <div style="display: flex; gap: 0.4rem;">
+        <button class="btn-secondary" style="padding: 0.35rem 0.65rem; font-size: 0.775rem;" onclick="viewRecordDetail('${r.id}')" title="Ver Hoja Digital / Seguimiento">
+          <i class="ri-eye-line"></i> Sheet
+        </button>
+        <button class="btn-secondary" disabled style="padding: 0.35rem 0.65rem; font-size: 0.725rem; opacity: 0.65; cursor: not-allowed; border-color: var(--slate-300); color: var(--slate-500);" title="Solo el personal de ${destName} puede realizar la entrega">
+          <i class="ri-lock-2-line"></i> Entrega por ${destName.split(' ')[0]}
+        </button>
+      </div>
+    `;
+
+    return `
+      <tr>
+        <td><span style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--primary-600);">${r.id}</span></td>
+        <td>
+          <strong>${r.type}</strong>
+          ${r.isRecurring ? `<br><span style="font-size: 0.7rem; color: #b45309; font-weight: 700;"><i class="ri-repeat-line"></i> Módulo ${r.moduloActual}/${r.totalModulos}</span>` : ''}
+        </td>
+        <td>${r.paciente}</td>
+        <td>${originDestHtml}</td>
+        <td><strong style="color: var(--primary-700);"><i class="ri-team-line"></i> ${r.staffAssigned || 'Equipo del Servicio'}</strong></td>
+        <td>${r.fecha}</td>
+        <td>${statusHtml}</td>
+        <td>${actionsHtml}</td>
+      </tr>
+    `;
+  }).join('');
 
   const badge = document.getElementById('inbox-badge');
   if (badge) badge.textContent = pendingRecords.length;

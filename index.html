@@ -377,18 +377,33 @@
         <!-- Tab 2: Bandeja de Entrada -->
         <section id="tab-inbox" class="tab-content">
           <div class="table-card">
-            <div class="table-header">
-              <div>
-                <h2>Bandeja de Entrada de Solicitudes Pendientes</h2>
-                <p style="font-size: 0.8rem; color: var(--text-muted);" id="inbox-filter-subtitle">Mostrando interconsultas asignadas a tu perfil profesional activo.</p>
+            <div class="table-header" style="flex-direction: column; align-items: stretch; gap: 1rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                <div>
+                  <h2>Bandeja de Entrada & Seguimiento de Solicitudes</h2>
+                  <p style="font-size: 0.8rem; color: var(--text-muted);" id="inbox-filter-subtitle">Consulte pedidos asignados a su servicio o aquellos que su sector ha enviado para seguimiento.</p>
+                </div>
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                  <button class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="filterInbox('all')">Todos los Tipos</button>
+                  <button class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="filterInbox('Cardiología')">Cardiología</button>
+                  <button class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="filterInbox('General')">General</button>
+                  <button class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="filterInbox('Farmacia')">Farmacia</button>
+                  <button class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="filterInbox('Nutrición')">Nutrición / Leches</button>
+                  <button class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="filterInbox('Imágenes')">Imágenes</button>
+                </div>
               </div>
-              <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                <button class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="filterInbox('all')">Todos los Tipos</button>
-                <button class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="filterInbox('Cardiología')">Cardiología</button>
-                <button class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="filterInbox('General')">General</button>
-                <button class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="filterInbox('Farmacia')">Farmacia</button>
-                <button class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="filterInbox('Nutrición')">Nutrición / Leches</button>
-                <button class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="filterInbox('Imágenes')">Imágenes</button>
+
+              <!-- Scope Filters: Received vs Sent vs All -->
+              <div style="display: flex; gap: 0.5rem; border-top: 1px solid var(--border-color); padding-top: 0.75rem; flex-wrap: wrap;">
+                <button class="btn-secondary active" id="scope-btn-all" style="font-size: 0.8rem; padding: 0.4rem 0.85rem;" onclick="setInboxScope('all')">
+                  <i class="ri-list-check"></i> Todos mis Pedidos (Recibidos y Enviados)
+                </button>
+                <button class="btn-secondary" id="scope-btn-received" style="font-size: 0.8rem; padding: 0.4rem 0.85rem;" onclick="setInboxScope('received')">
+                  <i class="ri-inbox-archive-line"></i> 📥 Recibidos para Entregar
+                </button>
+                <button class="btn-secondary" id="scope-btn-sent" style="font-size: 0.8rem; padding: 0.4rem 0.85rem;" onclick="setInboxScope('sent')">
+                  <i class="ri-send-plane-line"></i> 📤 Enviados en Seguimiento
+                </button>
               </div>
             </div>
 
@@ -399,11 +414,11 @@
                     <th>Código ID</th>
                     <th>Tipo Formulario</th>
                     <th>Paciente</th>
-                    <th>Servicio Receptor</th>
-                    <th>Personal Notificado</th>
+                    <th>Origen ➔ Destino</th>
+                    <th>Equipo Notificado</th>
                     <th>Fecha</th>
-                    <th>Estado</th>
-                    <th>Acciones</th>
+                    <th>Estado del Pedido</th>
+                    <th>Acciones / Dispensa</th>
                   </tr>
                 </thead>
                 <tbody id="inbox-table-body">
