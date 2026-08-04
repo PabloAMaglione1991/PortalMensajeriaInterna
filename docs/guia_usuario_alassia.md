@@ -80,7 +80,8 @@ En cualquier formulario, solicitud o dictamen médico:
 En la solapa **`[ 🛠️ Administración ]`**:
 * **CRUD de Usuarios:** Alta de nuevos profesionales con DNI y Clave, y tabla de gestión/borrado de cuentas habilitadas.
 * **CRUD de Servicios Hospitalarios:** Alta de nuevos departamentos (código, jefe, email) y botón `[ 🗑️ ]` para eliminar servicios en desuso.
-* **Control Quirúrgico de Permisos:** Interruptores para habilitar/deshabilitar formularios de emisión y activar/desactivar la pestaña de *Reportes & Métricas por Sector*.
+* **Control Quirúrgico de Permisos:** Interruptores para habilitar/deshabilitar formularios de emisión.
+* **Matriz de Habilitación de Reportes & Métricas:** Panel centralizado para habilitar o restringir el acceso a la pestaña de estadísticas sectoriales por servicio de forma individual (`[ 📊 HABILITADO / 🚫 RESTRINGIDO ]`) o masiva (`[ 📊 Habilitar A TODOS ]` / `[ 🚫 Deshabilitar A TODOS ]`).
 
 ---
 
