@@ -1628,12 +1628,26 @@ function renderInbox(filterType = 'all') {
     pendingRecords = pendingRecords.filter(r => r.type.toLowerCase().includes(fLower));
   }
 
+  // Live Search Input Filter (DNI, Patient Name, ID, Service)
+  const searchInput = document.getElementById('search-inbox-input');
+  if (searchInput && searchInput.value.trim() !== '') {
+    const term = searchInput.value.toLowerCase().trim();
+    pendingRecords = pendingRecords.filter(r => 
+      (r.dni || '').toLowerCase().includes(term) ||
+      (r.paciente || '').toLowerCase().includes(term) ||
+      (r.id || '').toLowerCase().includes(term) ||
+      (r.servicio || '').toLowerCase().includes(term) ||
+      (r.destino || '').toLowerCase().includes(term) ||
+      (r.type || '').toLowerCase().includes(term)
+    );
+  }
+
   if (pendingRecords.length === 0) {
     tbody.innerHTML = `
       <tr>
         <td colspan="8" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
-          <i class="ri-checkbox-circle-line" style="font-size: 2rem; color: var(--emerald-500); display: block; margin-bottom: 0.5rem;"></i>
-          ¡No hay solicitudes registradas en este filtro! Todo está al día o resuelto.
+          <i class="ri-search-line" style="font-size: 2rem; color: var(--slate-400); display: block; margin-bottom: 0.5rem;"></i>
+          No se encontraron solicitudes que coincidan con la búsqueda o filtro seleccionado.
         </td>
       </tr>
     `;
@@ -1723,12 +1737,27 @@ function renderArchiveTable() {
     resolvedRecords = resolvedRecords.filter(r => isRecordForService(r, activeUser.service));
   }
 
+  // Live Search Input Filter for Archive (DNI, Patient Name, ID, Response)
+  const searchInput = document.getElementById('search-archive-input');
+  if (searchInput && searchInput.value.trim() !== '') {
+    const term = searchInput.value.toLowerCase().trim();
+    resolvedRecords = resolvedRecords.filter(r => 
+      (r.dni || '').toLowerCase().includes(term) ||
+      (r.paciente || '').toLowerCase().includes(term) ||
+      (r.id || '').toLowerCase().includes(term) ||
+      (r.servicio || '').toLowerCase().includes(term) ||
+      (r.destino || '').toLowerCase().includes(term) ||
+      (r.respuestaMedica || '').toLowerCase().includes(term) ||
+      (r.medicoRespondedor || '').toLowerCase().includes(term)
+    );
+  }
+
   if (resolvedRecords.length === 0) {
     tbody.innerHTML = `
       <tr>
         <td colspan="8" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
-          <i class="ri-folder-open-line" style="font-size: 2rem; color: var(--slate-400); display: block; margin-bottom: 0.5rem;"></i>
-          No hay solicitudes resueltas ni archivadas para el servicio <strong>${activeUser ? activeUser.service : ''}</strong>.
+          <i class="ri-search-line" style="font-size: 2rem; color: var(--slate-400); display: block; margin-bottom: 0.5rem;"></i>
+          No hay registros resueltos ni archivados que coincidan con el término de búsqueda.
         </td>
       </tr>
     `;
@@ -2429,12 +2458,26 @@ function renderRecurringSection() {
     });
   }
 
+  // Live Search Input Filter for Recurring Cards (DNI, Patient Name, ID, Formula/RP)
+  const searchInput = document.getElementById('search-recurring-input');
+  if (searchInput && searchInput.value.trim() !== '') {
+    const term = searchInput.value.toLowerCase().trim();
+    recurringRecords = recurringRecords.filter(r => 
+      (r.dni || '').toLowerCase().includes(term) ||
+      (r.paciente || '').toLowerCase().includes(term) ||
+      (r.id || '').toLowerCase().includes(term) ||
+      (r.rp1 || '').toLowerCase().includes(term) ||
+      (r.hc || '').toLowerCase().includes(term) ||
+      (r.servicio || '').toLowerCase().includes(term)
+    );
+  }
+
   const todayStr = new Date().toISOString().split('T')[0];
 
   if (recurringRecords.length === 0) {
     container.innerHTML = `<div style="grid-column: span 3; padding: 2.5rem; text-align: center; color: var(--text-muted); background: var(--card-bg); border-radius: var(--radius-lg); border: 1px dashed var(--border-color);">
-      <i class="ri-shield-check-line" style="font-size: 2.2rem; color: var(--emerald-500); display: block; margin-bottom: 0.5rem;"></i>
-      No hay controles de retiros ni tratamientos crónicos asignados al servicio <strong>${activeUser ? activeUser.service : ''}</strong>.
+      <i class="ri-search-line" style="font-size: 2.2rem; color: var(--slate-400); display: block; margin-bottom: 0.5rem;"></i>
+      No hay controles de retiros ni tratamientos que coincidan con la búsqueda.
     </div>`;
     return;
   }
