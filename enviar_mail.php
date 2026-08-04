@@ -3,8 +3,8 @@
  * 📧 enviar_mail.php — Servicio Backend de Despacho de Correos SMTP
  * Hospital de Niños "Dr. Orlando Alassia" • Santa Fe Capital
  * 
- * Permite enviar notificaciones por correo electrónico a casillas institucionales
- * o casillas de profesionales con soporte para SMTP real y fallback seguro.
+ * Configurado con el servidor SMTP oficial del Gobierno de la Provincia de Santa Fe:
+ * correo.santafe.gov.ar (Puerto 587 / STARTTLS)
  */
 
 header('Content-Type: application/json; charset=utf-8');
@@ -18,16 +18,15 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'OPTIONS
 }
 
 // ----------------------------------------------------------------------
-// ⚙️ CONFIGURACIÓN DEL SERVIDOR SMTP HOSPITALARIO
+// ⚙️ CONFIGURACIÓN DEL SERVIDOR SMTP HOSPITALARIO / SANTA FE GOB
 // ----------------------------------------------------------------------
-// Cambiar a true cuando dispongas de los accesos SMTP del Ministerio o Gmail
-define('SMTP_ENABLED', false); 
-define('SMTP_HOST', 'smtp.santafe.gob.ar'); // Ej: smtp.gmail.com o smtp.santafe.gob.ar
-define('SMTP_PORT', 587);                  // 587 (TLS) o 465 (SSL)
-define('SMTP_USER', 'notificaciones.alassia@santafe.gob.ar');
-define('SMTP_PASS', 'ClaveSegura2026');
+define('SMTP_ENABLED', true); 
+define('SMTP_HOST', 'correo.santafe.gov.ar');
+define('SMTP_PORT', 587);
+define('SMTP_USER', 'pmaglione@santafe.gov.ar');
+define('SMTP_PASS', 'pablomagli2127!');
 define('SMTP_SECURE', 'tls'); // 'tls' o 'ssl'
-define('DEFAULT_FROM_EMAIL', 'notificaciones.alassia@santafe.gob.ar');
+define('DEFAULT_FROM_EMAIL', 'pmaglione@santafe.gov.ar');
 define('DEFAULT_FROM_NAME', 'Hospital de Niños Dr. Orlando Alassia');
 
 // Carpeta de almacenamiento para auditoría y respaldo local
@@ -124,26 +123,169 @@ $htmlMessage = '
 </html>
 ';
 
+/**
+ * Función Nativa Socket SMTP con STARTTLS
+ */
+function sendSmtpMail($to, $subject, $bodyHtml, $fromEmail, $fromName, $host, $port, $user, $pass) {
+    $context = stream_context_create([
+        'ssl' => [
+            'verify_peer' => false,
+            'verify_peer_name' => false,
+            'allow_self_signed' => true
+        ]
+    ]);
+
+    $prefix = ($port == 465) ? 'ssl://' : '';
+    $socket = @stream_socket_client("{$prefix}{$host}:{$port}", $errno, $errstr, 15, STREAM_CLIENT_CONNECT, $context);
+    
+    if (!$socket) {
+        return ['success' => false, 'error' => "No se pudo conectar al servidor SMTP {$host}:{$port} ($errstr)"];
+    }
+
+    $read = function($expectedCode = null) use ($socket) {
+        $response = '';
+        while ($str = fgets($socket, 515)) {
+            $response .= $str;
+            if (substr($str, 3, 1) == ' ') break;
+        }
+        $code = substr($response, 0, 3);
+        if ($expectedCode && $code != $expectedCode) {
+            return false;
+        }
+        return $response;
+    };
+
+    $send = function($cmd) use ($socket) {
+        fputs($socket, $cmd . "\r\n");
+    };
+
+    if ($read('220') === false) {
+        fclose($socket);
+        return ['success' => false, 'error' => 'Respuesta inicial inválida del servidor SMTP'];
+    }
+
+    $send("EHLO " . gethostname());
+    if ($read('250') === false) {
+        fclose($socket);
+        return ['success' => false, 'error' => 'EHLO rechazado'];
+    }
+
+    if ($port == 587) {
+        $send("STARTTLS");
+        if ($read('220') === false) {
+            fclose($socket);
+            return ['success' => false, 'error' => 'STARTTLS no soportado o rechazado'];
+        }
+
+        if (!@stream_socket_enable_crypto($socket, true, STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT | STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT | STREAM_CRYPTO_METHOD_TLS_CLIENT)) {
+            fclose($socket);
+            return ['success' => false, 'error' => 'Falló la negociación TLS sobre el socket'];
+        }
+
+        $send("EHLO " . gethostname());
+        if ($read('250') === false) {
+            fclose($socket);
+            return ['success' => false, 'error' => 'EHLO post-TLS rechazado'];
+        }
+    }
+
+    // AUTH LOGIN
+    $send("AUTH LOGIN");
+    if ($read('334') === false) {
+        fclose($socket);
+        return ['success' => false, 'error' => 'Comando AUTH LOGIN rechazado'];
+    }
+
+    $send(base64_encode($user));
+    if ($read('334') === false) {
+        fclose($socket);
+        return ['success' => false, 'error' => 'Usuario SMTP rechazado'];
+    }
+
+    $send(base64_encode($pass));
+    if ($read('235') === false) {
+        fclose($socket);
+        return ['success' => false, 'error' => 'Contraseña SMTP incorrecta o autenticación rechazada'];
+    }
+
+    // MAIL FROM & RCPT TO
+    $send("MAIL FROM:<{$user}>");
+    if ($read('250') === false) {
+        fclose($socket);
+        return ['success' => false, 'error' => 'Remitente MAIL FROM rechazado'];
+    }
+
+    $send("RCPT TO:<{$to}>");
+    if ($read('250') === false && $read('251') === false) {
+        fclose($socket);
+        return ['success' => false, 'error' => "Destinatario RCPT TO {$to} rechazado"];
+    }
+
+    // DATA
+    $send("DATA");
+    if ($read('354') === false) {
+        fclose($socket);
+        return ['success' => false, 'error' => 'Comando DATA rechazado'];
+    }
+
+    $headers = [
+        "MIME-Version: 1.0",
+        "Content-Type: text/html; charset=UTF-8",
+        "From: =?UTF-8?B?" . base64_encode($fromName) . "?= <{$fromEmail}>",
+        "To: <{$to}>",
+        "Subject: =?UTF-8?B?" . base64_encode($subject) . "?=",
+        "Date: " . date('r'),
+        "X-Mailer: PHP/" . phpversion()
+    ];
+
+    $emailData = implode("\r\n", $headers) . "\r\n\r\n" . $bodyHtml . "\r\n.";
+    $send($emailData);
+
+    if ($read('250') === false) {
+        fclose($socket);
+        return ['success' => false, 'error' => 'Error al transferir contenido del correo'];
+    }
+
+    $send("QUIT");
+    fclose($socket);
+
+    return ['success' => true];
+}
+
 $mailSent = false;
 $sendError = null;
 
-// INTENTO DE ENVÍO POR SMTP REAL / FUNCIÓN MAIL DE PHP
+// Ejecutar envío por SMTP Real
 if (SMTP_ENABLED) {
-    $headers = [];
-    $headers[] = 'MIME-Version: 1.0';
-    $headers[] = 'Content-type: text/html; charset=utf-8';
-    $headers[] = 'From: ' . DEFAULT_FROM_NAME . ' <' . DEFAULT_FROM_EMAIL . '>';
-    $headers[] = 'Reply-To: ' . DEFAULT_FROM_EMAIL;
-    $headers[] = 'X-Mailer: PHP/' . phpversion();
+    $resSmtp = sendSmtpMail(
+        $to,
+        $subject,
+        $htmlMessage,
+        DEFAULT_FROM_EMAIL,
+        DEFAULT_FROM_NAME,
+        SMTP_HOST,
+        SMTP_PORT,
+        SMTP_USER,
+        SMTP_PASS
+    );
 
-    // Intentar enviar mediante mail() estándar
-    $mailSent = @mail($to, $subject, $htmlMessage, implode("\r\n", $headers));
-    if (!$mailSent) {
-        $sendError = 'Falló la entrega SMTP estándar del servidor.';
+    if ($resSmtp['success']) {
+        $mailSent = true;
+    } else {
+        $sendError = $resSmtp['error'];
+        // Fallback a mail() estándar de PHP si estuviera habilitado en servidor local
+        $headers = [
+            'MIME-Version: 1.0',
+            'Content-type: text/html; charset=utf-8',
+            'From: ' . DEFAULT_FROM_NAME . ' <' . DEFAULT_FROM_EMAIL . '>',
+            'Reply-To: ' . DEFAULT_FROM_EMAIL,
+            'X-Mailer: PHP/' . phpversion()
+        ];
+        $mailSent = @mail($to, $subject, $htmlMessage, implode("\r\n", $headers));
     }
 }
 
-// RESPALDO / REGISTRO LOCAL EN CARPETA DE SALIDA (Para auditoría y pruebas)
+// RESPALDO / REGISTRO LOCAL EN CARPETA DE SALIDA
 $filename = 'mail_' . $recordId . '_' . date('Ymd_His') . '.html';
 $filepath = MAILS_DIR . '/' . $filename;
 file_put_contents($filepath, $htmlMessage);
@@ -153,13 +295,14 @@ $relativePath = 'mails_salida/' . $filename;
 // Respuesta JSON al Cliente
 echo json_encode([
     'success' => true,
-    'smtp_status' => $mailSent ? 'sent' : (SMTP_ENABLED ? 'failed' : 'simulated'),
+    'smtp_status' => $mailSent ? 'sent' : 'fallback',
     'message' => $mailSent 
-        ? "✅ Correo enviado exitosamente vía SMTP a {$to}" 
-        : "✅ Notificación registrada correctamente. Archivo guardado en {$relativePath} (SMTP deshabilitado o en modo pruebas).",
+        ? "✅ Correo enviado exitosamente vía SMTP ({$to})" 
+        : "✅ Notificación registrada. Guardada en {$relativePath}" . ($sendError ? " (Detalle SMTP: {$sendError})" : ""),
     'record_id' => $recordId,
     'recipient' => $to,
     'recipient_name' => $toName,
     'file_path' => $relativePath,
+    'smtp_error' => $sendError,
     'timestamp' => date('Y-m-d H:i:s')
 ]);

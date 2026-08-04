@@ -10,3 +10,7 @@ desktop.ini
 # Environment files
 .env
 .env.local
+
+# Outbound email logs
+mails_salida/*
+!mails_salida/.gitkeep
