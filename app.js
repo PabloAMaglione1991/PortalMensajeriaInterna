@@ -1528,6 +1528,31 @@ function handleAddStaffSubmit(e) {
   }
 }
 
+/* Helper: Robust Service Matching for Inbox, Archive, Reports and Badges */
+function isRecordForService(r, userServiceName) {
+  if (!userServiceName) return true;
+  const userServ = userServiceName.toLowerCase();
+
+  const destServ = (r.destino || '').toLowerCase();
+  const origServ = (r.servicio || '').toLowerCase();
+  const recType = (r.type || r.tipo || '').toLowerCase();
+
+  // Direct match: target destination OR origin matches user service
+  const isDest = destServ.length > 0 && (destServ.includes(userServ) || userServ.includes(destServ));
+  const isOrig = origServ.length > 0 && (origServ.includes(userServ) || userServ.includes(origServ));
+
+  if (isDest || isOrig) return true;
+
+  // Specialty keyword fallback mapping
+  if (userServ.includes('cardio')) return recType.includes('cardio');
+  if (userServ.includes('nutri') || userServ.includes('lactario')) return recType.includes('nutri') || recType.includes('leche') || recType.includes('prescripción');
+  if (userServ.includes('farmacia')) return recType.includes('farmacia') || recType.includes('receta');
+  if (userServ.includes('imágenes')) return recType.includes('imágenes');
+  if (userServ.includes('social')) return recType.includes('social');
+
+  return false;
+}
+
 /* Render Active Pending Inbox */
 function renderInbox(filterType = 'all') {
   const tbody = document.getElementById('inbox-table-body');
@@ -1536,11 +1561,7 @@ function renderInbox(filterType = 'all') {
   let pendingRecords = records.filter(r => r.estado === 'Pendiente' || r.estado === 'En Proceso');
 
   if (activeUser && !activeUser.isAdmin) {
-    pendingRecords = pendingRecords.filter(r => {
-      const targetServ = (r.servicio || r.destino || '').toLowerCase();
-      const userServ = activeUser.service.toLowerCase();
-      return targetServ.includes(userServ) || userServ.includes(targetServ);
-    });
+    pendingRecords = pendingRecords.filter(r => isRecordForService(r, activeUser.service));
   }
 
   if (filterType !== 'all') {
@@ -1556,7 +1577,8 @@ function renderInbox(filterType = 'all') {
         </td>
       </tr>
     `;
-    document.getElementById('inbox-badge').textContent = 0;
+    const badge = document.getElementById('inbox-badge');
+    if (badge) badge.textContent = 0;
     return;
   }
 
@@ -1568,8 +1590,8 @@ function renderInbox(filterType = 'all') {
         ${r.isRecurring ? `<br><span style="font-size: 0.7rem; color: #b45309; font-weight: 700;"><i class="ri-repeat-line"></i> Módulo ${r.moduloActual}/${r.totalModulos}</span>` : ''}
       </td>
       <td>${r.paciente}</td>
-      <td>${r.servicio || r.destino || 'General'}</td>
-      <td><strong style="color: var(--primary-700);">${r.staffAssigned || 'Equipo del Servicio'}</strong></td>
+      <td>${r.destino || r.servicio || 'General'}</td>
+      <td><strong style="color: var(--primary-700);"><i class="ri-team-line"></i> ${r.staffAssigned || 'Equipo del Servicio'}</strong></td>
       <td>${r.fecha}</td>
       <td>
         <select class="status-select-inline" onchange="changeStatusInline('${r.id}', this.value)">
@@ -1591,7 +1613,8 @@ function renderInbox(filterType = 'all') {
     </tr>
   `).join('');
 
-  document.getElementById('inbox-badge').textContent = pendingRecords.length;
+  const badge = document.getElementById('inbox-badge');
+  if (badge) badge.textContent = pendingRecords.length;
 }
 
 /* Render Archive of Confirmed & Resolved Consultations */
@@ -1602,18 +1625,7 @@ function renderArchiveTable() {
   let resolvedRecords = records.filter(r => r.estado.includes('Confirmado') || r.estado === 'Completada' || r.estado === 'Tratamiento Completado');
 
   if (activeUser && !activeUser.isAdmin) {
-    const userServ = activeUser.service.toLowerCase();
-    resolvedRecords = resolvedRecords.filter(r => {
-      const targetServ = (r.servicio || r.destino || '').toLowerCase();
-      const recType = (r.tipo || r.type || '').toLowerCase();
-
-      if (userServ.includes('cardio')) return targetServ.includes('cardio') || recType.includes('cardio');
-      if (userServ.includes('nutri') || userServ.includes('lactario')) return targetServ.includes('nutri') || recType.includes('leche') || recType.includes('nutri');
-      if (userServ.includes('farmacia')) return targetServ.includes('farmacia') || recType.includes('receta') || recType.includes('farmacia');
-      if (userServ.includes('imágenes')) return targetServ.includes('imágenes') || recType.includes('imágenes');
-
-      return targetServ.includes(userServ) || userServ.includes(targetServ);
-    });
+    resolvedRecords = resolvedRecords.filter(r => isRecordForService(r, activeUser.service));
   }
 
   if (resolvedRecords.length === 0) {
@@ -1654,19 +1666,7 @@ function renderReportSection() {
   let reportRecords = records;
 
   if (activeUser && !activeUser.isAdmin) {
-    const userServ = activeUser.service.toLowerCase();
-    reportRecords = records.filter(r => {
-      const targetServ = (r.servicio || r.destino || '').toLowerCase();
-      const recType = (r.tipo || r.type || '').toLowerCase();
-
-      if (userServ.includes('cardio')) return targetServ.includes('cardio') || recType.includes('cardio');
-      if (userServ.includes('nutri') || userServ.includes('lactario')) return targetServ.includes('nutri') || recType.includes('leche') || recType.includes('nutri');
-      if (userServ.includes('farmacia')) return targetServ.includes('farmacia') || recType.includes('receta') || recType.includes('farmacia');
-      if (userServ.includes('imágenes')) return targetServ.includes('imágenes') || recType.includes('imágenes');
-      if (userServ.includes('social')) return targetServ.includes('social') || recType.includes('social');
-
-      return targetServ.includes(userServ) || userServ.includes(targetServ);
-    });
+    reportRecords = records.filter(r => isRecordForService(r, activeUser.service));
   }
 
   const totalDispenses = reportRecords.filter(r => r.type === 'Receta Electrónica' || r.type === 'Prescripción Nutricional' || r.type === 'Solicitud de Imágenes' || r.type === 'Interconsulta Cardiología').length;
@@ -2565,19 +2565,33 @@ function showToast(message) {
 }
 
 function updateStats() {
-  const pendingCount = records.filter(r => r.estado === 'Pendiente' || r.estado === 'En Proceso').length;
-  const resolvedCount = records.filter(r => r.estado.includes('Confirmado') || r.estado === 'Completada' || r.estado === 'Tratamiento Completado').length;
-  const authorizedMilkCount = services.filter(s => s.enabled && s.autorizadoLeches).length;
+  let pendingRecords = records.filter(r => r.estado === 'Pendiente' || r.estado === 'En Proceso');
+  let resolvedRecords = records.filter(r => r.estado.includes('Confirmado') || r.estado === 'Completada' || r.estado === 'Tratamiento Completado');
+  let activeRecRecords = records.filter(r => r.isRecurring);
 
-  document.getElementById('stat-pending-inbox').textContent = pendingCount;
-  document.getElementById('stat-resolved-total').textContent = resolvedCount;
-  document.getElementById('stat-authorized-leches').textContent = authorizedMilkCount;
-  
+  if (activeUser && !activeUser.isAdmin) {
+    pendingRecords = pendingRecords.filter(r => isRecordForService(r, activeUser.service));
+    resolvedRecords = resolvedRecords.filter(r => isRecordForService(r, activeUser.service));
+    activeRecRecords = activeRecRecords.filter(r => isRecordForService(r, activeUser.service));
+  }
+
+  const inboxBadge = document.getElementById('inbox-badge');
+  if (inboxBadge) inboxBadge.textContent = pendingRecords.length;
+
+  const statPending = document.getElementById('stat-pending-inbox');
+  if (statPending) statPending.textContent = pendingRecords.length;
+
+  const statResolved = document.getElementById('stat-resolved-total');
+  if (statResolved) statResolved.textContent = resolvedRecords.length;
+
+  const authorizedMilkCount = services.filter(s => s.enabled && s.autorizadoLeches).length;
+  const statMilk = document.getElementById('stat-authorized-leches');
+  if (statMilk) statMilk.textContent = authorizedMilkCount;
+
   const recBadge = document.getElementById('recurring-badge');
   const recStat = document.getElementById('stat-recurring');
-  const activeRecCount = records.filter(r => r.isRecurring).length;
-  if (recBadge) recBadge.textContent = activeRecCount;
-  if (recStat) recStat.textContent = activeRecCount;
+  if (recBadge) recBadge.textContent = activeRecRecords.length;
+  if (recStat) recStat.textContent = activeRecRecords.length;
 }
 
 /* Detail Modal Renderer */
