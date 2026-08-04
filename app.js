@@ -1605,8 +1605,8 @@ function renderInbox(filterType = 'all') {
           <button class="btn-secondary" style="padding: 0.35rem 0.65rem; font-size: 0.775rem;" onclick="viewRecordDetail('${r.id}')" title="Ver Hoja Digital">
             <i class="ri-eye-line"></i> Sheet
           </button>
-          <button class="btn-success" style="padding: 0.35rem 0.65rem; font-size: 0.775rem;" onclick="openResolveModal('${r.id}')" title="Responder e Dictaminar">
-            <i class="ri-edit-box-line"></i> Dictaminar
+          <button class="btn-success" style="padding: 0.35rem 0.65rem; font-size: 0.775rem;" onclick="openResolveModal('${r.id}')" title="Registrar Entrega / Responder">
+            <i class="ri-check-double-line"></i> Entregar
           </button>
         </div>
       </td>
@@ -2238,7 +2238,7 @@ function openResolveModal(id) {
   if (!record) return;
 
   document.getElementById('resolve-record-id').value = record.id;
-  document.getElementById('resolve-modal-title').textContent = `Responder Interconsulta / Cargar Dictamen`;
+  document.getElementById('resolve-modal-title').textContent = `Registrar Entrega / Responder Solicitud`;
   document.getElementById('resolve-modal-subtitle').textContent = `Paciente: ${record.paciente} (${record.id}) • Servicio: ${record.servicio || record.type}`;
   document.getElementById('resolve-status-select').value = record.estado.includes('Confirmado') ? 'Confirmado / Resuelto' : record.estado;
   document.getElementById('resolve-response-text').value = record.respuestaMedica || '';
