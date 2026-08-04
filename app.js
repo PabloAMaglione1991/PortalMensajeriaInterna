@@ -1416,11 +1416,54 @@ function toggleReportAuth(serviceId) {
     service.reportesHabilitados = service.reportesHabilitados === false ? true : false;
     localStorage.setItem('alassia_services', JSON.stringify(services));
     renderAdminServicesGrid();
+    renderAdminReportPermissionsMatrix();
     applyRoleContextualFiltering();
 
     logEvent('ADMIN', `Reportes & Métricas para ${service.name}: ${service.reportesHabilitados ? 'HABILITADOS' : 'DESHABILITADOS'}`);
     showToast(`Reportes & Métricas para ${service.name}: ${service.reportesHabilitados ? 'HABILITADOS' : 'DESHABILITADOS'}`);
   }
+}
+
+function setAllReportsState(enabled) {
+  if (!services || services.length === 0) return;
+
+  services.forEach(s => {
+    s.reportesHabilitados = enabled;
+  });
+
+  localStorage.setItem('alassia_services', JSON.stringify(services));
+  renderAdminReportPermissionsMatrix();
+  renderAdminServicesGrid();
+  applyRoleContextualFiltering();
+
+  const stateStr = enabled ? 'HABILITADOS A TODOS LOS SERVICIOS' : 'DESHABILITADOS PARA TODOS LOS SERVICIOS (SOLO DIRECCIÓN)';
+  logEvent('ADMIN', `Reportes & Métricas: ${stateStr}`);
+  showToast(`📊 Reportes & Métricas: ${stateStr}`);
+}
+
+function renderAdminReportPermissionsMatrix() {
+  const container = document.getElementById('admin-reports-toggle-container');
+  if (!container) return;
+
+  if (!services || services.length === 0) {
+    services = INITIAL_SERVICES;
+    localStorage.setItem('alassia_services', JSON.stringify(services));
+  }
+
+  container.innerHTML = services.map(s => {
+    const isEnabled = s.reportesHabilitados !== false;
+    return `
+      <div style="background: var(--slate-50); border: 1px solid ${isEnabled ? 'var(--primary-300)' : 'var(--border-color)'}; border-left: 4px solid ${isEnabled ? 'var(--primary-600)' : 'var(--slate-400)'}; padding: 0.85rem; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
+        <div>
+          <strong style="font-size: 0.85rem; color: var(--slate-900); display: block; margin-bottom: 2px;">${s.name}</strong>
+          <span style="font-size: 0.75rem; color: var(--text-muted);"><i class="ri-user-star-line"></i> Jefe: ${s.headOfService}</span>
+        </div>
+        <button type="button" class="service-toggle-btn ${isEnabled ? 'enabled' : 'disabled'}" style="font-size: 0.725rem; white-space: nowrap;" onclick="toggleReportAuth('${s.id}')">
+          ${isEnabled ? '📊 HABILITADO' : '🚫 RESTRINGIDO'}
+        </button>
+      </div>
+    `;
+  }).join('');
 }
 
 function removeStaffFromService(serviceId, staffName) {
@@ -1941,6 +1984,7 @@ function switchTab(tabId) {
   if (tabId === 'tab-admin') {
     renderAdminFormPermissions();
     renderAdminServicesGrid();
+    renderAdminReportPermissionsMatrix();
   }
 
   // Always update form availability state across sidebar, dashboard cards, and form containers
