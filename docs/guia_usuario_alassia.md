@@ -8,13 +8,13 @@ El Portal Digital de Mensajería, Recetas e Interconsultas del Hospital de Niño
 
 ---
 
-## 🔑 1. Pantalla de Acceso Institucional Amigable (Santa Fe Capital)
-El portal cuenta con una pantalla de inicio de sesión **simple, cálida y limpia**, diseñada con los colores institucionales pediátricos del **Hospital de Niños Dr. Orlando Alassia • Ministerio de Salud de Santa Fe**:
+## 🔑 1. Pantalla de Acceso Institucional Humano (Santa Fe Capital)
+La pantalla de inicio de sesión fue diseñada siguiendo **estándares de software gubernamental e institucional humano**, alejándose de plantillas genéricas de IA:
 
-* **Fondo Pediátrico Cálido:** Gradiente suave en tonos celeste Santa Fe (`#0284c7`) y turquesa/menta hospitalario (`#0d9488`).
-* **Tarjeta Central Limpia:** Cuadro de diálogo blanco con el logo oficial del hospital e identificación institucional.
+* **Barra Superior Institucional:** Franja superior sobria de color azul noche (`#0f172a`) con el sello oficial **GOBIERNO DE LA PROVINCIA DE SANTA FE • Ministerio de Salud** e identificación de la Red Intranet.
+* **Tarjeta Clínica Limpia:** Formulario central sobrio con acento superior azul hospitalario (`#0284c7`), tipografía limpia de alta legibilidad (`Inter` / `Outfit`) y bordes nítidos de 8px.
 * **Ocultar/Mostrar Contraseña:** Botón con ícono de ojo para revisar la clave antes de ingresar.
-* **Acceso Rápido de Prueba (1 Clic):** Botones directos para autocompletar credenciales de prueba (*Dirección Médica*, *Cardiología*, *Nutrición*, *Farmacia* y *Servicio Social*).
+* **Acceso Rápido Asistencial de Prueba:** Lista limpia y ordenada para autocompletar credenciales en 1 clic durante guardias (*Dirección Médica*, *Cardiología*, *Nutrición*, *Farmacia* y *Servicio Social*).
 
 ---
 

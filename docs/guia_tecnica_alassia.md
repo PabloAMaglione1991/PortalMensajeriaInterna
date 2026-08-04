@@ -25,7 +25,7 @@
 ### 1. `index.html` (Vista Principal y Maquetación de Interfaces)
 * **Propósito:** Archivo de estructura HTML5 semántica y responsiva que contiene las vistas de la aplicación.
 * **Componentes Clave:**
-  * `#login-page-screen`: Pantalla de autenticación amigable con tarjeta central limpia, tonos celestes/turquesas pediátricos, conmutador de contraseña y chips de prueba en 1 clic.
+  * `#login-page-screen`: Pantalla de autenticación institucional humana con franja superior oficial `GOBIERNO DE LA PROVINCIA DE SANTA FE • Ministerio de Salud`, tarjeta blanca con acento superior de 4px en `#0284c7`, conmutador de visibilidad de clave y lista de credenciales demo por rol.
   * `#sidebar`: Menú lateral izquierdo dinámico filtrado por rol y tarjeta fija del profesional logueado (`#sidebar-user-card`).
   * `#quick-nav-header`: Barra superior fija con perfil activo y accesos directos (`Pendientes`, `Emisión`, `Archivo`).
   * `#tab-inbox`: Tabla de Bandeja de Entrada con buscador instantáneo (`#search-inbox-input`), selectores de alcance (`scope-btn-all`, `scope-btn-received`, `scope-btn-sent`) y matriz visual `Origen ➔ Destino`.
@@ -49,7 +49,7 @@
 ### 3. `styles.css` (Sistema de Diseño y Fluid Widescreen Engine)
 * **Propósito:** Hoja de estilos en CSS Vanilla con variables de tokens de diseño (`--primary-600`, `--slate-900`, `--radius-md`).
 * **Módulos Destacados:**
-  * `.login-page-screen` / `.login-box-card`: Estilos de la pantalla de login amigable con gradiente de cielo Santa Fe (`#0284c7`) y turquesa menta (`#0d9488`).
+  * `.login-gov-header` / `.login-box-card`: Estilos de autenticación de portal gubernamental de salud sin efectos "AI slop", con estructura sobria, tonos `#0f172a`, `#0284c7`, y bordes táctiles de 6-8px.
   * Breakpoints Widescreen `@media (min-width: 1400px)` y `@media (min-width: 1800px)` para aprovechar el 100% del ancho en monitores Full HD, 2K y 4K.
   * Hojas de papel digital e impresas (`.paper-sheet`) diseñadas con tipografía monospace `JetBrains Mono` y fuentes legibles de Google Fonts (`Inter`, `Outfit`).
 
