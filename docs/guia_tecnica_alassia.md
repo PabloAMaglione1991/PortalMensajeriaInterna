@@ -1,85 +1,91 @@
-# 🛠️ Documentación Técnica Detallada — Portal Mensajería e Interconsultas
-### Hospital de Niños "Dr. Orlando Alassia" • Arquitectura y Especificación por Archivo
+# 🛠️ Guía Técnica y Documentación de Archivos del Proyecto
+### Portal Digital de Mensajería, Recetas e Interconsultas — Hospital Alassia (Versión 2026)
 
 ---
 
-## 🏗️ 1. Visión General de la Arquitectura
+## 📐 1. Arquitectura de Software y Topología de Entorno
 
-El sistema está estructurado bajo una **Arquitectura Híbrida Desacoplada (Frontend SPA + API Proxy PHP PDO)**:
-* **Frontend:** Single Page Application (HTML5, CSS Vanilla Tokens, JavaScript Moderno ES6+).
-* **Backend Proxy:** PHP 8.x con PDO y fallback dual entre MySQL de central médica (`10.12.4.1` `diagnose`) y MySQL del portal (`10.12.4.2` `alassia_mensajeria`).
-* **Autenticación & Permisos:** RBAC Estricto (Role-Based Access Control) con aislamiento de vistas por especialidad médica.
-* **Motor PDF:** Librería cliente `html2pdf.js` para renderizado directo en formato ejecutable cliente sin invocación de controladores de impresión física.
-
----
-
-## 📁 2. Análisis Detallado Archivo por Archivo
-
-### 📄 1. `index.html` (Estructura de Interfaz y Vistas SPA)
-* **Propósito:** Archivo principal de la interfaz Single Page Application. Contiene el diseño semántico HTML5 y la infraestructura de pestañas (Tabs), formularios y modales.
-* **Componentes Principales:**
-  * `<head>`: Carga metadatos, fuentes Google Fonts, Remixicon `3.5.0` y la librería `html2pdf.js` (`0.10.1`).
-  * `#login-page-screen`: Pantalla de inicio de sesión de pantalla completa con campos para DNI y contraseña.
-  * `.sidebar`: Menú lateral adaptativo con navegación por roles (`data-tab`), distintivos contadores (`badge-count`) y tarjeta fija del usuario con botón de cierre de sesión (`logoutUser()`).
-  * `.top-header`: Cabecera superior con título dinámico, distintivo de rol activo, caja de búsqueda global, selector de modo oscuro/claro, menú de notificaciones por servicio y **Barra de Acceso Rápido (Quick Nav Pills)**.
-  * `<main class="content-body">`:
-    * `#tab-dashboard`: Panel General filtrado por rol (vista simplificada para médicos, métricas globales para Admin).
-    * `#tab-inbox`: Bandeja de entrada de solicitudes pendientes filtrada por servicio.
-    * `#tab-archive`: Archivo de solicitudes resueltas con respuestas firmadas y descarga PDF.
-    * `#tab-recurrencia`: Control de tratamientos crónicos, entrega de módulos lácteos y botón de alerta a Servicio Social.
-    * `#tab-reportes`: Tablero consolidado de métricas mensuales y descargas de reportes PDF.
-    * `#tab-admin`: Módulo de Administración General con **Gestión CRUD de Usuarios**, habilitación de leches y permisos.
-    * `#tab-services`: Directorio de servicios y asignación de personal médico.
-    * `#tab-logs`: Registro de auditoría inmutable de eventos del sistema.
-    * `#tab-cardio`, `#tab-general`, `#tab-farmacia`, `#tab-imagenes`, `#tab-nutri`: Formularios de emisión con vista previa en vivo estilo hoja médica oficial (*Live Sheet*).
-  * `#detail-modal` & `#resolve-modal`: Modales emergentes para visualización de hojas digitales y carga de dictámenes médicos firmados.
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ SERVIDOR CENTRAL DE PATOLOGÍAS (10.12.4.1)                                  │
+│ Base de datos: diagnose (READ-ONLY) ➔ Tabla: paciente                       │
+└──────────────────────────────────────┬──────────────────────────────────────┘
+                                       │ (Conexión PDO / Búsqueda DNI)
+┌──────────────────────────────────────▼──────────────────────────────────────┐
+│ SERVIDOR DE MENSAJERÍA HOSPITALARIA (10.12.4.2 / Localhost:8000)            │
+│ Base de datos: alassia_mensajeria (READ-WRITE)                              │
+│ Tablas: servicio, profesional, solicitud, ausentismo_alerta, auditoria_log  │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
-### ⚡ 2. `app.js` (Lógica de Negocio, Estado y Motor de Permisos)
-* **Propósito:** Corazón lógico de la aplicación client-side. Maneja el estado en tiempo real, autenticación, filtrado por rol, consumo de API PHP PDO, notificaciones y generación de PDF.
-* **Secciones y Funciones Clave:**
-  * `APP_CONFIG`: Switch de configuración global (`ENV: 'production' | 'testing'`, `SHOW_DEMO_USERS_MODAL`, `ALLOW_MOCK_PATIENTS_FALLBACK`).
-  * `INITIAL_SERVICES` & `DEMO_USERS`: Estructura inicial de servicios hospitalarios (*Gastroenterología, Neonatología, Nutrición, Cardiología, Crónicos, Internación, Clínica, Farmacia, Imágenes, Servicio Social*) y usuarios preconfigurados.
-  * `applyRoleContextualFiltering()`: Función central de RBAC. Oculta/muestra dinámicamente ítems del menú lateral, tarjetas del dashboard y secciones según el servicio del usuario activo.
-  * `renderActiveUser()`: Actualiza la interfaz con la identidad del profesional logueado y ejecuta el guard de navegación.
-  * `exportToPDF(selector, filename)`: Motor cliente que toma un elemento del DOM (`.paper-sheet`, `#report-print-area`, etc.) y genera una descarga directa de archivo `.pdf` con calidad de impresión gráfica sin popups de impresora.
-  * `triggerAbsenteeismAlert(id)`: Despacha alertas de inasistencia por retiros atrasados **exclusivamente hacia el Servicio Social Hospitalario** (`Lic. Viviana Roldán`), generando una orden de intervención privada.
-  * `handleCreateUserSubmit(e)`, `renderUserCrudTable()`, `deleteUserByDNI(dni)`: Administración completa del ciclo de vida de cuentas de usuarios (CRUD) en la pestaña Admin.
-  * `buscarPacientePorDNI(...)`: Realiza la petición asíncrona (Fetch) hacia `buscar_paciente.php` para obtener datos reales de la base central `diagnose`.
-  * `renderInbox()`, `renderArchiveTable()`, `renderRecurringSection()`: Motores de renderizado de tablas con filtrado por especialidad.
+## 📁 2. Especificación Técnica Archivo por Archivo
+
+### 1. `index.html` (Vista Principal y Maquetación de Interfaces)
+* **Propósito:** Archivo de estructura HTML5 semántica y responsiva que contiene las vistas de la aplicación.
+* **Componentes Clave:**
+  * `#sidebar`: Menú lateral izquierdo dinámico filtrado por rol y tarjeta fija del profesional logueado (`#sidebar-user-card`).
+  * `#quick-nav-header`: Barra superior fija con perfil activo y accesos directos (`Pendientes`, `Emisión`, `Archivo`).
+  * `#tab-dashboard`: Panel principal con cards de accesos por servicio.
+  * `#tab-inbox`: Tabla de Bandeja de Entrada con notificaciones de equipo y botones de acción `[ 📦 Entregar ]`.
+  * `#tab-recurrencia`: Módulo de tratamientos crónicos con botón `[ 🟢 Registrar Entrega ]` y `[ ↩️ Deshacer Entrega ]`.
+  * `#tab-admin`: Módulo de Administración exclusivo para Admin con CRUD de Usuarios, CRUD de Servicios Hospitalarios (`#create-service-form`) y toggles de autorización por sector.
+  * `#resolve-modal`, `#email-modal`, `#sheet-modal`: Cuadros modales interactivos para firmas, reportes y vistas previa de PDF.
+
+### 2. `app.js` (Lógica del Cliente, Controlador SPA y Estado)
+* **Propósito:** Controlador principal en JavaScript vanilla que maneja el estado local (`localStorage`), la reactividad de la interfaz y la lógica de negocio.
+* **Funciones Principales:**
+  * `isRecordForService(record, userService)`: Algoritmo de filtrado bidireccional que asegura que los pedidos lleguen tanto a la bandeja del servicio receptor (`r.destino`) como emisor (`r.servicio`).
+  * `handleFormSubmit(e)`: Captura las solicitudes emitidas, remueve la asignación individual, asigna al `Equipo Completo de [Servicio]` y despacha notificaciones push locales.
+  * `revertLastDispense(id)`: Permite deshacer la última entrega de un tratamiento mensual (`moduloActual -= 1`), reajustando fechas y registrando la reversión en la auditoría.
+  * `applyRoleContextualFiltering()`: Enforza el control de acceso RBAC ocultando solapas no autorizadas al usuario logueado.
+  * `handleCreateServiceSubmit()` / `deleteService(id)`: Lógica del CRUD de servicios hospitalarios con persistencia en `alassia_services`.
+  * `exportToPDF(elementId, filename)`: Motor de generación directa de recetarios en PDF usando `html2pdf.js`.
+
+### 3. `styles.css` (Sistema de Diseño y Fluid Widescreen Engine)
+* **Propósito:** Hoja de estilos en CSS Vanilla con variables de tokens de diseño (`--primary-600`, `--slate-900`, `--radius-md`).
+* **Módulos Destacados:**
+  * Breakpoints Widescreen `@media (min-width: 1400px)` y `@media (min-width: 1800px)` para aprovechar el 100% del ancho en monitores Full HD, 2K y 4K.
+  * Hojas de papel digital e impresas (`.paper-sheet`) diseñadas con tipografía monospace `JetBrains Mono` y fuentes legibles de Google Fonts (`Inter`, `Outfit`).
+  * Clases utility para notificaciones de equipo, insignias de estado y animaciones micro-interactivas.
+
+### 4. `buscar_paciente.php` (Servicio API de Búsqueda de Pacientes)
+* **Propósito:** Endpoint PHP con PDO que recibe la consulta `GET ?dni=XXXXX` o `GET ?term=XXXXX`.
+* **Manejo de Errores y Robustez:**
+  * Sanitización de cadenas (`preg_replace('/[^0-9]/', '', $dni)`).
+  * Intenta consultar primero el Servidor Central `diagnose` (`10.12.4.1`). Si falla por red, realiza un failover transparente al Servidor Local `alassia_mensajeria`.
+  * Normalización de campos nulos (`$row['fnac'] ?? '2019-05-12'`) para evitar warnings o referencias undefined en JavaScript.
+
+### 5. `test_conexion.php` (Endpoint de Diagnóstico e Infraestructura)
+* **Propósito:** Script PHP de salud que evalúa latencia y estado de conexión con ambas bases MySQL (`diagnose` y `alassia_mensajeria`), devolviendo JSON estructurado con el estado de la red hospitalaria.
+
+### 6. `schema_completo_alassia.sql` (Script DDL y Semillero MySQL)
+* **Propósito:** Script SQL idempotent de creación e inicialización de la base de datos `alassia_mensajeria`.
+* **Características Anti-Errores:**
+  * Incluye la protección `SET FOREIGN_KEY_CHECKS = 0;` al inicio y `SET FOREIGN_KEY_CHECKS = 1;` al final para evitar MySQL Error 1217 y 150 durante la reconstrucción de tablas.
+  * Inserta registros semilla con `ON DUPLICATE KEY UPDATE` para garantizar ejecuciones seguras en producción.
 
 ---
 
-### 🎨 3. `styles.css` (Sistema de Diseño y Tokens Responsive)
-* **Propósito:** Hojas de estilo CSS Vanilla organizadas mediante variables CSS Custom Properties. Proporciona tematizado (Light/Dark Mode), diseño clínico profesional y soporte fluido para monitores HD, Widescreen y 4K.
-* **Componentes Destacados:**
-  * `:root` & `[data-theme="dark"]`: Paleta cromática médica (Azul Hospitalario `#0284c7`, Verde Esmeralda, Rosa Alarma, Grises Slate), sombras y bordes.
-  * `.app-container`, `.sidebar`, `.main-wrapper`, `.top-header`, `.content-body`: Estructura flexible CSS Flexbox y Grid.
-  * `.actions-grid`, `.quick-stats-grid`, `.form-layout-grid`: Disposición adaptable de componentes.
-  * `.paper-sheet`: Estilizado de hoja física de recetario médico con sello, membrete e instrucciones de validez.
-  * `@media (min-width: 1400px)` & `@media (min-width: 1800px)`: Reglas responsive de alta resolución para monitores 1080p, 1440p y 4K (ampliación de paddings, fuentes y contenedores).
+## 📊 3. Modelo de Datos Relacional (`alassia_mensajeria`)
+
+```sql
+-- Tabla Principal de Solicitudes, Recetas e Interconsultas
+CREATE TABLE IF NOT EXISTS solicitud (
+    id VARCHAR(50) PRIMARY KEY,
+    tipo VARCHAR(100) NOT NULL,
+    paciente_dni VARCHAR(20) NOT NULL,
+    paciente_nombre VARCHAR(150) NOT NULL,
+    servicio_origen VARCHAR(100) NOT NULL,
+    servicio_destino VARCHAR(100) NOT NULL,
+    personal_asignado VARCHAR(150) DEFAULT 'Equipo Completo del Servicio',
+    estado ENUM('Pendiente', 'En Proceso', 'Confirmado / Resuelto', 'Tratamiento Completado') DEFAULT 'Pendiente',
+    respuesta_medica TEXT NULL,
+    medico_firmante VARCHAR(150) NULL,
+    fecha_emision DATETIME DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+```
 
 ---
-
-### 🐘 4. `buscar_paciente.php` (Proxy de Consulta PDO Dual DB)
-* **Propósito:** Endpoint backend PHP encargado de consultar de manera segura y resiliente el padrón de pacientes en MySQL.
-* **Características Técnicas:**
-  * **Conexión Dual y Failover:** Intenta conectar a `10.12.4.1` (DB `diagnose`, puerto 3306). Si falla la red o el servidor, realiza failover automático a `10.12.4.2` (DB `alassia_mensajeria`).
-  * **Consulta Resiliente `SELECT p.*`:** Evita errores SQL `1054 Unknown column` ante variaciones en los nombres de columnas de producción.
-  * **Normalización de DNI:** Limpia puntos, guiones y espacios en el parámetro de entrada y utiliza `REPLACE()` en la consulta SQL.
-  * **Mapeo Dinámico de Atributos:** Resuelve dinámicamente nombres de campos como `$row['fnac'] ?? $row['fecha_nac'] ?? $row['fecha_nacimiento']`.
-  * **Modo Depuración (`?debug=1`):** Devuelve información técnica estructurada de la conexión PDO ante consultas administrativas.
-
----
-
-### 🧪 5. `test_conexion.php` (Herramienta de Diagnóstico DB)
-* **Propósito:** Endpoint de diagnóstico técnico independiente para probar la conectividad y listar las tablas y esquemas de los servidores MySQL `10.12.4.1` y `10.12.4.2`.
-
----
-
-### 🖼️ 6. `1.jpeg`, `2.jpeg`, `3.jpeg` (Recetarios y Formularios de Referencia)
-* **Propósito:** Imágenes físicas de referencia de los recetarios oficiales del Hospital Alassia (*Interconsulta Cardiología*, *Interconsulta General* y *Recetario de Leches/Módulos Calóricos*) utilizadas para la digitalización fiel en el portal.
-
----
-*Documentación oficial mantenida en el repositorio Git del Hospital Alassia*
+*Documentación Técnica Oficial • Hospital Alassia 2026*
