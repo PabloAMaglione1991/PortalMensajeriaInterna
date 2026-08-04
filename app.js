@@ -450,7 +450,8 @@ const INITIAL_DATA = [
     edad: "2 meses (Prematura 32 sem)",
     sexo: "F",
     servicio: "Neonatología y UCNI",
-    staffAssigned: "Maglione Pablo (Coordinador) / Lic. Mariana Varela",
+    destino: "Nutrición y Lactario",
+    staffAssigned: "Equipo Completo de Nutrición y Lactario",
     pa: "2.450 kg",
     talla: "44 cm",
     diagnostico: "Prematurez Extrema / Retraso del Crecimiento Intrauterino (RCIU)",
@@ -475,7 +476,8 @@ const INITIAL_DATA = [
     edad: "8 meses",
     sexo: "M",
     servicio: "Gastroenterología Infantil",
-    staffAssigned: "Maglione Pablo (Coordinador) / Lic. Paula Gómez",
+    destino: "Nutrición y Lactario",
+    staffAssigned: "Equipo Completo de Nutrición y Lactario",
     pa: "6.850 kg",
     talla: "66 cm",
     diagnostico: "Alergia a la proteína de leche de vaca (APLV) / Lactante menor",
@@ -562,7 +564,18 @@ const INITIAL_NOTIFS = [
 // Active State Storage
 let services = INITIAL_SERVICES;
 localStorage.setItem('alassia_services', JSON.stringify(services));
-let records = INITIAL_DATA;
+let records = JSON.parse(localStorage.getItem('alassia_records')) || INITIAL_DATA;
+
+// Auto-patch records to ensure destination service is set for RBAC filtering
+records.forEach(r => {
+  if (!r.destino) {
+    if (r.type === 'Prescripción Nutricional') r.destino = 'Nutrición y Lactario';
+    else if (r.type === 'Receta Electrónica') r.destino = 'Farmacia y Recetas Electrónicas';
+    else if (r.type === 'Solicitud de Imágenes') r.destino = 'Diagnóstico por Imágenes';
+    else if (r.type === 'Cardiología') r.destino = 'Cardiología Infantil';
+    else r.destino = r.servicio || 'General';
+  }
+});
 localStorage.setItem('alassia_records', JSON.stringify(records));
 let auditLogs = JSON.parse(localStorage.getItem('alassia_audit_logs')) || INITIAL_LOGS;
 let notifications = JSON.parse(localStorage.getItem('alassia_notifs')) || INITIAL_NOTIFS;
