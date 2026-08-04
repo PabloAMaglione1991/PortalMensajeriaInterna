@@ -2378,15 +2378,59 @@ function handleFormSubmit(event, type) {
   showToast(`Solicitud ${newRecord.id} creada e informada a ${newRecord.staffAssigned}`);
 }
 
-/* Email Dispatch Preview Modal */
+/* Real Email Dispatch via PHP Backend (enviar_mail.php) */
+async function sendRealEmailNotification(record, targetEmail) {
+  try {
+    const payload = {
+      to: targetEmail,
+      to_name: record.staffAssigned || 'Equipo del Servicio Receptor',
+      subject: `[SOLICITUD OFICIAL #${record.id}] ${record.type} para ${record.paciente}`,
+      record_id: record.id,
+      paciente: record.paciente,
+      medico: record.medico,
+      tipo: record.type,
+      motivo: record.motivo || record.diagnostico || record.rp1 || 'Sin especificaciones',
+      servicio_origen: record.servicio || (activeUser ? activeUser.service : 'Clínica Pediátrica'),
+      servicio_destino: record.destino || 'Servicio Especialista'
+    };
+
+    const response = await fetch('enviar_mail.php', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const result = await response.json();
+    if (result.success) {
+      logEvent('EMAIL', `Correo despachado a ${targetEmail} (${result.smtp_status}) - Ref: ${record.id}`);
+      return result;
+    } else {
+      console.warn('Falló el despacho de correo PHP:', result.message);
+      return null;
+    }
+  } catch (err) {
+    console.error('Error al invocar enviar_mail.php:', err);
+    return null;
+  }
+}
+
+/* Email Dispatch Preview & Real Delivery Modal */
 function showEmailPreviewModal(record, targetEmail) {
   const modalBody = document.getElementById('email-modal-body');
+  if (!modalBody) return;
+  
   modalBody.innerHTML = `
     <div class="email-meta-line"><strong>Para:</strong> <span>${targetEmail}</span></div>
     <div class="email-meta-line"><strong>Personal a Cargo:</strong> <span style="color: #0284c7; font-weight: 700;">${record.staffAssigned || 'Equipo Médico de Servicio'}</span></div>
     <div class="email-meta-line"><strong>De:</strong> <span>sistema-interconsultas@alassia.santafe.gob.ar (${record.medico})</span></div>
     <div class="email-meta-line"><strong>Asunto:</strong> <span>[SOLICITUD OFICIAL #${record.id}] ${record.type} para ${record.paciente}</span></div>
     
+    <div id="email-server-status-badge" style="background: #f0f9ff; border: 1px solid #bae6fd; padding: 0.6rem 0.85rem; border-radius: 6px; margin: 0.85rem 0; font-size: 0.8rem; color: #0369a1; display: flex; align-items: center; justify-content: space-between;">
+      <span><i class="ri-loader-4-line spin"></i> Despachando notificación a <strong>enviar_mail.php</strong>...</span>
+    </div>
+
     <div class="email-body-preview">
       <p>Estimado/a <strong>${record.staffAssigned}</strong> y equipo del Servicio,</p>
       <p>Se ha registrado un nuevo pedido digital en el sistema del <strong>Hospital de Niños Dr. Orlando Alassia</strong> bajo su responsabilidad:</p>
@@ -2402,11 +2446,48 @@ function showEmailPreviewModal(record, targetEmail) {
       </div>
 
       <p>Podés acceder directamente al sistema web para procesar el pedido haciendo clic en el siguiente enlace:</p>
-      <p><a href="http://localhost:3000" style="color: #0284c7; font-weight: 700;">Acceder al Sistema Digital #${record.id} →</a></p>
+      <p><a href="http://localhost:8000" style="color: #0284c7; font-weight: 700;">Acceder al Sistema Digital #${record.id} →</a></p>
     </div>
   `;
 
   document.getElementById('email-modal').classList.add('active');
+
+  // Trigger real email dispatch via PHP backend
+  sendRealEmailNotification(record, targetEmail).then(res => {
+    const badge = document.getElementById('email-server-status-badge');
+    if (badge) {
+      if (res && res.success) {
+        const isSmtp = res.smtp_status === 'sent';
+        badge.style.background = isSmtp ? '#f0fdf4' : '#fefce8';
+        badge.style.borderColor = isSmtp ? '#bbf7d0' : '#fef08a';
+        badge.style.color = isSmtp ? '#15803d' : '#a16207';
+        badge.innerHTML = `
+          <span><i class="${isSmtp ? 'ri-checkbox-circle-fill' : 'ri-mail-check-line'}"></i> ${res.message}</span>
+          <button type="button" class="btn-secondary" style="font-size: 0.7rem; padding: 0.25rem 0.5rem;" onclick="triggerManualReSend('${record.id}', '${targetEmail}')">
+            <i class="ri-refresh-line"></i> Re-enviar
+          </button>
+        `;
+      } else {
+        badge.style.background = '#fef2f2';
+        badge.style.borderColor = '#fecaca';
+        badge.style.color = '#991b1b';
+        badge.innerHTML = `
+          <span><i class="ri-error-warning-line"></i> Servidor de correo finalizado localmente. Notificación guardada en sistema.</span>
+        `;
+      }
+    }
+  });
+}
+
+function triggerManualReSend(recordId, targetEmail) {
+  const record = records.find(r => r.id === recordId);
+  if (!record) return;
+  showToast(`✉️ Re-enviando correo para ${record.id}...`);
+  sendRealEmailNotification(record, targetEmail).then(res => {
+    if (res && res.success) {
+      showToast(`✅ Correo de ${record.id} despachado exitosamente`);
+    }
+  });
 }
 
 function closeEmailModal() {
