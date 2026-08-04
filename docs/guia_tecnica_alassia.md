@@ -27,8 +27,7 @@
 * **Componentes Clave:**
   * `#sidebar`: Menú lateral izquierdo dinámico filtrado por rol y tarjeta fija del profesional logueado (`#sidebar-user-card`).
   * `#quick-nav-header`: Barra superior fija con perfil activo y accesos directos (`Pendientes`, `Emisión`, `Archivo`).
-  * `#tab-dashboard`: Panel principal con cards de accesos por servicio.
-  * `#tab-inbox`: Tabla de Bandeja de Entrada con notificaciones de equipo y botones de acción `[ 📦 Entregar ]`.
+  * `#tab-inbox`: Tabla de Bandeja de Entrada con selectores de alcance (`scope-btn-all`, `scope-btn-received`, `scope-btn-sent`) y matriz visual `Origen ➔ Destino`.
   * `#tab-recurrencia`: Módulo de tratamientos crónicos con botón `[ 🟢 Registrar Entrega ]` y `[ ↩️ Deshacer Entrega ]`.
   * `#tab-admin`: Módulo de Administración exclusivo para Admin con CRUD de Usuarios, CRUD de Servicios Hospitalarios (`#create-service-form`) y toggles de autorización por sector.
   * `#resolve-modal`, `#email-modal`, `#sheet-modal`: Cuadros modales interactivos para firmas, reportes y vistas previa de PDF.
@@ -36,10 +35,11 @@
 ### 2. `app.js` (Lógica del Cliente, Controlador SPA y Estado)
 * **Propósito:** Controlador principal en JavaScript vanilla que maneja el estado local (`localStorage`), la reactividad de la interfaz y la lógica de negocio.
 * **Funciones Principales:**
-  * `isRecordForService(record, userService)`: Algoritmo de filtrado bidireccional que asegura que los pedidos lleguen tanto a la bandeja del servicio receptor (`r.destino`) como emisor (`r.servicio`).
-  * `handleFormSubmit(e)`: Captura las solicitudes emitidas, remueve la asignación individual, asigna al `Equipo Completo de [Servicio]` y despacha notificaciones push locales.
+  * `canUserDeliverRecord(record, user)`: Matriz de autorización por rol que habilita el botón `[ 📦 Entregar ]` y los selectores de cambio de estado ÚNICAMENTE a los profesionales del servicio receptor (`r.destino`).
+  * `isRecordForService(record, userService)`: Algoritmo de filtrado relacional que permite visibilidad tanto al servicio emisor (para seguimiento) como al servicio receptor (para dispensa).
+  * `setInboxScope(scope)`: Conmutador de alcance para alternar entre `all` (Todos), `received` (Recibidos) y `sent` (Enviados).
+  * `handleFormSubmit(e)`: Captura las solicitudes emitidas, asigna al `Equipo Completo de [Servicio]` y despacha notificaciones colectivas.
   * `revertLastDispense(id)`: Permite deshacer la última entrega de un tratamiento mensual (`moduloActual -= 1`), reajustando fechas y registrando la reversión en la auditoría.
-  * `applyRoleContextualFiltering()`: Enforza el control de acceso RBAC ocultando solapas no autorizadas al usuario logueado.
   * `handleCreateServiceSubmit()` / `deleteService(id)`: Lógica del CRUD de servicios hospitalarios con persistencia en `alassia_services`.
   * `exportToPDF(elementId, filename)`: Motor de generación directa de recetarios en PDF usando `html2pdf.js`.
 

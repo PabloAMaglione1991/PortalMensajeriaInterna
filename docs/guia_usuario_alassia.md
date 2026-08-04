@@ -1,4 +1,4 @@
-# 📖 Guía de Usuario — Portal Digital de Mensajería, Recetas e Interconsultas
+# 📖 Guía de Usuario — Portal Digital de Mensajeria, Recetas e Interconsultas
 ### Hospital de Niños "Dr. Orlando Alassia" • Santa Fe (Versión Oficial Actualizada 2026)
 
 ---
@@ -13,7 +13,7 @@ Cada profesional de la salud accede con sus credenciales personales (**D.N.I.** 
 
 ### 🎭 Perfiles Hospitalarios Habilitados:
 * **Cardiología Infantil:** Emisión y recepción de evaluaciones cardiológicas, ECG y Ecocardiogramas.
-* **Nutrición y Lactario:** Prescripción oficial de fórmulas lácteas y módulos calóricos (APLV).
+* **Nutrición y Lactario:** Prescripción oficial y dispensa de fórmulas lácteas y módulos calóricos (APLV).
 * **Farmacia Hospitalaria:** Emisión y dispensa de recetas electrónicas de medicamentos y tratamientos crónicos.
 * **Diagnóstico por Imágenes:** Pedidos de ecografía, radiografía (RX), tomografía (TAC) y resonancia (RMN).
 * **Servicio Social Hospitalario:** Recepción exclusiva de alertas privadas por inasistencia/ausentismo de pacientes a retiros.
@@ -22,29 +22,43 @@ Cada profesional de la salud accede con sus credenciales personales (**D.N.I.** 
 
 ---
 
-## 🖥️ 2. Navegación Simplicada y Notificaciones de Equipo
-Al ingresar con tu usuario:
-* **Dashboard Personalizado:** Ves únicamente la tarjeta de bienvenida con tu nombre y las acciones directas de tu especialidad.
-* **Notificación Colectiva al Equipo Completo:** Los pedidos no se asignan a un médico individual (para evitar bloqueos por ausencia o cambio de turno). Al emitir una receta o consulta, **se notifica e ingresa a la bandeja de entrada compartida de todo el equipo receptor**.
-* **Barra de Acceso Rápido en la Cabecera:**
-  * **`[ 📥 Pendientes ]`** → Acceso en 1 clic a la Bandeja de Entrada.
-  * **`[ ➕ Emisión ]`** → Acceso en 1 clic a emitir nuevos pedidos.
-  * **`[ 📂 Archivo ]`** → Acceso en 1 clic a consultar solicitudes resueltas.
+## 📥 2. Matriz de Permisos en la Bandeja de Entrada: Seguimiento vs. Dispensa
+
+El sistema implementa una matriz de visibilidad y autorización quirúrgica:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 📤 SERVICIO EMISOR (Ej: Clínica Pediátrica / Neonatología)                   │
+│ ➔ Muestra el pedido en la Bandeja bajo la solapa [ 📤 Enviados en Seguimiento]│
+│ ➔ Permite ver el estado en vivo (🟠 Pendiente, 🔵 En Proceso, 🟢 Resuelto) │
+│ ➔ Muestra el botón bloqueado: [ 🔒 Entrega por Nutrición / Farmacia ]        │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ 📥 SERVICIO RECEPTOR (Ej: Nutrición y Lactario / Farmacia)                  │
+│ ➔ Muestra el pedido bajo la solapa [ 📥 Recibidos para Entregar ]            │
+│ ➔ TIENE AUTORIZACIÓN EXCLUSIVA PARA ENTREGAR Y CAMBIAR ESTADOS              │
+│ ➔ Botón verde activo: [ 📦 Entregar ] y selector de estados                 │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Filtros Rápidos de la Bandeja:
+* **`[ 📋 Todos mis Pedidos ]`**: Muestra todo el historial de pedidos vinculados a tu servicio (emitidos y recibidos).
+* **`[ 📥 Recibidos para Entregar ]`**: Muestra únicamente los pedidos dirigidos a tu equipo para ser entregados.
+* **`[ 📤 Enviados en Seguimiento ]`**: Muestra las recetas o consultas enviadas por tu sala a otros sectores para verificar su avance.
 
 ---
 
-## 📥 3. Bandeja de Entrada y Registro de Entregas (`[ 📦 Entregar ]`)
+## 📦 3. Registro de Entregas y Reversión de Errores (`[ 📦 Entregar ]`)
 
-### A. Pedidos y Recetas de Una Sola Vez (Entregas Únicas):
-1. Abrí la **`Bandeja de Entrada`** (`#tab-inbox`).
-2. En la lista de solicitudes pendientes, presioná el botón verde **`[ 📦 Entregar ]`**.
-3. Se abrirá el modal de confirmación donde podés cargar una breve nota o indicación (ej: *"Amoxicilina entregada en farmacia a la madre"*).
-4. Tocá **`[ 🟢 Registrar Entrega y Archivar ]`**. La solicitud se dará por resuelta y pasará automáticamente al **`Archivo de Resueltos`** (`#tab-archive`).
+### A. Entrega de Recetas o Formularios Únicos:
+1. Al estar logueado en el servicio receptor (ej: *Nutrición* para leches o *Farmacia* para medicamentos), ingresá a la **`Bandeja de Entrada`** (`#tab-inbox`).
+2. Presioná el botón verde **`[ 📦 Entregar ]`**.
+3. Carga el informe de respuesta o indicación de dispensa (ej: *"Fórmula extensamente hidrolizada 150cc entregada a la madre"*).
+4. Presioná **`[ 🟢 Registrar Entrega y Archivar ]`**. La solicitud se dará por resuelta y se archivará.
 
-### B. Retiros Mensuales y Tratamientos Crónicos:
+### B. Retiros Mensuales y Deshacer Errores:
 1. En la solapa **Retiros Mensuales & Alarmas** (`#tab-recurrencia`), visualizás las tarjetas de tratamientos por módulos (Módulo 1/6, 2/6, etc.).
 2. Para registrar cada entrega mensual, tocá **`[ 🟢 Registrar Entrega (Módulo X/Y) ]`**.
-3. **¿Te equivocaste o hiciste clic por error?** Tocá el botón amarillo **`[ ↩️ Deshacer Entrega ]`**. El sistema te pedirá confirmación y devolverá el tratamiento exactamente al módulo y fecha anterior sin alterar el historial.
+3. **¿Hiciste clic por error?** Tocá el botón amarillo **`[ ↩️ Deshacer Entrega ]`**. El sistema te pedirá confirmación y devolverá el tratamiento al módulo anterior sin borrar el historial de auditoría.
 
 ---
 
@@ -52,17 +66,17 @@ Al ingresar con tu usuario:
 En cualquier formulario, solicitud o dictamen médico:
 1. Completá los datos del paciente (búsqueda automática por DNI en la base central `diagnose`).
 2. Presioná **`[ Descargar PDF ]`**.
-3. El archivo `.pdf` en formato de recetario médico oficial del Hospital Alassia se guardará **directamente en tu carpeta de Descargas** sin abrir ventanas del sistema operativo ni controladores de impresión física.
+3. El archivo `.pdf` en formato de recetario médico oficial del Hospital Alassia se guardará **directamente en tu carpeta de Descargas** sin abrir ventanas del sistema operativo.
 
 ---
 
 ## 🚨 5. Alarmas de Ausentismo a Servicio Social
 * Si un paciente supera los días fijados para retirar su insumo o leche, la tarjeta se tornará de color rojo (**`🔴 ALARMA AUSENTISMO`**).
-* Al presionar **`[ 🔴 Alerta Trabajo Social ]`**, se genera una orden de intervención que se despacha **de manera privada y exclusiva al perfil de Servicio Social Hospitalario** (`Lic. Viviana Roldán`), para coordinar la visita domiciliaria o llamado a la familia.
+* Al presionar **`[ 🔴 Alerta Trabajo Social ]`**, se genera una orden de intervención desptachada **de manera privada y exclusiva al perfil de Servicio Social Hospitalario** (`Lic. Viviana Roldán`).
 
 ---
 
-## 🛡️ 6. Módulo de Administración General (Exclusivo Dirección)
+## 🛠️ 6. Módulo de Administración General (Exclusivo Dirección)
 En la solapa **`[ 🛠️ Administración ]`**:
 * **CRUD de Usuarios:** Alta de nuevos profesionales con DNI y Clave, y tabla de gestión/borrado de cuentas habilitadas.
 * **CRUD de Servicios Hospitalarios:** Alta de nuevos departamentos (código, jefe, email) y botón `[ 🗑️ ]` para eliminar servicios en desuso.
