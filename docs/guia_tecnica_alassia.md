@@ -25,6 +25,7 @@
 ### 1. `index.html` (Vista Principal y Maquetación de Interfaces)
 * **Propósito:** Archivo de estructura HTML5 semántica y responsiva que contiene las vistas de la aplicación.
 * **Componentes Clave:**
+  * `#login-page-screen`: Pantalla de autenticación Split-Screen con identidad del Gobierno de Santa Fe, sello del Hospital Alassia (`Mendoza 4151, Santa Fe Capital`), conmutador de visibilidad de contraseña y selector rápido de credenciales demo por rol.
   * `#sidebar`: Menú lateral izquierdo dinámico filtrado por rol y tarjeta fija del profesional logueado (`#sidebar-user-card`).
   * `#quick-nav-header`: Barra superior fija con perfil activo y accesos directos (`Pendientes`, `Emisión`, `Archivo`).
   * `#tab-inbox`: Tabla de Bandeja de Entrada con buscador instantáneo (`#search-inbox-input`), selectores de alcance (`scope-btn-all`, `scope-btn-received`, `scope-btn-sent`) y matriz visual `Origen ➔ Destino`.
@@ -36,11 +37,11 @@
 ### 2. `app.js` (Lógica del Cliente, Controlador SPA y Estado)
 * **Propósito:** Controlador principal en JavaScript vanilla que maneja el estado local (`localStorage`), la reactividad de la interfaz y la lógica de negocio.
 * **Funciones Principales:**
-  * `renderInbox()`: Incorpora filtrado por término de búsqueda (`#search-inbox-input`) en vivo comparando contra DNI, nombre del paciente, ID o servicio.
-  * `renderArchiveTable()`: Incorpora filtrado instantáneo por término (`#search-archive-input`) en el archivo histórico.
-  * `renderRecurringSection()`: Incorpora filtrado instantáneo por término (`#search-recurring-input`) en las tarjetas de tratamientos crónicos.
+  * `togglePasswordVisibility()`: Conmutador de tipo de campo (`password` / `text`) e ícono del ojo en el formulario de login.
+  * `fillDemoLogin(dni, pass)`: Función de autocompletado en 1 clic de credenciales por especialidad para demostraciones.
   * `canUserDeliverRecord(record, user)`: Matriz de autorización por rol que habilita el botón `[ 📦 Entregar ]` y los selectores de cambio de estado ÚNICAMENTE a los profesionales del servicio receptor (`r.destino`).
   * `isRecordForService(record, userService)`: Algoritmo de filtrado relacional que permite visibilidad tanto al servicio emisor (para seguimiento) como al servicio receptor (para dispensa).
+  * `setInboxScope(scope)`: Conmutador de alcance para alternar entre `all` (Todos), `received` (Recibidos) y `sent` (Enviados).
   * `revertLastDispense(id)`: Permite deshacer la última entrega de un tratamiento mensual (`moduloActual -= 1`), reajustando fechas y registrando la reversión en la auditoría.
   * `handleCreateServiceSubmit()` / `deleteService(id)`: Lógica del CRUD de servicios hospitalarios con persistencia en `alassia_services`.
   * `exportToPDF(elementId, filename)`: Motor de generación directa de recetarios en PDF usando `html2pdf.js`.
@@ -48,9 +49,9 @@
 ### 3. `styles.css` (Sistema de Diseño y Fluid Widescreen Engine)
 * **Propósito:** Hoja de estilos en CSS Vanilla con variables de tokens de diseño (`--primary-600`, `--slate-900`, `--radius-md`).
 * **Módulos Destacados:**
+  * `.login-container-wrap` / `.login-hero-showcase`: Estilos de la pantalla de Login institucional con glassmorphism, gradientes pediátricos santafesinos y animación de pulso de sello.
   * Breakpoints Widescreen `@media (min-width: 1400px)` y `@media (min-width: 1800px)` para aprovechar el 100% del ancho en monitores Full HD, 2K y 4K.
   * Hojas de papel digital e impresas (`.paper-sheet`) diseñadas con tipografía monospace `JetBrains Mono` y fuentes legibles de Google Fonts (`Inter`, `Outfit`).
-  * Clases utility para notificaciones de equipo, insignias de estado y animaciones micro-interactivas.
 
 ### 4. `buscar_paciente.php` (Servicio API de Búsqueda de Pacientes)
 * **Propósito:** Endpoint PHP con PDO que recibe la consulta `GET ?dni=XXXXX` o `GET ?term=XXXXX`.

@@ -8,17 +8,13 @@ El Portal Digital de Mensajería, Recetas e Interconsultas del Hospital de Niño
 
 ---
 
-## 🔑 1. Inicio de Sesión y Perfiles de Acceso (RBAC)
-Cada profesional de la salud accede con sus credenciales personales (**D.N.I.** y **Contraseña**). El sistema detecta automáticamente tu especialidad y adapta la interfaz a tu rol:
+## 🔑 1. Pantalla de Acceso Institucional (Santa Fe Capital)
+La nueva pantalla de inicio de sesión cuenta con una maquetación **Split-Screen** moderna con diseño institucional del **Gobierno de la Provincia de Santa Fe • Ministerio de Salud**:
 
-### 🎭 Perfiles Hospitalarios Habilitados:
-* **Cardiología Infantil:** Emisión y recepción de evaluaciones cardiológicas, ECG y Ecocardiogramas.
-* **Nutrición y Lactario:** Prescripción oficial y dispensa de fórmulas lácteas y módulos calóricos (APLV).
-* **Farmacia Hospitalaria:** Emisión y dispensa de recetas electrónicas de medicamentos y tratamientos crónicos.
-* **Diagnóstico por Imágenes:** Pedidos de ecografía, radiografía (RX), tomografía (TAC) y resonancia (RMN).
-* **Servicio Social Hospitalario:** Recepción exclusiva de alertas privadas por inasistencia/ausentismo de pacientes a retiros.
-* **Internación General / Clínica Pediátrica:** Emisión de interconsultas generales entre salas.
-* **Dirección Médica (Admin):** Auditoría total, gestión CRUD de cuentas de usuarios, alta de servicios y control de permisos.
+* **Escudo e Identidad Local:** Referencia explícita al *Hospital de Niños Dr. Orlando Alassia* (`Mendoza 4151, Santa Fe Capital • Tel: (0342) 457-3333`).
+* **Indicador de Red Intranet:** Estado en vivo de la red hospitalaria conectada a los servidores locales.
+* **Ocultar/Mostrar Contraseña:** Botón interactivo con ícono de ojo para verificar la clave personal antes de ingresar.
+* **Selector Rápido de Credenciales de Prueba:** Botones por especialidad (*Dirección Médica*, *Cardiología*, *Gastroenterología*, *Nutrición*, *Farmacia*, *Imágenes* y *Servicio Social*) para autocompletar el acceso en 1 clic durante guardias o demostraciones.
 
 ---
 
