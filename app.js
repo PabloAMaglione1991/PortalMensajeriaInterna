@@ -2085,7 +2085,8 @@ function handleFormSubmit(event, type) {
     newRecord.hc = document.getElementById('c-dni').value || 'HC-9821';
     newRecord.edad = document.getElementById('c-edad').value;
     newRecord.servicio = 'Cardiología Infantil';
-    newRecord.staffAssigned = document.getElementById('c-staff-target').value;
+    newRecord.destino = 'Cardiología Infantil';
+    newRecord.staffAssigned = 'Equipo Completo de Cardiología Infantil';
     newRecord.diagnostico = document.getElementById('c-diag').value;
     newRecord.motivo = document.getElementById('c-motivo').value;
     newRecord.medico = document.getElementById('c-medico').value || activeUser.name;
@@ -2096,7 +2097,7 @@ function handleFormSubmit(event, type) {
     newRecord.hc = document.getElementById('g-hc').value || 'HC-SN';
     newRecord.servicio = document.getElementById('g-servicio').value;
     newRecord.destino = document.getElementById('g-destino').value;
-    newRecord.staffAssigned = document.getElementById('g-staff-target').value;
+    newRecord.staffAssigned = `Equipo Completo de ${newRecord.destino}`;
     newRecord.motivo = document.getElementById('g-motivo').value;
     newRecord.medico = document.getElementById('g-medico').value || activeUser.name;
     targetEmail = document.getElementById('g-email').value || 'gastroenterologia.alassia@santafe.gob.ar';
@@ -2105,7 +2106,8 @@ function handleFormSubmit(event, type) {
     newRecord.dni = document.getElementById('f-dni').value || 'Sin DNI';
     newRecord.hc = document.getElementById('f-dni').value || 'HC-REC';
     newRecord.servicio = 'Farmacia y Recetas Electrónicas';
-    newRecord.staffAssigned = document.getElementById('f-staff-target').value;
+    newRecord.destino = 'Farmacia y Recetas Electrónicas';
+    newRecord.staffAssigned = 'Equipo Completo de Farmacia Hospitalaria';
     newRecord.diagnostico = document.getElementById('f-diag').value;
     newRecord.rp1 = `${document.getElementById('f-rp').value} — ${document.getElementById('f-dosis').value}`;
     newRecord.medico = document.getElementById('f-medico').value || activeUser.name;
@@ -2125,7 +2127,8 @@ function handleFormSubmit(event, type) {
     newRecord.dni = document.getElementById('i-dni').value || 'Sin DNI';
     newRecord.hc = document.getElementById('i-dni').value || 'HC-IMG';
     newRecord.servicio = 'Diagnóstico por Imágenes';
-    newRecord.staffAssigned = document.getElementById('i-staff-target').value;
+    newRecord.destino = 'Diagnóstico por Imágenes';
+    newRecord.staffAssigned = 'Equipo Guardia de Diagnóstico por Imágenes';
     newRecord.diagnostico = document.getElementById('i-modalidad').value;
     newRecord.motivo = `Estudio: ${document.getElementById('i-modalidad').value} en ${document.getElementById('i-region').value}. Indicación: ${document.getElementById('i-motivo').value}`;
     newRecord.medico = document.getElementById('i-medico').value || activeUser.name;
@@ -2134,8 +2137,9 @@ function handleFormSubmit(event, type) {
     newRecord.paciente = document.getElementById('n-nombre').value;
     newRecord.dni = document.getElementById('n-dni').value || 's/d';
     newRecord.hc = 'HC-NUT';
-    newRecord.servicio = document.getElementById('n-servicio-select').value || 'Gastroenterología Infantil';
-    newRecord.staffAssigned = document.getElementById('n-staff-target').value;
+    newRecord.servicio = document.getElementById('n-servicio-select').value || 'Nutrición y Lactario';
+    newRecord.destino = 'Nutrición y Lactario';
+    newRecord.staffAssigned = 'Equipo Completo de Nutrición y Lactario';
     newRecord.diagnostico = document.getElementById('n-diag').value;
     newRecord.rp1 = `${document.getElementById('n-rp1-formula').value} - ${document.getElementById('n-rp1-vol').value}`;
     newRecord.medico = document.getElementById('n-medico').value || activeUser.name;
@@ -2155,6 +2159,14 @@ function handleFormSubmit(event, type) {
   // Save Record
   records.unshift(newRecord);
   localStorage.setItem('alassia_records', JSON.stringify(records));
+
+  // Add Team-Wide Notification for Target Service
+  addNotification({
+    targetService: newRecord.destino || newRecord.servicio,
+    title: `📥 NUEVO PEDIDO REQUISITADO: ${newRecord.type}`,
+    text: `Paciente: ${newRecord.paciente} (${newRecord.hc || newRecord.id}) emitido por ${newRecord.medico}.`,
+    time: "Ahora"
+  });
 
   // Log Audit Event
   logEvent('CREACION', `Emisión de ${newRecord.type} #${newRecord.id} para paciente ${newRecord.paciente} (HC: ${newRecord.hc})`);
