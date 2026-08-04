@@ -60,7 +60,13 @@
   * Intenta consultar primero el Servidor Central `diagnose` (`10.12.4.1`). Si falla por red, realiza un failover transparente al Servidor Local `alassia_mensajeria`.
   * Normalización de campos nulos (`$row['fnac'] ?? '2019-05-12'`) para evitar warnings o referencias undefined en JavaScript.
 
-### 5. `test_conexion.php` (Endpoint de Diagnóstico e Infraestructura)
+### 5. `enviar_mail.php` (Servicio Backend SMTP de Despacho de Notificaciones)
+* **Propósito:** Endpoint PHP que recibe solicitudes de envío de correo en formato JSON y gestiona el despacho mediante servidor SMTP hospitalario (`smtp.santafe.gob.ar` o Gmail).
+* **Características Destacadas:**
+  * Soporte dual: Modo `SMTP_ENABLED = true` para despacho SMTP real y modo fallback local `MAILS_DIR` (`mails_salida/mail_ID_timestamp.html`) para pruebas sin riesgo de envío accidental.
+  * Plantilla HTML responsiva con sello institucional oficial del Hospital de Niños "Dr. Orlando Alassia", tipografía clara y botón directo de acceso al portal.
+
+### 6. `test_conexion.php` (Endpoint de Diagnóstico e Infraestructura)
 * **Propósito:** Script PHP de salud que evalúa latencia y estado de conexión con ambas bases MySQL (`diagnose` y `alassia_mensajeria`), devolviendo JSON estructurado con el estado de la red hospitalaria.
 
 ### 6. `schema_completo_alassia.sql` (Script DDL y Semillero MySQL)
