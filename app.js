@@ -642,6 +642,20 @@ function checkAuthSession() {
   }
 }
 
+function togglePasswordVisibility() {
+  const passInput = document.getElementById('login-pass-input');
+  const eyeIcon = document.getElementById('pass-eye-icon');
+  if (!passInput) return;
+
+  if (passInput.type === 'password') {
+    passInput.type = 'text';
+    if (eyeIcon) eyeIcon.className = 'ri-eye-off-line';
+  } else {
+    passInput.type = 'password';
+    if (eyeIcon) eyeIcon.className = 'ri-eye-line';
+  }
+}
+
 function fillDemoLogin(dni, pass) {
   document.getElementById('login-dni-input').value = dni;
   document.getElementById('login-pass-input').value = pass;
