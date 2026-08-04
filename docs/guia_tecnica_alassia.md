@@ -27,18 +27,20 @@
 * **Componentes Clave:**
   * `#sidebar`: Menú lateral izquierdo dinámico filtrado por rol y tarjeta fija del profesional logueado (`#sidebar-user-card`).
   * `#quick-nav-header`: Barra superior fija con perfil activo y accesos directos (`Pendientes`, `Emisión`, `Archivo`).
-  * `#tab-inbox`: Tabla de Bandeja de Entrada con selectores de alcance (`scope-btn-all`, `scope-btn-received`, `scope-btn-sent`) y matriz visual `Origen ➔ Destino`.
-  * `#tab-recurrencia`: Módulo de tratamientos crónicos con botón `[ 🟢 Registrar Entrega ]` y `[ ↩️ Deshacer Entrega ]`.
+  * `#tab-inbox`: Tabla de Bandeja de Entrada con buscador instantáneo (`#search-inbox-input`), selectores de alcance (`scope-btn-all`, `scope-btn-received`, `scope-btn-sent`) y matriz visual `Origen ➔ Destino`.
+  * `#tab-recurrencia`: Módulo de tratamientos crónicos con buscador en tiempo real (`#search-recurring-input`), botón `[ 🟢 Registrar Entrega ]` y `[ ↩️ Deshacer Entrega ]`.
+  * `#tab-archive`: Archivo histórico con buscador instantáneo (`#search-archive-input`).
   * `#tab-admin`: Módulo de Administración exclusivo para Admin con CRUD de Usuarios, CRUD de Servicios Hospitalarios (`#create-service-form`) y toggles de autorización por sector.
   * `#resolve-modal`, `#email-modal`, `#sheet-modal`: Cuadros modales interactivos para firmas, reportes y vistas previa de PDF.
 
 ### 2. `app.js` (Lógica del Cliente, Controlador SPA y Estado)
 * **Propósito:** Controlador principal en JavaScript vanilla que maneja el estado local (`localStorage`), la reactividad de la interfaz y la lógica de negocio.
 * **Funciones Principales:**
+  * `renderInbox()`: Incorpora filtrado por término de búsqueda (`#search-inbox-input`) en vivo comparando contra DNI, nombre del paciente, ID o servicio.
+  * `renderArchiveTable()`: Incorpora filtrado instantáneo por término (`#search-archive-input`) en el archivo histórico.
+  * `renderRecurringSection()`: Incorpora filtrado instantáneo por término (`#search-recurring-input`) en las tarjetas de tratamientos crónicos.
   * `canUserDeliverRecord(record, user)`: Matriz de autorización por rol que habilita el botón `[ 📦 Entregar ]` y los selectores de cambio de estado ÚNICAMENTE a los profesionales del servicio receptor (`r.destino`).
   * `isRecordForService(record, userService)`: Algoritmo de filtrado relacional que permite visibilidad tanto al servicio emisor (para seguimiento) como al servicio receptor (para dispensa).
-  * `setInboxScope(scope)`: Conmutador de alcance para alternar entre `all` (Todos), `received` (Recibidos) y `sent` (Enviados).
-  * `handleFormSubmit(e)`: Captura las solicitudes emitidas, asigna al `Equipo Completo de [Servicio]` y despacha notificaciones colectivas.
   * `revertLastDispense(id)`: Permite deshacer la última entrega de un tratamiento mensual (`moduloActual -= 1`), reajustando fechas y registrando la reversión en la auditoría.
   * `handleCreateServiceSubmit()` / `deleteService(id)`: Lógica del CRUD de servicios hospitalarios con persistencia en `alassia_services`.
   * `exportToPDF(elementId, filename)`: Motor de generación directa de recetarios en PDF usando `html2pdf.js`.

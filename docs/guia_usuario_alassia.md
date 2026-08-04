@@ -1,4 +1,4 @@
-# 📖 Guía de Usuario — Portal Digital de Mensajeria, Recetas e Interconsultas
+# 📖 Guía de Usuario — Portal Digital de Mensajería, Recetas e Interconsultas
 ### Hospital de Niños "Dr. Orlando Alassia" • Santa Fe (Versión Oficial Actualizada 2026)
 
 ---
@@ -22,7 +22,16 @@ Cada profesional de la salud accede con sus credenciales personales (**D.N.I.** 
 
 ---
 
-## 📥 2. Matriz de Permisos en la Bandeja de Entrada: Seguimiento vs. Dispensa
+## 🔍 2. Buscadores en Tiempo Real por DNI, Paciente y Código ID
+Dada la masividad asistencial del Hospital Alassia, se incorporaron **buscadores interactivos instantáneos** en las 3 secciones operativas clave:
+
+1. **Buscador en Bandeja de Entrada (`#tab-inbox`):** Campo `🔍 Buscar por DNI, paciente o Código ID...` que filtra en vivo solicitudes pendientes y en seguimiento.
+2. **Buscador en Retiros Mensuales & Alarmas (`#tab-recurrencia`):** Campo `🔍 Buscar retiros por DNI, paciente o Código ID...` para ubicar tarjetas de tratamientos crónicos de leches o fármacos en microsegundos.
+3. **Buscador en Archivo Histórico (`#tab-archive`):** Campo `🔍 Buscar en archivo por DNI, paciente o ID...` para consultar expedientes o entregas resueltas pasadas.
+
+---
+
+## 📥 3. Matriz de Permisos en la Bandeja de Entrada: Seguimiento vs. Dispensa
 
 El sistema implementa una matriz de visibilidad y autorización quirúrgica:
 
@@ -40,14 +49,9 @@ El sistema implementa una matriz de visibilidad y autorización quirúrgica:
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Filtros Rápidos de la Bandeja:
-* **`[ 📋 Todos mis Pedidos ]`**: Muestra todo el historial de pedidos vinculados a tu servicio (emitidos y recibidos).
-* **`[ 📥 Recibidos para Entregar ]`**: Muestra únicamente los pedidos dirigidos a tu equipo para ser entregados.
-* **`[ 📤 Enviados en Seguimiento ]`**: Muestra las recetas o consultas enviadas por tu sala a otros sectores para verificar su avance.
-
 ---
 
-## 📦 3. Registro de Entregas y Reversión de Errores (`[ 📦 Entregar ]`)
+## 📦 4. Registro de Entregas y Reversión de Errores (`[ 📦 Entregar ]`)
 
 ### A. Entrega de Recetas o Formularios Únicos:
 1. Al estar logueado en el servicio receptor (ej: *Nutrición* para leches o *Farmacia* para medicamentos), ingresá a la **`Bandeja de Entrada`** (`#tab-inbox`).
@@ -62,7 +66,7 @@ El sistema implementa una matriz de visibilidad y autorización quirúrgica:
 
 ---
 
-## 📄 4. Descarga Directa de PDF (Sin Ventanas de Impresora)
+## 📄 5. Descarga Directa de PDF (Sin Ventanas de Impresora)
 En cualquier formulario, solicitud o dictamen médico:
 1. Completá los datos del paciente (búsqueda automática por DNI en la base central `diagnose`).
 2. Presioná **`[ Descargar PDF ]`**.
@@ -70,13 +74,13 @@ En cualquier formulario, solicitud o dictamen médico:
 
 ---
 
-## 🚨 5. Alarmas de Ausentismo a Servicio Social
+## 🚨 6. Alarmas de Ausentismo a Servicio Social
 * Si un paciente supera los días fijados para retirar su insumo o leche, la tarjeta se tornará de color rojo (**`🔴 ALARMA AUSENTISMO`**).
-* Al presionar **`[ 🔴 Alerta Trabajo Social ]`**, se genera una orden de intervención desptachada **de manera privada y exclusiva al perfil de Servicio Social Hospitalario** (`Lic. Viviana Roldán`).
+* Al presionar **`[ 🔴 Alerta Trabajo Social ]`**, se genera una orden de intervención despachada **de manera privada y exclusiva al perfil de Servicio Social Hospitalario** (`Lic. Viviana Roldán`).
 
 ---
 
-## 🛠️ 6. Módulo de Administración General (Exclusivo Dirección)
+## 🛠️ 7. Módulo de Administración General (Exclusivo Dirección)
 En la solapa **`[ 🛠️ Administración ]`**:
 * **CRUD de Usuarios:** Alta de nuevos profesionales con DNI y Clave, y tabla de gestión/borrado de cuentas habilitadas.
 * **CRUD de Servicios Hospitalarios:** Alta de nuevos departamentos (código, jefe, email) y botón `[ 🗑️ ]` para eliminar servicios en desuso.
@@ -84,7 +88,7 @@ En la solapa **`[ 🛠️ Administración ]`**:
 
 ---
 
-## 🚪 7. Cierre de Sesión Seguro
+## 🚪 8. Cierre de Sesión Seguro
 Al finalizar tu turno o guardia:
 * Dirigite al pie del menú lateral.
 * Encontrá tu tarjeta profesional fija con tu nombre y matrícula.
