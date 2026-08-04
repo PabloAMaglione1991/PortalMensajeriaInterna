@@ -1192,94 +1192,132 @@ textarea.form-control {
   line-height: 1.5;
 }
 
-/* Dedicated Friendly Hospital Alassia Login Page Styles */
+/* Human-Designed Authentic Institutional Hospital Alassia Login Page Styles */
 .login-page-screen {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-  /* Friendly, warm pediatric hospital background palette (Santa Fe Sky & Teal) */
-  background: radial-gradient(circle at 10% 20%, #e0f2fe 0%, #f0fdf4 40%, #e0f2fe 80%),
-              linear-gradient(135deg, #0284c7 0%, #0d9488 100%);
+  background-color: #f1f5f9;
+  display: flex;
+  flex-direction: column;
+  z-index: 9999;
+  overflow-y: auto;
+}
+
+/* Top Institutional Government Header */
+.login-gov-header {
+  background: #0f172a;
+  color: #ffffff;
+  padding: 0.75rem 1.5rem;
+  border-bottom: 3px solid #0284c7;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.gov-header-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.gov-brand-left {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.85rem;
+}
+
+.gov-flag-badge {
+  background: #0284c7;
+  color: #ffffff;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 0.2rem 0.45rem;
+  border-radius: 3px;
+  letter-spacing: 0.5px;
+}
+
+.gov-brand-left strong {
+  font-weight: 700;
+  letter-spacing: -0.2px;
+}
+
+.gov-sub-label {
+  color: #94a3b8;
+  font-size: 0.8rem;
+}
+
+.gov-system-tag {
+  font-size: 0.75rem;
+  color: #38bdf8;
+  font-family: 'JetBrains Mono', monospace;
+  background: rgba(56, 189, 248, 0.1);
+  padding: 0.25rem 0.6rem;
+  border-radius: 4px;
+  border: 1px solid rgba(56, 189, 248, 0.2);
+}
+
+/* Center Card Section */
+.login-card-container {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
-  padding: 1.5rem;
-  overflow-y: auto;
+  padding: 2rem 1rem;
 }
 
 .login-box-card {
   background: #ffffff;
   width: 100%;
-  max-width: 450px;
-  border-radius: 24px;
-  padding: 2.25rem 2rem;
-  box-shadow: 0 20px 40px -15px rgba(2, 132, 199, 0.25), 0 0 0 1px rgba(186, 230, 253, 0.6);
-  animation: friendlyFadeIn 0.4s ease-out;
-}
-
-@keyframes friendlyFadeIn {
-  from { opacity: 0; transform: translateY(12px) scale(0.98); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  max-width: 440px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  border-top: 4px solid #0284c7;
+  padding: 2rem 1.75rem;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
 }
 
 .login-brand-header {
-  text-align: center;
   margin-bottom: 1.5rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid #e2e8f0;
 }
 
-.login-brand-logo {
-  width: 60px;
-  height: 60px;
-  background: linear-gradient(135deg, #0284c7, #0d9488);
-  color: white;
-  border-radius: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 2rem;
-  margin: 0 auto 0.85rem;
-  box-shadow: 0 8px 20px rgba(2, 132, 199, 0.3);
-}
-
-.login-brand-header h2 {
-  font-size: 1.25rem;
+.hospital-identity h2 {
+  font-size: 1.15rem;
   font-weight: 800;
   color: #0f172a;
   letter-spacing: -0.3px;
-  margin-bottom: 2px;
+  margin-bottom: 0.25rem;
+  line-height: 1.25;
 }
 
-.login-brand-header h3 {
-  font-size: 1.05rem;
+.hospital-identity p {
+  font-size: 0.825rem;
   color: #0284c7;
-  font-weight: 700;
-  margin-bottom: 0.35rem;
-}
-
-.login-gov-tag {
-  font-size: 0.775rem;
-  color: #64748b;
   font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.35rem;
+  margin-bottom: 0.4rem;
 }
 
-.login-error-msg {
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  color: #991b1b;
-  padding: 0.65rem 0.85rem;
-  border-radius: var(--radius-md);
-  font-size: 0.8rem;
+.hospital-location {
+  font-size: 0.75rem;
+  color: #64748b;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
+  gap: 0.3rem;
+}
+
+.form-label-human {
+  display: block;
+  font-size: 0.825rem;
+  font-weight: 700;
+  color: #334155;
+  margin-bottom: 0.35rem;
 }
 
 .input-with-icon-wrap {
@@ -1290,31 +1328,44 @@ textarea.form-control {
 
 .input-leading-icon {
   position: absolute;
-  left: 0.9rem;
-  color: #94a3b8;
-  font-size: 1.1rem;
+  left: 0.85rem;
+  color: #64748b;
+  font-size: 1.05rem;
   pointer-events: none;
 }
 
 .padded-left {
-  padding-left: 2.6rem !important;
+  padding-left: 2.5rem !important;
+  background-color: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  color: #0f172a;
+  transition: all 0.2s ease;
+}
+
+.padded-left:focus {
+  background-color: #ffffff;
+  border-color: #0284c7;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+  outline: none;
 }
 
 .padded-right {
-  padding-right: 2.6rem !important;
+  padding-right: 2.5rem !important;
 }
 
 .btn-toggle-eye {
   position: absolute;
-  right: 0.75rem;
+  right: 0.6rem;
   background: none;
   border: none;
-  color: #94a3b8;
-  font-size: 1.1rem;
+  color: #64748b;
+  font-size: 1.05rem;
   cursor: pointer;
   padding: 0.25rem;
-  border-radius: var(--radius-sm);
-  transition: color 0.2s ease;
+  border-radius: 4px;
+  transition: color 0.15s ease;
 }
 
 .btn-toggle-eye:hover {
@@ -1323,50 +1374,66 @@ textarea.form-control {
 
 .btn-login-submit {
   width: 100%;
-  padding: 0.85rem;
-  background: linear-gradient(135deg, #0284c7 0%, #0d9488 100%);
-  color: white;
+  padding: 0.8rem;
+  background: #0284c7;
+  color: #ffffff;
   border: none;
-  border-radius: var(--radius-lg);
-  font-size: 0.95rem;
+  border-radius: 6px;
+  font-size: 0.925rem;
   font-weight: 700;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  box-shadow: 0 8px 18px rgba(2, 132, 199, 0.35);
-  transition: all 0.25s ease;
+  box-shadow: 0 2px 4px rgba(2, 132, 199, 0.2);
+  transition: background-color 0.2s ease, transform 0.1s ease;
 }
 
 .btn-login-submit:hover {
+  background-color: #0369a1;
   transform: translateY(-1px);
-  box-shadow: 0 12px 24px rgba(2, 132, 199, 0.45);
-  background: linear-gradient(135deg, #0369a1 0%, #0f766e 100%);
+}
+
+.btn-login-submit:active {
+  transform: translateY(0);
+}
+
+.login-error-msg {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  padding: 0.65rem 0.85rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.15rem;
 }
 
 .demo-credentials-box {
-  margin-top: 1.25rem;
+  margin-top: 1.35rem;
   padding-top: 1rem;
-  border-top: 1px dashed #e2e8f0;
+  border-top: 1px solid #e2e8f0;
 }
 
-.demo-credentials-box h4 {
+.demo-box-title {
   font-size: 0.75rem;
+  font-weight: 700;
   color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
   margin-bottom: 0.65rem;
   display: flex;
   align-items: center;
   gap: 0.35rem;
-  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
 }
 
 .demo-cards-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 0.45rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
   max-height: 160px;
   overflow-y: auto;
 }
@@ -1374,37 +1441,39 @@ textarea.form-control {
 .demo-chip {
   background: #f8fafc;
   border: 1px solid #e2e8f0;
-  padding: 0.45rem 0.65rem;
-  border-radius: var(--radius-md);
-  text-align: left;
+  padding: 0.45rem 0.75rem;
+  border-radius: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
 }
 
 .demo-chip:hover {
   border-color: #0284c7;
-  background-color: #f0f9ff;
-  transform: translateY(-1px);
+  background: #f0f9ff;
 }
 
 .demo-chip strong {
-  display: block;
-  font-size: 0.75rem;
+  font-size: 0.775rem;
   color: #1e293b;
 }
 
 .demo-chip span {
-  display: block;
-  font-size: 0.675rem;
+  font-size: 0.7rem;
   color: #0284c7;
   font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
 }
 
 .login-footer {
   margin-top: 1.25rem;
   text-align: center;
   font-size: 0.725rem;
-  color: #64748b;
+  color: #94a3b8;
+  padding-top: 0.75rem;
+  border-top: 1px dashed #f1f5f9;
 }
 
 /* Toast Alerts */

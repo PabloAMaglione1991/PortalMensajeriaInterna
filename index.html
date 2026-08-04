@@ -12,85 +12,104 @@
 </head>
 <body>
 
-  <!-- Dedicated Friendly Hospital Alassia Login Page -->
+  <!-- Authentic Institutional Hospital Alassia Login Page (Human Designed) -->
   <div class="login-page-screen" id="login-page-screen">
-    <div class="login-box-card">
-      <div class="login-brand-header">
-        <div class="login-brand-logo">
-          <i class="ri-hospital-fill"></i>
+    
+    <!-- Top Government Banner -->
+    <header class="login-gov-header">
+      <div class="gov-header-inner">
+        <div class="gov-brand-left">
+          <span class="gov-flag-badge">SANTA FE</span>
+          <strong>GOBIERNO DE LA PROVINCIA DE SANTA FE</strong>
+          <span class="gov-sub-label">• Ministerio de Salud</span>
         </div>
-        <h2>HOSPITAL DE NIÑOS</h2>
-        <h3>"DR. ORLANDO ALASSIA"</h3>
-        <p class="login-gov-tag">
-          <i class="ri-building-2-line"></i> Ministerio de Salud • Provincia de Santa Fe
-        </p>
+        <div class="gov-system-tag">
+          Red Intranet Hospitalaria 10.12.4.2
+        </div>
       </div>
+    </header>
 
-      <div class="login-error-msg" id="login-error-alert" style="display: none;">
-        <i class="ri-error-warning-fill" style="font-size: 1.2rem;"></i>
-        <span id="login-error-text">D.N.I. o Contraseña incorrecta. Verifique sus credenciales.</span>
-      </div>
-
-      <form id="login-form-el" onsubmit="handleLoginSubmit(event)">
-        <div class="form-group full-width" style="margin-bottom: 1.15rem;">
-          <label style="font-weight: 600; color: var(--text-main); font-size: 0.85rem; margin-bottom: 0.35rem; display: block;">
-            <i class="ri-id-card-line" style="color: var(--primary-600);"></i> D.N.I. del Profesional
-          </label>
-          <div class="input-with-icon-wrap">
-            <i class="ri-user-3-line input-leading-icon"></i>
-            <input type="text" id="login-dni-input" class="form-control padded-left" placeholder="Ej: 24105200 (Sin puntos ni espacios)" required autofocus>
+    <!-- Center Login Card -->
+    <div class="login-card-container">
+      <div class="login-box-card">
+        
+        <div class="login-brand-header">
+          <div class="hospital-identity">
+            <h2>HOSPITAL DE NIÑOS "DR. ORLANDO ALASSIA"</h2>
+            <p>Portal Digital de Mensajería, Recetas e Interconsultas</p>
+            <span class="hospital-location"><i class="ri-map-pin-line"></i> Mendoza 4151, Santa Fe Capital</span>
           </div>
         </div>
 
-        <div class="form-group full-width" style="margin-bottom: 1.35rem;">
-          <label style="font-weight: 600; color: var(--text-main); font-size: 0.85rem; margin-bottom: 0.35rem; display: block;">
-            <i class="ri-lock-password-line" style="color: var(--primary-600);"></i> Contraseña / Clave Personal
-          </label>
-          <div class="input-with-icon-wrap">
-            <i class="ri-key-line input-leading-icon"></i>
-            <input type="password" id="login-pass-input" class="form-control padded-left padded-right" placeholder="••••••••" required>
-            <button type="button" class="btn-toggle-eye" onclick="togglePasswordVisibility()" title="Mostrar/Ocultar contraseña">
-              <i class="ri-eye-line" id="pass-eye-icon"></i>
+        <div class="login-error-msg" id="login-error-alert" style="display: none;">
+          <i class="ri-error-warning-fill"></i>
+          <span id="login-error-text">D.N.I. o Contraseña incorrecta. Verifique sus credenciales.</span>
+        </div>
+
+        <form id="login-form-el" onsubmit="handleLoginSubmit(event)">
+          <div class="form-group full-width" style="margin-bottom: 1.15rem;">
+            <label class="form-label-human">
+              D.N.I. del Profesional
+            </label>
+            <div class="input-with-icon-wrap">
+              <i class="ri-id-card-line input-leading-icon"></i>
+              <input type="text" id="login-dni-input" class="form-control padded-left" placeholder="Ej: 24105200 (Sin puntos)" required autofocus>
+            </div>
+          </div>
+
+          <div class="form-group full-width" style="margin-bottom: 1.35rem;">
+            <label class="form-label-human">
+              Contraseña / Clave Personal
+            </label>
+            <div class="input-with-icon-wrap">
+              <i class="ri-lock-line input-leading-icon"></i>
+              <input type="password" id="login-pass-input" class="form-control padded-left padded-right" placeholder="••••••••" required>
+              <button type="button" class="btn-toggle-eye" onclick="togglePasswordVisibility()" title="Mostrar/Ocultar contraseña">
+                <i class="ri-eye-line" id="pass-eye-icon"></i>
+              </button>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-login-submit">
+            <i class="ri-login-box-line"></i> Ingresar al Portal Hospitalario
+          </button>
+        </form>
+
+        <!-- Quick Demo Credentials Helper -->
+        <div class="demo-credentials-box">
+          <div class="demo-box-title">
+            <i class="ri-key-2-line"></i> Credenciales de Prueba por Rol:
+          </div>
+          <div class="demo-cards-list">
+            <button type="button" class="demo-chip" onclick="fillDemoLogin('11111111', 'admin123')">
+              <strong>Dirección Médica (Admin)</strong>
+              <span>DNI: 11111111</span>
+            </button>
+            <button type="button" class="demo-chip" onclick="fillDemoLogin('20341000', 'cardio123')">
+              <strong>Dr. Orlando Alassia (Cardio)</strong>
+              <span>DNI: 20341000</span>
+            </button>
+            <button type="button" class="demo-chip" onclick="fillDemoLogin('24105200', 'nutri123')">
+              <strong>Maglione Pablo (Nutrición)</strong>
+              <span>DNI: 24105200</span>
+            </button>
+            <button type="button" class="demo-chip" onclick="fillDemoLogin('22182000', 'farmacia123')">
+              <strong>Farm. Carlos Villalba (Farmacia)</strong>
+              <span>DNI: 22182000</span>
+            </button>
+            <button type="button" class="demo-chip" onclick="fillDemoLogin('28410999', 'social123')">
+              <strong>Lic. Viviana Roldán (Serv. Social)</strong>
+              <span>DNI: 28410999</span>
             </button>
           </div>
         </div>
 
-        <button type="submit" class="btn-login-submit">
-          <i class="ri-login-box-line"></i> Ingresar al Portal Hospitalario
-        </button>
-      </form>
-
-      <!-- Quick Demo Credentials Helper -->
-      <div class="demo-credentials-box">
-        <h4><i class="ri-key-2-line" style="color: var(--primary-600);"></i> Acceso Rápido de Prueba (Clic para Autocompletar)</h4>
-        <div class="demo-cards-list">
-          <button type="button" class="demo-chip" onclick="fillDemoLogin('11111111', 'admin123')">
-            <strong>Dirección Médica (Admin)</strong>
-            <span>DNI: 11111111</span>
-          </button>
-          <button type="button" class="demo-chip" onclick="fillDemoLogin('20341000', 'cardio123')">
-            <strong>Dr. Orlando Alassia (Cardio)</strong>
-            <span>DNI: 20341000</span>
-          </button>
-          <button type="button" class="demo-chip" onclick="fillDemoLogin('24105200', 'nutri123')">
-            <strong>Maglione Pablo (Nutrición)</strong>
-            <span>DNI: 24105200</span>
-          </button>
-          <button type="button" class="demo-chip" onclick="fillDemoLogin('22182000', 'farmacia123')">
-            <strong>Farm. Carlos Villalba (Farmacia)</strong>
-            <span>DNI: 22182000</span>
-          </button>
-          <button type="button" class="demo-chip" onclick="fillDemoLogin('28410999', 'social123')">
-            <strong>Lic. Viviana Roldán (Serv. Social)</strong>
-            <span>DNI: 28410999</span>
-          </button>
+        <div class="login-footer">
+          <span>Sistema de Gestión Asistencial • Hospital Alassia 2026</span>
         </div>
       </div>
-
-      <div class="login-footer">
-        <p><i class="ri-shield-check-line" style="color: var(--emerald-500);"></i> Mendoza 4151, Santa Fe Capital • Red Intranet Hospital Alassia</p>
-      </div>
     </div>
+
   </div>
 
   <div class="app-container" id="app-workspace-container" style="display: none;">
