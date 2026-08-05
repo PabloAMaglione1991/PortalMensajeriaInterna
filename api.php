@@ -110,13 +110,14 @@ switch ($action) {
 
         try {
             $stmt = $pdo->prepare("
-                INSERT INTO servicio (codigo, nombre, email_oficial, jefe_servicio, requiere_autorizacion_leches, activo)
-                VALUES (:codigo, :nombre, :email, :jefe, :leches, :activo)
+                INSERT INTO servicio (codigo, nombre, email_oficial, jefe_servicio, requiere_autorizacion_leches, reportes_habilitados, activo)
+                VALUES (:codigo, :nombre, :email, :jefe, :leches, :reportes, :activo)
                 ON DUPLICATE KEY UPDATE 
                     nombre = VALUES(nombre),
                     email_oficial = VALUES(email_oficial),
                     jefe_servicio = VALUES(jefe_servicio),
-                    requiere_autorizacion_leches = VALUES(requiere_autorizacion_leches)
+                    requiere_autorizacion_leches = VALUES(requiere_autorizacion_leches),
+                    reportes_habilitados = VALUES(reportes_habilitados)
             ");
             $stmt->execute([
                 ':codigo' => $code,
@@ -124,6 +125,7 @@ switch ($action) {
                 ':email' => $email,
                 ':jefe' => $head,
                 ':leches' => $autorizadoLeches,
+                ':reportes' => $reportesHabilitados,
                 ':activo' => 1
             ]);
 

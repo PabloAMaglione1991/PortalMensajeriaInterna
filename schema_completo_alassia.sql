@@ -72,6 +72,7 @@ CREATE TABLE `servicio` (
   `email_oficial` VARCHAR(150) NOT NULL,
   `jefe_servicio` VARCHAR(150) NULL,
   `requiere_autorizacion_leches` TINYINT(1) DEFAULT 0,
+  `reportes_habilitados` TINYINT(1) DEFAULT 1,
   `activo` TINYINT(1) DEFAULT 1,
   INDEX `idx_codigo` (`codigo`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_spanish_ci;
