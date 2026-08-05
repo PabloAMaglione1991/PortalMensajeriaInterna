@@ -7,6 +7,9 @@
 -- ============================================================================
 
 -- Desactivar verificación de claves foráneas durante el DDL para evitar Error 1217 y 150
+-- Forzar encoding UTF-8 mb4 para acentos y caracteres en español (á, é, í, ó, ú, ñ)
+SET NAMES utf8mb4;
+SET CHARACTER SET utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 
