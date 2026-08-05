@@ -1108,12 +1108,110 @@ function renderUserCrudTable() {
           : `<span class="action-tag general" style="font-size: 0.7rem;"><i class="ri-stethoscope-line"></i> Médico de Servicio</span>`}
       </td>
       <td>
-        ${activeUser && u.dni === activeUser.dni 
-          ? `<span style="font-size: 0.75rem; color: var(--text-muted); font-style: italic;">Sesión Actual</span>`
-          : `<button class="btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; color: var(--rose-600);" onclick="deleteUserByDNI('${u.dni}')"><i class="ri-delete-bin-line"></i> Eliminar</button>`}
+        <div style="display: flex; gap: 0.35rem; align-items: center;">
+          <button class="btn-secondary" style="padding: 0.25rem 0.55rem; font-size: 0.75rem; color: var(--primary-600); border-color: var(--primary-300);" onclick="openEditUserModal('${u.dni}')" title="Editar usuario">
+            <i class="ri-edit-line"></i> Editar
+          </button>
+          ${activeUser && u.dni === activeUser.dni 
+            ? `<span style="font-size: 0.75rem; color: var(--text-muted); font-style: italic;">Sesión Actual</span>`
+            : `<button class="btn-secondary" style="padding: 0.25rem 0.55rem; font-size: 0.75rem; color: var(--rose-600); border-color: var(--rose-300);" onclick="deleteUserByDNI('${u.dni}')" title="Eliminar usuario"><i class="ri-delete-bin-line"></i></button>`}
+        </div>
       </td>
     </tr>
   `).join('');
+}
+
+/* User Edit Handlers */
+function openEditUserModal(dni) {
+  const user = DEMO_USERS.find(u => u.dni === dni);
+  if (!user) return;
+
+  const modal = document.getElementById('edit-user-modal');
+  if (!modal) return;
+
+  document.getElementById('edit-user-original-dni').value = user.dni;
+  document.getElementById('edit-user-dni').value = user.dni;
+  document.getElementById('edit-user-name').value = user.name;
+  document.getElementById('edit-user-pass').value = '';
+  document.getElementById('edit-user-email').value = user.email || '';
+  document.getElementById('edit-user-is-admin').value = user.isAdmin ? 'true' : 'false';
+
+  let cleanRole = user.role;
+  let cleanMat = '';
+  if (user.role.includes('• Mat.')) {
+    const parts = user.role.split('• Mat.');
+    cleanRole = parts[0].trim();
+    cleanMat = parts[1].trim();
+  } else if (user.role.includes('Mat.')) {
+    const parts = user.role.split('Mat.');
+    cleanRole = parts[0].trim();
+    cleanMat = parts[1].trim();
+  }
+  document.getElementById('edit-user-role').value = cleanRole;
+  document.getElementById('edit-user-mat').value = cleanMat;
+
+  const servSelect = document.getElementById('edit-user-service');
+  if (servSelect) {
+    servSelect.innerHTML = services.map(s => `
+      <option value="${s.name}" ${s.name === user.service ? 'selected' : ''}>${s.name} (${s.code})</option>
+    `).join('');
+  }
+
+  modal.classList.add('active');
+}
+
+function closeEditUserModal() {
+  const modal = document.getElementById('edit-user-modal');
+  if (modal) modal.classList.remove('active');
+}
+
+function handleEditUserSubmit(e) {
+  e.preventDefault();
+  const dni = document.getElementById('edit-user-original-dni').value;
+  const user = DEMO_USERS.find(u => u.dni === dni);
+  if (!user) return;
+
+  const newName = document.getElementById('edit-user-name').value.trim();
+  const newPass = document.getElementById('edit-user-pass').value.trim();
+  const newMat = document.getElementById('edit-user-mat').value.trim() || 'S/N';
+  const newRole = document.getElementById('edit-user-role').value.trim();
+  const newService = document.getElementById('edit-user-service').value;
+  const newEmail = document.getElementById('edit-user-email').value.trim();
+  const newIsAdmin = document.getElementById('edit-user-is-admin').value === 'true';
+
+  user.name = newName;
+  if (newPass !== '') user.password = newPass;
+  user.role = `${newRole} • Mat. ${newMat}`;
+  user.service = newService;
+  user.email = newEmail;
+  user.isAdmin = newIsAdmin;
+  user.avatar = newName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'MD';
+
+  let customUsers = JSON.parse(localStorage.getItem('alassia_custom_users')) || [];
+  const idx = customUsers.findIndex(u => u.dni === dni);
+  if (idx !== -1) {
+    customUsers[idx] = user;
+  } else {
+    customUsers.unshift(user);
+  }
+  localStorage.setItem('alassia_custom_users', JSON.stringify(customUsers));
+
+  syncUsersWithServiceStaff();
+
+  fetch('api.php?action=save_user', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(user)
+  }).catch(err => console.log('MySQL User Edit Sync:', err));
+
+  closeEditUserModal();
+  renderUserCrudTable();
+  renderAdminServicesGrid();
+  renderServicesGrid();
+  populateStaffDropdowns();
+
+  logEvent('ADMIN', `Edición de usuario DNI ${dni}: actualizados datos de ${newName} (${newService})`);
+  showToast(`¡Usuario ${newName} (DNI ${dni}) actualizado exitosamente!`);
 }
 
 function deleteUserByDNI(dni) {
@@ -1376,12 +1474,72 @@ function renderAdminServicesGrid() {
         <button class="btn-secondary" style="flex: 1; font-size: 0.775rem; justify-content: center;" onclick="quickAddStaffTo('${s.id}')">
           <i class="ri-user-add-line"></i> Asignar Profesional
         </button>
+        <button class="btn-secondary" style="color: var(--primary-600); border-color: var(--primary-300); font-size: 0.775rem; padding: 0.4rem 0.65rem;" onclick="openEditServiceModal('${s.id}')" title="Editar servicio">
+          <i class="ri-edit-line"></i> Editar
+        </button>
         <button class="btn-secondary" style="color: var(--rose-600); border-color: var(--rose-300); font-size: 0.775rem; padding: 0.4rem 0.65rem;" onclick="deleteService('${s.id}')" title="Eliminar servicio">
           <i class="ri-delete-bin-line"></i>
         </button>
       </div>
     </div>
   `).join('');
+}
+
+/* Service Edit Handlers */
+function openEditServiceModal(serviceId) {
+  const service = services.find(s => s.id === serviceId);
+  if (!service) return;
+
+  const modal = document.getElementById('edit-service-modal');
+  if (!modal) return;
+
+  document.getElementById('edit-service-id').value = service.id;
+  document.getElementById('edit-service-code').value = service.code;
+  document.getElementById('edit-service-name').value = service.name;
+  document.getElementById('edit-service-head').value = service.headOfService;
+  document.getElementById('edit-service-email').value = service.email;
+  document.getElementById('edit-service-milk-auth').value = service.autorizadoLeches ? 'true' : 'false';
+  document.getElementById('edit-service-report-auth').value = service.reportesHabilitados !== false ? 'true' : 'false';
+  document.getElementById('edit-service-enabled').value = service.enabled ? 'true' : 'false';
+
+  modal.classList.add('active');
+}
+
+function closeEditServiceModal() {
+  const modal = document.getElementById('edit-service-modal');
+  if (modal) modal.classList.remove('active');
+}
+
+function handleEditServiceSubmit(e) {
+  e.preventDefault();
+  const id = document.getElementById('edit-service-id').value;
+  const service = services.find(s => s.id === id);
+  if (!service) return;
+
+  service.name = document.getElementById('edit-service-name').value.trim();
+  service.headOfService = document.getElementById('edit-service-head').value.trim();
+  service.email = document.getElementById('edit-service-email').value.trim();
+  service.autorizadoLeches = document.getElementById('edit-service-milk-auth').value === 'true';
+  service.reportesHabilitados = document.getElementById('edit-service-report-auth').value === 'true';
+  service.enabled = document.getElementById('edit-service-enabled').value === 'true';
+
+  localStorage.setItem('alassia_services', JSON.stringify(services));
+
+  // POST to api.php for MySQL 10.12.4.2 sync
+  fetch('api.php?action=save_service', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(service)
+  }).catch(err => console.log('MySQL Service Edit Sync:', err));
+
+  closeEditServiceModal();
+  renderAdminServicesGrid();
+  renderServicesGrid();
+  populateStaffDropdowns();
+  updateUserServiceDropdowns();
+
+  logEvent('ADMIN', `Edición de servicio ${service.name} (${service.code}): actualizados datos y permisos.`);
+  showToast(`¡Servicio ${service.name} (${service.code}) actualizado exitosamente!`);
 }
 
 function handleCreateServiceSubmit(e) {
@@ -2191,6 +2349,9 @@ function renderServicesGrid() {
         <div style="display: flex; gap: 0.5rem; margin-top: 0.85rem; padding-top: 0.75rem; border-top: 1px dashed var(--border-color);">
           <button class="btn-secondary" style="flex: 1; font-size: 0.775rem; justify-content: center;" onclick="quickAddStaffTo('${s.id}')">
             <i class="ri-user-add-line"></i> Asignar Agente
+          </button>
+          <button class="btn-secondary" style="color: var(--primary-600); border-color: var(--primary-300); font-size: 0.775rem; padding: 0.4rem 0.65rem;" onclick="openEditServiceModal('${s.id}')" title="Editar servicio">
+            <i class="ri-edit-line"></i> Editar
           </button>
           <button class="btn-secondary" style="color: var(--rose-600); border-color: var(--rose-300); font-size: 0.775rem; padding: 0.4rem 0.65rem;" onclick="deleteService('${s.id}')" title="Eliminar servicio">
             <i class="ri-delete-bin-line"></i>

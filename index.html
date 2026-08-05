@@ -1882,6 +1882,149 @@
     </div>
   </div>
 
+  <!-- Edit User Modal -->
+  <div class="modal-backdrop" id="edit-user-modal">
+    <div class="modal-card" style="max-width: 600px;">
+      <button onclick="closeEditUserModal()" style="position: absolute; right: 1.5rem; top: 1.5rem; border: none; background: transparent; font-size: 1.5rem; cursor: pointer; color: var(--text-muted);">&times;</button>
+      <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.15rem;">
+        <div style="width: 44px; height: 44px; border-radius: 10px; background: #e0f2fe; color: #0284c7; display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">
+          <i class="ri-user-settings-line"></i>
+        </div>
+        <div>
+          <h2 style="font-size: 1.25rem; color: var(--text-main); margin: 0;">Editar Cuenta de Usuario / Profesional</h2>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">Modificá los datos del profesional, servicio asignado y nivel de acceso.</p>
+        </div>
+      </div>
+
+      <form id="edit-user-form" onsubmit="handleEditUserSubmit(event)">
+        <input type="hidden" id="edit-user-original-dni">
+
+        <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.25rem;">
+          <div class="form-group">
+            <label>D.N.I. (Usuario)</label>
+            <input type="text" id="edit-user-dni" class="form-control" style="font-family: 'JetBrains Mono', monospace; font-weight: 700; background-color: var(--slate-100);" readonly>
+          </div>
+
+          <div class="form-group">
+            <label>Nombre y Apellido</label>
+            <input type="text" id="edit-user-name" class="form-control" required>
+          </div>
+
+          <div class="form-group">
+            <label>Nueva Contraseña (Opcional)</label>
+            <input type="password" id="edit-user-pass" class="form-control" placeholder="Dejar en blanco para no cambiar">
+          </div>
+
+          <div class="form-group">
+            <label>Nº de Matrícula Profesional</label>
+            <input type="text" id="edit-user-mat" class="form-control" placeholder="Ej: Mat. 3410">
+          </div>
+
+          <div class="form-group">
+            <label>Especialidad / Rol Hospitalario</label>
+            <input type="text" id="edit-user-role" class="form-control" required>
+          </div>
+
+          <div class="form-group">
+            <label>Servicio Asignado</label>
+            <select id="edit-user-service" class="form-control" required>
+              <!-- Dynamic Services Options -->
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Email de Notificaciones</label>
+            <input type="email" id="edit-user-email" class="form-control" required>
+          </div>
+
+          <div class="form-group">
+            <label>Nivel de Acceso</label>
+            <select id="edit-user-is-admin" class="form-control" style="font-weight: 700;">
+              <option value="false">No (Médico de Servicio / Especialista)</option>
+              <option value="true">Sí (Dirección Médica / Administrador Total)</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+          <button type="button" class="btn-secondary" onclick="closeEditUserModal()">Cancelar</button>
+          <button type="submit" class="btn-primary"><i class="ri-save-line"></i> Guardar Cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Service Modal -->
+  <div class="modal-backdrop" id="edit-service-modal">
+    <div class="modal-card" style="max-width: 600px;">
+      <button onclick="closeEditServiceModal()" style="position: absolute; right: 1.5rem; top: 1.5rem; border: none; background: transparent; font-size: 1.5rem; cursor: pointer; color: var(--text-muted);">&times;</button>
+      <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.15rem;">
+        <div style="width: 44px; height: 44px; border-radius: 10px; background: #e0f2fe; color: #0284c7; display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">
+          <i class="ri-hospital-line"></i>
+        </div>
+        <div>
+          <h2 style="font-size: 1.25rem; color: var(--text-main); margin: 0;">Editar Servicio Hospitalario</h2>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">Modificá el nombre, responsable, email oficial y permisos del departamento.</p>
+        </div>
+      </div>
+
+      <form id="edit-service-form" onsubmit="handleEditServiceSubmit(event)">
+        <input type="hidden" id="edit-service-id">
+
+        <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.25rem;">
+          <div class="form-group">
+            <label>Código / Sigla Oficial</label>
+            <input type="text" id="edit-service-code" class="form-control" style="font-family: 'JetBrains Mono', monospace; font-weight: 700; background-color: var(--slate-100);" readonly>
+          </div>
+
+          <div class="form-group">
+            <label>Nombre del Servicio</label>
+            <input type="text" id="edit-service-name" class="form-control" required>
+          </div>
+
+          <div class="form-group">
+            <label>Jefe / Coordinador de Servicio</label>
+            <input type="text" id="edit-service-head" class="form-control" required>
+          </div>
+
+          <div class="form-group">
+            <label>Email Oficial del Servicio</label>
+            <input type="email" id="edit-service-email" class="form-control" required>
+          </div>
+
+          <div class="form-group">
+            <label>Recetas de Leches / Fórmulas</label>
+            <select id="edit-service-milk-auth" class="form-control">
+              <option value="true">🥛 Autorizado</option>
+              <option value="false">🚫 Restringido</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Reportes & Métricas del Sector</label>
+            <select id="edit-service-report-auth" class="form-control">
+              <option value="true">📊 Habilitado</option>
+              <option value="false">🚫 Deshabilitado</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Estado del Servicio en el Portal</label>
+            <select id="edit-service-enabled" class="form-control" style="font-weight: 700;">
+              <option value="true">🟢 Activo / Habilitado</option>
+              <option value="false">🔴 Suspendido / Deshabilitado</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+          <button type="button" class="btn-secondary" onclick="closeEditServiceModal()">Cancelar</button>
+          <button type="submit" class="btn-primary"><i class="ri-save-line"></i> Guardar Cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Toast Container -->
   <div class="toast-container" id="toast-container"></div>
 
