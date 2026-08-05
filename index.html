@@ -1220,12 +1220,11 @@
                   </div>
 
                   <div class="form-group" id="f-recurring-months-group" style="display: none;">
-                    <label>Duración en Módulos Mensuales</label>
-                    <select id="f-total-modulos" class="form-control">
-                      <option value="3">3 Meses (3 Entregas Mensuales)</option>
-                      <option value="6" selected>6 Meses (6 Entregas Mensuales)</option>
-                      <option value="12">12 Meses (12 Entregas Mensuales)</option>
-                    </select>
+                    <label style="font-weight: 700; color: var(--primary-700);">Duración en Módulos (Cantidad de Meses)</label>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                      <input type="number" id="f-total-modulos" class="form-control" min="1" max="36" value="6" placeholder="Ej: 4, 5, 6, 8..." style="font-weight: 700; max-width: 140px;" required>
+                      <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Meses de Retiro Mensual</span>
+                    </div>
                   </div>
 
                   <div class="form-group" id="f-recurring-freq-group" style="display: none;">
@@ -1532,12 +1531,11 @@
                   </div>
 
                   <div class="form-group" id="n-recurring-months-group" style="display: none;">
-                    <label>Duración del Esquema Nutricional</label>
-                    <select id="n-total-modulos" class="form-control">
-                      <option value="3">3 Meses (3 Entregas de Latas/Fórmula)</option>
-                      <option value="6" selected>6 Meses (6 Entregas de Latas/Fórmula)</option>
-                      <option value="12">12 Meses (12 Entregas de Latas/Fórmula)</option>
-                    </select>
+                    <label style="font-weight: 700; color: var(--primary-700);">Duración del Esquema Nutricional (Cantidad de Meses)</label>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                      <input type="number" id="n-total-modulos" class="form-control" min="1" max="36" value="6" placeholder="Ej: 4, 5, 6, 8..." style="font-weight: 700; max-width: 140px;" required>
+                      <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Meses de Tratamiento / Entregas</span>
+                    </div>
                   </div>
 
                   <div class="form-group" id="n-recurring-freq-group" style="display: none;">
@@ -1804,6 +1802,52 @@
         <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
           <button type="button" class="btn-secondary" onclick="closeCreateServiceModal()">Cancelar</button>
           <button type="submit" class="btn-primary"><i class="ri-add-circle-line"></i> Dar de Alta Servicio</button>
+        </div>
+      </form>
+    </div>
+  <!-- Dispense Quantity Modal (Single or Multi-Unit Delivery) -->
+  <div class="modal-backdrop" id="dispense-modal">
+    <div class="modal-card" style="max-width: 500px;">
+      <button onclick="closeDispenseModal()" style="position: absolute; right: 1.5rem; top: 1.5rem; border: none; background: transparent; font-size: 1.5rem; cursor: pointer; color: var(--text-muted);">&times;</button>
+      <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+        <div style="width: 44px; height: 44px; border-radius: 10px; background: #dcfce7; color: #16a34a; display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">
+          <i class="ri-check-double-line"></i>
+        </div>
+        <div>
+          <h2 style="font-size: 1.2rem; color: var(--text-main); margin: 0;">Registrar Entrega de Módulos / Leches</h2>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;" id="dispense-modal-patient-info">Paciente: -</p>
+        </div>
+      </div>
+
+      <form id="dispense-modal-form" onsubmit="confirmDispenseSubmit(event)">
+        <input type="hidden" id="dispense-modal-record-id">
+
+        <div style="background: var(--slate-50); border: 1px solid var(--border-color); padding: 0.85rem; border-radius: var(--radius-md); margin-bottom: 1.15rem;">
+          <p style="font-size: 0.825rem; color: var(--text-muted); margin-bottom: 0.25rem;">Tratamiento / Fórmula Prescrita:</p>
+          <p style="font-size: 0.875rem; font-weight: 700; color: var(--primary-700);" id="dispense-modal-treatment">-</p>
+          <p style="font-size: 0.775rem; color: var(--slate-600); margin-top: 0.35rem;" id="dispense-modal-progress">Progreso Actual: Módulo -</p>
+        </div>
+
+        <div class="form-group full-width" style="margin-bottom: 1.25rem;">
+          <label style="font-weight: 700; color: var(--text-main);">¿Cuántos módulos / latas se entregan hoy?</label>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.5rem;">
+            <button type="button" class="btn-secondary" onclick="setDispenseQty(1)" id="btn-disp-1" style="justify-content: center; font-weight: 700; border-color: var(--primary-500); background-color: var(--primary-50);">
+              📦 1 Módulo (Normal)
+            </button>
+            <button type="button" class="btn-secondary" onclick="setDispenseQty(2)" id="btn-disp-2" style="justify-content: center; font-weight: 700;">
+              📦📦 2 Módulos (Doble)
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group full-width" style="margin-bottom: 1.5rem;">
+          <label>O ingresar cantidad de módulos entregados en mano:</label>
+          <input type="number" id="dispense-modal-qty" class="form-control" min="1" max="12" value="1" style="font-weight: 700;" required onchange="updateDispenseBtnStyles(this.value)">
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+          <button type="button" class="btn-secondary" onclick="closeDispenseModal()">Cancelar</button>
+          <button type="submit" class="btn-success"><i class="ri-checkbox-circle-line"></i> Confirmar y Registrar Entrega</button>
         </div>
       </form>
     </div>

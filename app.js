@@ -2800,7 +2800,7 @@ function renderRecurringSection() {
   }).join('');
 }
 
-/* Dispense Next Module Action */
+/* Dispense Modal & Multi-Module Delivery Engine */
 function dispenseNextModule(id) {
   const record = records.find(r => r.id === id);
   if (!record) return;
@@ -2810,31 +2810,104 @@ function dispenseNextModule(id) {
     return;
   }
 
-  record.moduloActual += 1;
-  
+  const modal = document.getElementById('dispense-modal');
+  if (!modal) return;
+
+  document.getElementById('dispense-modal-record-id').value = id;
+  document.getElementById('dispense-modal-patient-info').textContent = `Paciente: ${record.paciente} • HC: ${record.hc || 'S/N'} • DNI: ${record.dni || 'S/N'}`;
+  document.getElementById('dispense-modal-treatment').textContent = record.rp1 || record.motivo || record.diagnostico || 'Fórmula Prescrita';
+  document.getElementById('dispense-modal-progress').textContent = `Progreso Actual: Módulo ${record.moduloActual} de ${record.totalModulos} (${Math.round((record.moduloActual / record.totalModulos) * 100)}% entregado)`;
+
+  setDispenseQty(1);
+  modal.classList.add('active');
+}
+
+function closeDispenseModal() {
+  const modal = document.getElementById('dispense-modal');
+  if (modal) modal.classList.remove('active');
+}
+
+function setDispenseQty(qty) {
+  const qtyInput = document.getElementById('dispense-modal-qty');
+  if (qtyInput) qtyInput.value = qty;
+  updateDispenseBtnStyles(qty);
+}
+
+function updateDispenseBtnStyles(qty) {
+  const btn1 = document.getElementById('btn-disp-1');
+  const btn2 = document.getElementById('btn-disp-2');
+  if (!btn1 || !btn2) return;
+
+  const numericQty = parseInt(qty) || 1;
+  if (numericQty === 1) {
+    btn1.style.borderColor = 'var(--primary-500)';
+    btn1.style.backgroundColor = 'var(--primary-50)';
+    btn2.style.borderColor = 'var(--border-color)';
+    btn2.style.backgroundColor = 'transparent';
+  } else if (numericQty === 2) {
+    btn2.style.borderColor = 'var(--primary-500)';
+    btn2.style.backgroundColor = 'var(--primary-50)';
+    btn1.style.borderColor = 'var(--border-color)';
+    btn1.style.backgroundColor = 'transparent';
+  } else {
+    btn1.style.borderColor = 'var(--border-color)';
+    btn1.style.backgroundColor = 'transparent';
+    btn2.style.borderColor = 'var(--border-color)';
+    btn2.style.backgroundColor = 'transparent';
+  }
+}
+
+function confirmDispenseSubmit(e) {
+  e.preventDefault();
+  const id = document.getElementById('dispense-modal-record-id').value;
+  const record = records.find(r => r.id === id);
+  if (!record) return;
+
+  const qty = parseInt(document.getElementById('dispense-modal-qty').value) || 1;
+  const remaining = record.totalModulos - record.moduloActual + 1;
+  const actualQty = Math.min(qty, remaining);
+
+  const prevModule = record.moduloActual;
+  record.moduloActual += actualQty;
+
   const nextDate = new Date();
-  nextDate.setDate(nextDate.getDate() + 30);
+  nextDate.setDate(nextDate.getDate() + (30 * actualQty));
   record.proximoRetiro = nextDate.toISOString().split('T')[0];
 
-  if (record.moduloActual === record.totalModulos) {
+  if (record.moduloActual > record.totalModulos) {
+    record.moduloActual = record.totalModulos;
+    record.estado = "Tratamiento Completado";
+  } else if (record.moduloActual === record.totalModulos) {
     record.estado = "Tratamiento Completado";
   }
 
   localStorage.setItem('alassia_records', JSON.stringify(records));
 
-  logEvent('DISPENSA', `Dispensa registrada: Módulo ${record.moduloActual}/${record.totalModulos} para paciente ${record.paciente} (${record.id})`);
+  const logDesc = actualQty > 1
+    ? `Entrega MÚLTIPLE (${actualQty} módulos/latas entregadas en mano): Módulos del ${prevModule} al ${Math.min(prevModule + actualQty - 1, record.totalModulos)} de ${record.totalModulos} para paciente ${record.paciente} (${record.id})`
+    : `Dispensa registrada: Módulo ${prevModule}/${record.totalModulos} para paciente ${record.paciente} (${record.id})`;
+
+  logEvent('DISPENSA', logDesc);
+
+  // Sincronización en tiempo real con MySQL (10.12.4.2)
+  fetch('api.php?action=save_record', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(record)
+  }).catch(err => console.log('MySQL Sync Dispense:', err));
 
   addNotification({
     targetService: record.destino || record.servicio,
-    title: `Entrega Registrada: Módulo ${record.moduloActual}/${record.totalModulos}`,
+    title: actualQty > 1 ? `Entrega Doble/Múltiple Registrada (${actualQty} latas)` : `Entrega Registrada: Módulo ${prevModule}/${record.totalModulos}`,
     text: `Paciente ${record.paciente} (${record.id}). Próxima entrega programada para ${record.proximoRetiro}.`,
     time: "Ahora"
   });
 
+  closeDispenseModal();
   renderRecurringSection();
   renderInbox();
   renderReportSection();
-  showToast(`¡Entrega de Módulo ${record.moduloActual}/${record.totalModulos} registrada con éxito para ${record.paciente}!`);
+  showToast(`¡Entrega de ${actualQty} módulo(s) registrada con éxito para ${record.paciente}!`);
 }
 
 /* Revert Last Dispensed Module Action */
