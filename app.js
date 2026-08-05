@@ -604,6 +604,7 @@ let formPermissions = JSON.parse(localStorage.getItem('alassia_form_permissions'
 
 document.addEventListener('DOMContentLoaded', () => {
   applyEnvironmentMode();
+  syncUsersWithServiceStaff();
   checkAuthSession();
   initTabs();
   initTheme();
@@ -1033,12 +1034,61 @@ function handleCreateUserSubmit(e) {
   customUsers.unshift(newUser);
   localStorage.setItem('alassia_custom_users', JSON.stringify(customUsers));
 
+  // Sync automatically into service staff roster
+  syncUsersWithServiceStaff();
+
+  // Sincronización con MySQL (10.12.4.2)
+  fetch('api.php?action=save_user', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(newUser)
+  }).catch(err => console.log('MySQL User Sync:', err));
+
   document.getElementById('create-user-form').reset();
 
-  logEvent('ADMIN', `Alta de nuevo usuario: ${name} (DNI ${dni}) para servicio ${service} [Admin: ${isAdmin ? 'SÍ' : 'NO'}]`);
-  showToast(`¡Usuario ${name} (DNI ${dni}) creado exitosamente!`);
+  logEvent('ADMIN', `Alta de nuevo usuario: ${name} (DNI ${dni}) asignado al servicio ${service} [Admin: ${isAdmin ? 'SÍ' : 'NO'}]`);
+  showToast(`¡Usuario ${name} creado y asignado al servicio '${service}' exitosamente!`);
 
   renderUserCrudTable();
+  renderServicesGrid();
+  renderAdminServicesGrid();
+  populateStaffDropdowns();
+}
+
+/* Automatic Synchronization of Registered Users with Service Staff Rosters */
+function syncUsersWithServiceStaff() {
+  DEMO_USERS.forEach(u => {
+    if (!u.service || u.isAdmin) return;
+
+    // Find matching service
+    const targetService = services.find(s => 
+      s.name.toLowerCase() === u.service.toLowerCase() || 
+      s.code.toLowerCase() === u.service.toLowerCase() ||
+      u.service.toLowerCase().includes(s.name.toLowerCase()) ||
+      s.name.toLowerCase().includes(u.service.toLowerCase())
+    );
+
+    if (targetService) {
+      if (!targetService.staff) targetService.staff = [];
+      const cleanName = u.name.trim();
+      const exists = targetService.staff.some(m => 
+        m.name.toLowerCase() === cleanName.toLowerCase() || 
+        (m.dni && u.dni && m.dni === u.dni)
+      );
+
+      if (!exists) {
+        targetService.staff.push({
+          name: u.name,
+          role: u.role,
+          mat: u.role.includes('Mat.') ? u.role.split('Mat.')[1].trim() : 'S/N',
+          dni: u.dni,
+          avatar: u.avatar || u.name.substring(0, 2).toUpperCase()
+        });
+      }
+    }
+  });
+
+  localStorage.setItem('alassia_services', JSON.stringify(services));
 }
 
 function renderUserCrudTable() {
