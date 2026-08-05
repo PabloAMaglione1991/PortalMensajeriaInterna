@@ -1568,7 +1568,65 @@ function updateGeneralStaffList() {
   staffSelect.innerHTML = matchedService.staff.map(m => `<option value="${m.name} (${m.role})">${m.name} — ${m.role}</option>`).join('') + `<option value="Personal de Guardia de ${matchedService.name}">Personal de Guardia del Servicio</option>`;
 }
 
-/* Modal Add Staff handlers */
+function openCreateServiceModal() {
+  const modal = document.getElementById('create-service-modal');
+  if (modal) modal.classList.add('active');
+}
+
+function closeCreateServiceModal() {
+  const modal = document.getElementById('create-service-modal');
+  if (modal) modal.classList.remove('active');
+}
+
+function handleModalCreateServiceSubmit(e) {
+  e.preventDefault();
+
+  const name = document.getElementById('modal-service-name').value.trim();
+  const code = document.getElementById('modal-service-code').value.trim().toUpperCase();
+  const headOfService = document.getElementById('modal-service-head').value.trim();
+  const email = document.getElementById('modal-service-email').value.trim();
+  const autorizadoLeches = document.getElementById('modal-service-milk-auth').value === 'true';
+  const reportesHabilitados = document.getElementById('modal-service-report-auth').value === 'true';
+
+  if (!name || !code) {
+    showToast('⚠️ Por favor completa el nombre y la sigla del servicio.');
+    return;
+  }
+
+  const existing = services.find(s => s.code === code || s.name.toLowerCase() === name.toLowerCase());
+  if (existing) {
+    showToast(`⚠️ Ya existe un servicio registrado con el código '${code}' o el nombre '${name}'.`);
+    return;
+  }
+
+  const newId = `serv-${code.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+  const newServiceObj = {
+    id: newId,
+    name: name,
+    code: code,
+    email: email,
+    headOfService: headOfService,
+    enabled: true,
+    autorizadoLeches: autorizadoLeches,
+    reportesHabilitados: reportesHabilitados,
+    staff: []
+  };
+
+  services.push(newServiceObj);
+  localStorage.setItem('alassia_services', JSON.stringify(services));
+
+  logEvent('ADMIN', `Nuevo servicio hospitalario dado de alta desde modal: ${name} (${code})`);
+
+  document.getElementById('modal-create-service-form').reset();
+  closeCreateServiceModal();
+  renderAdminServicesGrid();
+  renderServicesGrid();
+  populateStaffDropdowns();
+  updateUserServiceDropdowns();
+
+  showToast(`¡Servicio ${name} (${code}) creado y habilitado exitosamente!`);
+}
+
 function openAddStaffModal() {
   document.getElementById('add-staff-modal').classList.add('active');
 }
@@ -1904,12 +1962,13 @@ function renderReportSection() {
   `).join('');
 }
 
-/* Render Services Grid (Public view) */
+/* Render Services Grid (Public view & Dashboard Management) */
 function renderServicesGrid() {
   const container = document.getElementById('services-cards-container');
   if (!container) return;
 
   const enabledServices = services.filter(s => s.enabled);
+  const isAdmin = activeUser ? activeUser.isAdmin : false;
 
   container.innerHTML = enabledServices.map(s => `
     <div class="service-card">
@@ -1934,17 +1993,35 @@ function renderServicesGrid() {
         <ul class="staff-list">
           ${s.staff.map(m => `
             <li class="staff-member-item">
-              <div style="display: flex; align-items: center; gap: 0.75rem;">
-                <div class="staff-avatar-mini">${m.avatar || m.name.substring(0, 2).toUpperCase()}</div>
-                <div class="staff-info-mini">
-                  <h5>${m.name}</h5>
-                  <p>${m.role}</p>
+              <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                  <div class="staff-avatar-mini">${m.avatar || m.name.substring(0, 2).toUpperCase()}</div>
+                  <div class="staff-info-mini">
+                    <h5>${m.name}</h5>
+                    <p>${m.role}</p>
+                  </div>
                 </div>
+                ${isAdmin ? `
+                  <button style="border: none; background: transparent; color: var(--rose-500); cursor: pointer;" onclick="removeStaffFromService('${s.id}', '${m.name}')" title="Quitar agente">
+                    <i class="ri-delete-bin-line"></i>
+                  </button>
+                ` : ''}
               </div>
             </li>
           `).join('')}
         </ul>
       </div>
+
+      ${isAdmin ? `
+        <div style="display: flex; gap: 0.5rem; margin-top: 0.85rem; padding-top: 0.75rem; border-top: 1px dashed var(--border-color);">
+          <button class="btn-secondary" style="flex: 1; font-size: 0.775rem; justify-content: center;" onclick="quickAddStaffTo('${s.id}')">
+            <i class="ri-user-add-line"></i> Asignar Agente
+          </button>
+          <button class="btn-secondary" style="color: var(--rose-600); border-color: var(--rose-300); font-size: 0.775rem; padding: 0.4rem 0.65rem;" onclick="deleteService('${s.id}')" title="Eliminar servicio">
+            <i class="ri-delete-bin-line"></i>
+          </button>
+        </div>
+      ` : ''}
     </div>
   `).join('');
 }
