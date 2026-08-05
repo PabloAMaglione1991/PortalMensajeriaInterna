@@ -603,6 +603,7 @@ const INITIAL_FORM_PERMISSIONS = {
 let formPermissions = JSON.parse(localStorage.getItem('alassia_form_permissions')) || INITIAL_FORM_PERMISSIONS;
 
 document.addEventListener('DOMContentLoaded', () => {
+  applyEnvironmentMode();
   checkAuthSession();
   initTabs();
   initTheme();
@@ -628,8 +629,22 @@ document.addEventListener('DOMContentLoaded', () => {
   setupSearch();
 });
 
+/* Global Environment & Demo UI Switch */
+function applyEnvironmentMode() {
+  const demoBox = document.getElementById('demo-credentials-box') || document.querySelector('.demo-credentials-box');
+  if (!demoBox) return;
+
+  const isProduction = APP_CONFIG.ENV === 'production' && !APP_CONFIG.SHOW_DEMO_USERS_MODAL;
+  if (isProduction) {
+    demoBox.style.display = 'none';
+  } else {
+    demoBox.style.display = 'block';
+  }
+}
+
 /* Session & Authentication Guard */
 function checkAuthSession() {
+  applyEnvironmentMode();
   const loginScreen = document.getElementById('login-page-screen');
   const appWorkspace = document.getElementById('app-workspace-container');
 
