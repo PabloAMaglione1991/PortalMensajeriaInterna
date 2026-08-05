@@ -30,27 +30,33 @@ function getDbConnection() {
     $options = [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        PDO::ATTR_TIMEOUT => 3,
+        PDO::ATTR_TIMEOUT => 1,
         PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4 COLLATE utf8mb4_spanish_ci"
     ];
 
-    // Intento 1: Servidor oficial 10.12.4.2
-    try {
-        $dsn = "mysql:host=" . DB_HOST_PRIMARY . ";dbname=" . DB_NAME . ";charset=utf8mb4";
-        $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
-        $pdo->exec("SET NAMES utf8mb4 COLLATE utf8mb4_spanish_ci");
-        return $pdo;
-    } catch (PDOException $e) {
-        // Intento 2: Fallback local / localhost
-        try {
-            $dsn = "mysql:host=" . DB_HOST_FALLBACK . ";dbname=" . DB_NAME . ";charset=utf8mb4";
-            $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
-            $pdo->exec("SET NAMES utf8mb4 COLLATE utf8mb4_spanish_ci");
-            return $pdo;
-        } catch (PDOException $e2) {
-            return null;
+    $credentials = [
+        ['user' => 'root', 'pass' => ''],
+        ['user' => 'sa', 'pass' => ''],
+        ['user' => 'root', 'pass' => 'root'],
+        ['user' => 'sa', 'pass' => 'sa'],
+        ['user' => 'alassia', 'pass' => 'alassia123']
+    ];
+
+    $hosts = [DB_HOST_PRIMARY, DB_HOST_FALLBACK];
+
+    foreach ($hosts as $host) {
+        foreach ($credentials as $cred) {
+            try {
+                $dsn = "mysql:host=" . $host . ";dbname=" . DB_NAME . ";charset=utf8mb4";
+                $pdo = new PDO($dsn, $cred['user'], $cred['pass'], $options);
+                $pdo->exec("SET NAMES utf8mb4 COLLATE utf8mb4_spanish_ci");
+                return $pdo;
+            } catch (PDOException $e) {
+                // Continuar intentando con el siguiente par de credenciales
+            }
         }
     }
+    return null;
 }
 
 $rawInput = file_get_contents('php://input');
