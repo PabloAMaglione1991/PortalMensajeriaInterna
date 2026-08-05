@@ -1718,29 +1718,34 @@
   <div class="modal-backdrop" id="add-staff-modal">
     <div class="modal-card" style="max-width: 550px;">
       <button onclick="closeAddStaffModal()" style="position: absolute; right: 1.5rem; top: 1.5rem; border: none; background: transparent; font-size: 1.5rem; cursor: pointer; color: var(--text-muted);">&times;</button>
-      <h2 style="font-size: 1.3rem; margin-bottom: 1rem;">Asignar Nuevo Personal a Servicio</h2>
+      <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.15rem;">
+        <div style="width: 44px; height: 44px; border-radius: 10px; background: #e0f2fe; color: #0284c7; display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">
+          <i class="ri-user-add-line"></i>
+        </div>
+        <div>
+          <h2 style="font-size: 1.25rem; color: var(--text-main); margin: 0;">Asignar Profesional a Servicio</h2>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">Seleccioná un profesional registrado en el portal para vincularlo al departamento.</p>
+        </div>
+      </div>
+
       <form id="add-staff-form" onsubmit="handleAddStaffSubmit(event)">
         <div class="form-group full-width" style="margin-bottom: 1rem;">
-          <label>Servicio Hospitalario</label>
-          <select id="staff-service-select" class="form-control">
+          <label style="font-weight: 700; color: var(--primary-700);">Servicio Hospitalario de Destino</label>
+          <select id="staff-service-select" class="form-control" style="font-weight: 700;">
             <!-- Dynamic Services Options -->
           </select>
         </div>
-        <div class="form-group full-width" style="margin-bottom: 1rem;">
-          <label>Nombre y Apellido del Profesional</label>
-          <input type="text" id="staff-name-input" class="form-control" placeholder="Ej: Farm. Carlos Villalba / Dr. Andrés Cavallo" required>
-        </div>
-        <div class="form-group full-width" style="margin-bottom: 1rem;">
-          <label>Especialidad / Cargo</label>
-          <input type="text" id="staff-role-input" class="form-control" placeholder="Ej: Jefe de Farmacia Hospitalaria / Radiólogo Especialista" required>
-        </div>
+
         <div class="form-group full-width" style="margin-bottom: 1.5rem;">
-          <label>Nº de Matrícula Profesional</label>
-          <input type="text" id="staff-mat-input" class="form-control" placeholder="Ej: Mat. 1820">
+          <label style="font-weight: 700; color: var(--text-main);">Profesional / Usuario Registrado en el Sistema</label>
+          <select id="staff-user-select" class="form-control" style="font-weight: 700;" required>
+            <!-- Dynamic Registered Users -->
+          </select>
         </div>
-        <div style="display: flex; justify-content: flex-end; gap: 1rem;">
+
+        <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
           <button type="button" class="btn-secondary" onclick="closeAddStaffModal()">Cancelar</button>
-          <button type="submit" class="btn-primary"><i class="ri-check-line"></i> Guardar y Asignar</button>
+          <button type="submit" class="btn-primary"><i class="ri-check-line"></i> Asignar a Servicio</button>
         </div>
       </form>
     </div>

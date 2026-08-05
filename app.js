@@ -605,6 +605,7 @@ let formPermissions = JSON.parse(localStorage.getItem('alassia_form_permissions'
 document.addEventListener('DOMContentLoaded', () => {
   applyEnvironmentMode();
   syncUsersWithServiceStaff();
+  loadBackendDataFromDb();
   checkAuthSession();
   initTabs();
   initTheme();
@@ -1697,6 +1698,7 @@ function handleModalCreateServiceSubmit(e) {
 }
 
 function openAddStaffModal() {
+  populateStaffModalUserDropdown();
   document.getElementById('add-staff-modal').classList.add('active');
 }
 
@@ -1704,40 +1706,144 @@ function closeAddStaffModal() {
   document.getElementById('add-staff-modal').classList.remove('active');
 }
 
+function populateStaffModalUserDropdown() {
+  const userSelect = document.getElementById('staff-user-select');
+  if (!userSelect) return;
+
+  const validUsers = DEMO_USERS.filter(u => !u.isAdmin);
+  if (validUsers.length === 0) {
+    userSelect.innerHTML = `<option value="">⚠️ No hay profesionales registrados aún. Creá uno desde el Panel de Administración.</option>`;
+    return;
+  }
+
+  userSelect.innerHTML = validUsers.map(u => `
+    <option value="${u.dni}">👤 ${u.name} — ${u.role} (Servicio Actual: ${u.service || 'Sin servicio'})</option>
+  `).join('');
+}
+
 function quickAddStaffTo(serviceId) {
-  document.getElementById('staff-service-select').value = serviceId;
+  const servSelect = document.getElementById('staff-service-select');
+  if (servSelect) servSelect.value = serviceId;
   openAddStaffModal();
 }
 
 function handleAddStaffSubmit(e) {
   e.preventDefault();
   const servId = document.getElementById('staff-service-select').value;
-  const name = document.getElementById('staff-name-input').value;
-  const role = document.getElementById('staff-role-input').value;
-  const mat = document.getElementById('staff-mat-input').value;
+  const userDni = document.getElementById('staff-user-select').value;
 
-  const targetService = services.find(s => s.id === servId);
-  if (targetService) {
-    targetService.staff.push({
-      name: name,
-      role: role,
-      mat: mat,
-      avatar: name.substring(0, 2).toUpperCase()
-    });
+  if (!userDni) {
+    showToast('⚠️ Seleccioná un profesional de la lista o creá uno nuevo desde Administración.');
+    return;
+  }
 
-    localStorage.setItem('alassia_services', JSON.stringify(services));
+  const selectedUser = DEMO_USERS.find(u => u.dni === userDni);
+  const targetService = services.find(s => s.id === servId || s.name === servId);
+
+  if (targetService && selectedUser) {
+    // Update user's assigned service
+    selectedUser.service = targetService.name;
+
+    let customUsers = JSON.parse(localStorage.getItem('alassia_custom_users')) || [];
+    const customUser = customUsers.find(u => u.dni === userDni);
+    if (customUser) customUser.service = targetService.name;
+    localStorage.setItem('alassia_custom_users', JSON.stringify(customUsers));
+
+    // Re-sync service staff rosters
+    syncUsersWithServiceStaff();
+
+    // Sincronización en tiempo real con MySQL 10.12.4.2
+    fetch('api.php?action=save_user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(selectedUser)
+    }).catch(err => console.log('MySQL User Sync:', err));
+
+    fetch('api.php?action=save_service', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(targetService)
+    }).catch(err => console.log('MySQL Service Sync:', err));
+
     renderAdminServicesGrid();
     renderServicesGrid();
     populateStaffDropdowns();
+    renderUserCrudTable();
     closeAddStaffModal();
-    
-    logEvent('ADMIN', `Asignación de nuevo profesional ${name} (${role}) a ${targetService.name}`);
-    showToast(`¡${name} fue asignado/a exitosamente a ${targetService.name}!`);
 
-    document.getElementById('staff-name-input').value = '';
-    document.getElementById('staff-role-input').value = '';
-    document.getElementById('staff-mat-input').value = '';
+    logEvent('ADMIN', `Asignación de profesional ${selectedUser.name} (DNI ${selectedUser.dni}) al servicio ${targetService.name}`);
+    showToast(`¡${selectedUser.name} fue asignado/a exitosamente a ${targetService.name}!`);
   }
+}
+
+/* Automatic MySQL Database Re-hydration Engine (10.12.4.2) */
+function loadBackendDataFromDb() {
+  fetch('api.php?action=get_all_data')
+    .then(res => res.json())
+    .then(data => {
+      if (!data || !data.success) return;
+
+      // 1. Sincronizar Servicios de MySQL 10.12.4.2
+      if (data.servicios && Array.isArray(data.servicios)) {
+        data.servicios.forEach(s => {
+          const servCode = (s.codigo || '').toUpperCase();
+          const existing = services.find(x => x.code === servCode || x.name.toLowerCase() === s.nombre.toLowerCase());
+
+          if (!existing) {
+            services.push({
+              id: `serv-${servCode.toLowerCase().replace(/[^a-z0-9]/g, '')}`,
+              name: s.nombre,
+              code: servCode,
+              email: s.email_oficial,
+              headOfService: s.jefe_servicio || 'Jefatura de Servicio',
+              enabled: s.activo == 1,
+              autorizadoLeches: s.requiere_autorizacion_leches == 1,
+              reportesHabilitados: s.reportes_habilitados == 1,
+              staff: []
+            });
+          } else {
+            existing.name = s.nombre;
+            existing.email = s.email_oficial || existing.email;
+            existing.headOfService = s.jefe_servicio || existing.headOfService;
+            existing.autorizadoLeches = s.requiere_autorizacion_leches == 1;
+            existing.reportesHabilitados = s.reportes_habilitados == 1;
+          }
+        });
+        localStorage.setItem('alassia_services', JSON.stringify(services));
+      }
+
+      // 2. Sincronizar Profesionales de MySQL 10.12.4.2
+      if (data.profesionales && Array.isArray(data.profesionales)) {
+        data.profesionales.forEach(p => {
+          const cleanDni = (p.dni || '').trim();
+          if (!cleanDni) return;
+
+          const existingUser = DEMO_USERS.find(u => u.dni === cleanDni);
+          if (!existingUser) {
+            DEMO_USERS.unshift({
+              id: `user-${p.id || Date.now()}`,
+              dni: cleanDni,
+              password: 'alassia123',
+              name: p.nombre_completo,
+              role: p.especialidad_rol,
+              service: 'Clínica Pediátrica',
+              avatar: p.nombre_completo.substring(0, 2).toUpperCase(),
+              isAdmin: p.es_admin == 1,
+              email: p.email
+            });
+          }
+        });
+      }
+
+      // Re-sincronizar y actualizar vistas
+      syncUsersWithServiceStaff();
+      renderServicesGrid();
+      renderAdminServicesGrid();
+      updateUserServiceDropdowns();
+      populateStaffDropdowns();
+      renderUserCrudTable();
+    })
+    .catch(err => console.log('Base MySQL 10.12.4.2 Offline o no disponible:', err));
 }
 
 /* Helper: Delivery Authorization Check */
