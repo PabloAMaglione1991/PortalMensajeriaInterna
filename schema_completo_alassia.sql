@@ -20,10 +20,12 @@ CREATE DATABASE IF NOT EXISTS `diagnose`
 
 USE `diagnose`;
 
+SET FOREIGN_KEY_CHECKS = 0;
+
 DROP TABLE IF EXISTS `paciente`;
 CREATE TABLE `paciente` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
-  `nro_doc` VARCHAR(20) NOT NULL COMMENT 'DNI sin puntos ni guiones',
+  `nro_doc` VARCHAR(20) NOT NULL UNIQUE COMMENT 'DNI sin puntos ni guiones',
   `hc` VARCHAR(20) NOT NULL COMMENT 'Número de Historia Clínica Única',
   `nombre` VARCHAR(100) NOT NULL,
   `apellido` VARCHAR(100) NOT NULL,
@@ -33,7 +35,6 @@ CREATE TABLE `paciente` (
   `direccion` VARCHAR(255) NULL,
   `email` VARCHAR(150) NULL,
   `fecha_alta` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  INDEX `idx_nro_doc` (`nro_doc`),
   INDEX `idx_hc` (`hc`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_spanish_ci;
 
