@@ -1,0 +1,5 @@
+# Force UTF-8 Charset on Apache Web Server
+AddDefaultCharset UTF-8
+<IfModule mod_headers.c>
+    Header set Content-Type "text/html; charset=utf-8"
+</IfModule>

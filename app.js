@@ -1969,47 +1969,96 @@ function handleAddStaffSubmit(e) {
   }
 }
 
-/* Automatic MySQL Database Re-hydration Engine (10.12.4.2) */
+/* Helper: Sanitize & Auto-Repair Spanish Characters (Tildes, Eñes, Accents) */
+function sanitizeString(str) {
+  if (!str || typeof str !== 'string') return str || '';
+  return str
+    .replace(/\uFFFD/g, '')
+    .replace(/Gastroenterolog[^\s]*\s*Infantil/gi, 'Gastroenterología Infantil')
+    .replace(/Neonatolog[^\s]*\s*y UCNI/gi, 'Neonatología y UCNI')
+    .replace(/Nutrici[^\s]*\s*y Lactario/gi, 'Nutrición y Lactario')
+    .replace(/Cardiolog[^\s]*\s*Infantil/gi, 'Cardiología Infantil')
+    .replace(/Tratamientos Cr[^\s]*nicos/gi, 'Tratamientos Crónicos')
+    .replace(/Cl[^\s]*nica Ped[^\s]*trica/gi, 'Clínica Pediátrica')
+    .replace(/Diagn[^\s]*stico por Im[^\s]*genes/gi, 'Diagnóstico por Imágenes')
+    .replace(/Mensajer[^\s]*/gi, 'Mensajería')
+    .replace(/M[^\s]*tricas/gi, 'Métricas')
+    .replace(/L[^\s]*pez/g, 'López')
+    .replace(/Ben[^\s]*tez/g, 'Benítez')
+    .replace(/G[^\s]*mez/g, 'Gómez')
+    .replace(/Rold[^\s]*n/g, 'Roldán')
+    .replace(/Gim[^\s]*nez/g, 'Giménez')
+    .replace(/Hern[^\s]*n/g, 'Hernán')
+    .replace(/Luc[^\s]*a/g, 'Lucía')
+    .replace(/Sof[^\s]*a/g, 'Sofía')
+    .replace(/Ped[^\s]*trica/g, 'Pediátrica')
+    .replace(/Cl[^\s]*nica/g, 'Clínica')
+    .trim();
+}
+
+/* Automatic MySQL Database Re-hydration & Self-Healing Engine (10.12.4.2) */
 function loadBackendDataFromDb() {
   fetch('api.php?action=get_all_data')
     .then(res => res.json())
     .then(data => {
       if (!data || !data.success) return;
 
-      // 1. Sincronizar Servicios de MySQL 10.12.4.2
+      // 1. Sincronizar y Sanitizar Servicios de MySQL 10.12.4.2
       if (data.servicios && Array.isArray(data.servicios)) {
         data.servicios.forEach(s => {
+          const cleanName = sanitizeString(s.nombre);
+          const cleanHead = sanitizeString(s.jefe_servicio || 'Jefatura de Servicio');
           const servCode = (s.codigo || '').toUpperCase();
-          const existing = services.find(x => x.code === servCode || x.name.toLowerCase() === s.nombre.toLowerCase());
+          const existing = services.find(x => x.code === servCode || x.name.toLowerCase() === cleanName.toLowerCase());
 
           if (!existing) {
             services.push({
               id: `serv-${servCode.toLowerCase().replace(/[^a-z0-9]/g, '')}`,
-              name: s.nombre,
+              name: cleanName,
               code: servCode,
               email: s.email_oficial,
-              headOfService: s.jefe_servicio || 'Jefatura de Servicio',
+              headOfService: cleanHead,
               enabled: s.activo == 1,
               autorizadoLeches: s.requiere_autorizacion_leches == 1,
               reportesHabilitados: s.reportes_habilitados == 1,
               staff: []
             });
           } else {
-            existing.name = s.nombre;
+            existing.name = cleanName;
             existing.email = s.email_oficial || existing.email;
-            existing.headOfService = s.jefe_servicio || existing.headOfService;
+            existing.headOfService = cleanHead;
             existing.autorizadoLeches = s.requiere_autorizacion_leches == 1;
             existing.reportesHabilitados = s.reportes_habilitados == 1;
+          }
+
+          // Auto-reparación en MySQL 10.12.4.2 si la base contenía caracteres corruptos
+          if (cleanName !== s.nombre || cleanHead !== s.jefe_servicio) {
+            fetch('api.php?action=save_service', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                code: servCode,
+                name: cleanName,
+                headOfService: cleanHead,
+                email: s.email_oficial,
+                autorizadoLeches: s.requiere_autorizacion_leches == 1,
+                reportesHabilitados: s.reportes_habilitados == 1,
+                enabled: s.activo == 1
+              })
+            }).catch(e => {});
           }
         });
         localStorage.setItem('alassia_services', JSON.stringify(services));
       }
 
-      // 2. Sincronizar Profesionales de MySQL 10.12.4.2
+      // 2. Sincronizar y Sanitizar Profesionales de MySQL 10.12.4.2
       if (data.profesionales && Array.isArray(data.profesionales)) {
         data.profesionales.forEach(p => {
           const cleanDni = (p.dni || '').trim();
           if (!cleanDni) return;
+
+          const cleanName = sanitizeString(p.nombre_completo);
+          const cleanRole = sanitizeString(p.especialidad_rol);
 
           const existingUser = DEMO_USERS.find(u => u.dni === cleanDni);
           if (!existingUser) {
@@ -2017,16 +2066,52 @@ function loadBackendDataFromDb() {
               id: `user-${p.id || Date.now()}`,
               dni: cleanDni,
               password: 'alassia123',
-              name: p.nombre_completo,
-              role: p.especialidad_rol,
+              name: cleanName,
+              role: cleanRole,
               service: 'Clínica Pediátrica',
-              avatar: p.nombre_completo.substring(0, 2).toUpperCase(),
+              avatar: cleanName.substring(0, 2).toUpperCase(),
               isAdmin: p.es_admin == 1,
               email: p.email
             });
+          } else {
+            existingUser.name = cleanName;
+            existingUser.role = cleanRole;
+          }
+
+          // Auto-reparación en MySQL 10.12.4.2
+          if (cleanName !== p.nombre_completo || cleanRole !== p.especialidad_rol) {
+            fetch('api.php?action=save_user', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                dni: cleanDni,
+                name: cleanName,
+                role: cleanRole,
+                service: existingUser ? existingUser.service : 'Clínica Pediátrica',
+                email: p.email,
+                isAdmin: p.es_admin == 1
+              })
+            }).catch(e => {});
           }
         });
       }
+
+      // Sanitizar arreglos locales
+      services.forEach(s => {
+        s.name = sanitizeString(s.name);
+        s.headOfService = sanitizeString(s.headOfService);
+        s.staff.forEach(st => {
+          st.name = sanitizeString(st.name);
+          st.role = sanitizeString(st.role);
+        });
+      });
+      localStorage.setItem('alassia_services', JSON.stringify(services));
+
+      DEMO_USERS.forEach(u => {
+        u.name = sanitizeString(u.name);
+        u.role = sanitizeString(u.role);
+        u.service = sanitizeString(u.service);
+      });
 
       // Re-sincronizar y actualizar vistas
       syncUsersWithServiceStaff();
