@@ -1629,6 +1629,13 @@ function handleModalCreateServiceSubmit(e) {
 
   logEvent('ADMIN', `Nuevo servicio hospitalario dado de alta desde modal: ${name} (${code})`);
 
+  // Sincronización en tiempo real con MySQL (10.12.4.2)
+  fetch('api.php?action=save_service', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(newServiceObj)
+  }).catch(err => console.log('Sincronización MySQL Service:', err));
+
   document.getElementById('modal-create-service-form').reset();
   closeCreateServiceModal();
   renderAdminServicesGrid();
