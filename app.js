@@ -727,12 +727,24 @@ function logEvent(category, detail, customUser = null) {
     role: user ? user.role : 'Profesional de Salud',
     service: user ? user.service : 'Hospital Alassia',
     detail: detail,
-    ip: `192.168.10.${Math.floor(10 + Math.random() * 89)} (Terminal Red)`
+    ip: `10.12.4.221 (Terminal Red Hospitalaria)`
   };
 
   auditLogs.unshift(newLog);
   localStorage.setItem('alassia_audit_logs', JSON.stringify(auditLogs));
   renderAuditLogs();
+
+  // Sincronizar log de auditoría en tiempo real con la base MySQL en IP 10.12.4.2
+  fetch('api.php?action=log_event', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      categoria: category,
+      usuario_dni: user ? user.dni : 'S/N',
+      usuario_nombre: user ? user.name : 'Usuario Sistema',
+      detalle: detail
+    })
+  }).catch(err => console.log('Sincronización MySQL 10.12.4.2:', err));
 }
 
 function renderAuditLogs(filterCategory = 'all') {
