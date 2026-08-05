@@ -2122,6 +2122,44 @@ function loadBackendDataFromDb() {
       renderUserCrudTable();
     })
     .catch(err => console.log('Base MySQL 10.12.4.2 Offline o no disponible:', err));
+/* Clear / Purge All Test Prescription Records & Interconsultations */
+function clearAllTestRecords() {
+  if (!confirm('⚠️ ¿ATENCIÓN: Estás seguro de que deseas ELIMINAR Y VACIAR TODAS las recetas, solicitudes e interconsultas de prueba del sistema?\n\nEsta acción purgará la base de datos MySQL (10.12.4.2) y el almacenamiento del navegador.')) {
+    return;
+  }
+
+  if (!confirm('🚨 ÚLTIMA CONFIRMACIÓN:\nSe eliminarán todas las recetas registradas hasta el momento. ¿Proceder con el vaciado completo?')) {
+    return;
+  }
+
+  fetch('api.php?action=clear_test_records', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' }
+  })
+  .then(res => res.json())
+  .then(data => {
+    records = [];
+    localStorage.removeItem('alassia_records');
+
+    renderInboxTable();
+    renderArchiveTable();
+    renderRecurrenceTable();
+    renderReportSection();
+    updateStats();
+
+    logEvent('ADMIN', 'Purga y vaciado completo de recetas y solicitudes de prueba realizado por el Administrador');
+    showToast('¡Se vaciaron exitosamente todas las recetas y registros de prueba de la base de datos!');
+  })
+  .catch(err => {
+    records = [];
+    localStorage.removeItem('alassia_records');
+    renderInboxTable();
+    renderArchiveTable();
+    renderRecurrenceTable();
+    renderReportSection();
+    updateStats();
+    showToast('¡Se vaciaron las recetas del navegador local!');
+  });
 }
 
 /* Helper: Delivery Authorization Check */
