@@ -102,6 +102,7 @@ switch ($action) {
         $email = trim($data['email'] ?? '');
         $autorizadoLeches = !empty($data['autorizadoLeches']) ? 1 : 0;
         $reportesHabilitados = ($data['reportesHabilitados'] ?? true) !== false ? 1 : 0;
+        $activo = isset($data['enabled']) ? ($data['enabled'] ? 1 : 0) : 1;
 
         if (empty($code) || empty($name)) {
             echo json_encode(['success' => false, 'message' => 'Código y nombre obligatorios']);
@@ -117,7 +118,8 @@ switch ($action) {
                     email_oficial = VALUES(email_oficial),
                     jefe_servicio = VALUES(jefe_servicio),
                     requiere_autorizacion_leches = VALUES(requiere_autorizacion_leches),
-                    reportes_habilitados = VALUES(reportes_habilitados)
+                    reportes_habilitados = VALUES(reportes_habilitados),
+                    activo = VALUES(activo)
             ");
             $stmt->execute([
                 ':codigo' => $code,
@@ -126,12 +128,25 @@ switch ($action) {
                 ':jefe' => $head,
                 ':leches' => $autorizadoLeches,
                 ':reportes' => $reportesHabilitados,
-                ':activo' => 1
+                ':activo' => $activo
             ]);
 
             echo json_encode(['success' => true, 'message' => "Servicio {$code} sincronizado en MySQL (10.12.4.2)"]);
         } catch (Exception $e) {
             echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+        }
+        break;
+
+    case 'delete_service':
+        $code = strtoupper(trim($data['code'] ?? ''));
+        if (!empty($code)) {
+            try {
+                $stmt = $pdo->prepare("UPDATE servicio SET activo = 0 WHERE codigo = :code");
+                $stmt->execute([':code' => $code]);
+                echo json_encode(['success' => true]);
+            } catch (Exception $e) {
+                echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+            }
         }
         break;
 

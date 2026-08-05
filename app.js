@@ -1581,13 +1581,20 @@ function handleCreateServiceSubmit(e) {
 
   logEvent('ADMIN', `Nuevo servicio hospitalario dado de alta: ${name} (${code})`);
 
+  // Sincronización en tiempo real con MySQL 10.12.4.2
+  fetch('api.php?action=save_service', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(newServiceObj)
+  }).catch(err => console.log('Sincronización MySQL Service:', err));
+
   document.getElementById('create-service-form').reset();
   renderAdminServicesGrid();
   renderServicesGrid();
   populateStaffDropdowns();
   updateUserServiceDropdowns();
 
-  showToast(`¡Servicio ${name} (${code}) creado y habilitado exitosamente!`);
+  showToast(`¡Servicio ${name} (${code}) creado y guardado en la Base de Datos!`);
 }
 
 function deleteService(serviceId) {
@@ -1598,13 +1605,20 @@ function deleteService(serviceId) {
     services = services.filter(s => s.id !== serviceId);
     localStorage.setItem('alassia_services', JSON.stringify(services));
 
+    // Desactivar servicio en MySQL 10.12.4.2
+    fetch('api.php?action=delete_service', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: serv.code })
+    }).catch(err => console.log('MySQL Service Delete Sync:', err));
+
     logEvent('ADMIN', `Servicio eliminado del sistema: ${serv.name} (${serv.code})`);
     renderAdminServicesGrid();
     renderServicesGrid();
     populateStaffDropdowns();
     updateUserServiceDropdowns();
 
-    showToast(`Servicio '${serv.name}' eliminado del portal.`);
+    showToast(`Servicio '${serv.name}' eliminado del portal y desactivado en Base de Datos.`);
   }
 }
 
@@ -1622,6 +1636,13 @@ function toggleServiceState(serviceId) {
   if (service) {
     service.enabled = !service.enabled;
     localStorage.setItem('alassia_services', JSON.stringify(services));
+
+    fetch('api.php?action=save_service', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(service)
+    }).catch(err => console.log('MySQL Service Toggle Sync:', err));
+
     renderAdminServicesGrid();
     renderServicesGrid();
     populateStaffDropdowns();
@@ -1637,6 +1658,13 @@ function toggleMilkAuth(serviceId) {
   if (service) {
     service.autorizadoLeches = !service.autorizadoLeches;
     localStorage.setItem('alassia_services', JSON.stringify(services));
+
+    fetch('api.php?action=save_service', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(service)
+    }).catch(err => console.log('MySQL Milk Auth Sync:', err));
+
     renderAdminServicesGrid();
     populateStaffDropdowns();
     updateStats();
@@ -1651,6 +1679,13 @@ function toggleReportAuth(serviceId) {
   if (service) {
     service.reportesHabilitados = service.reportesHabilitados === false ? true : false;
     localStorage.setItem('alassia_services', JSON.stringify(services));
+
+    fetch('api.php?action=save_service', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(service)
+    }).catch(err => console.log('MySQL Report Auth Sync:', err));
+
     renderAdminServicesGrid();
     renderAdminReportPermissionsMatrix();
     applyRoleContextualFiltering();
