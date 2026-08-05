@@ -2162,6 +2162,51 @@ function clearAllTestRecords() {
   });
 }
 
+/* Clear / Purge All Test Users Except Main Admin (11111111) */
+function clearAllTestUsers() {
+  if (!confirm('⚠️ ¿ATENCIÓN: Estás seguro de que deseas ELIMINAR Y VACIAR TODOS los usuarios y profesionales de prueba?\n\nSe conservará únicamente la cuenta del Administrador General (DNI: 11111111).')) {
+    return;
+  }
+
+  if (!confirm('🚨 ÚLTIMA CONFIRMACIÓN:\nSe borrarán los usuarios de prueba en MySQL (10.12.4.2) y en la memoria del sistema. ¿Proceder?')) {
+    return;
+  }
+
+  fetch('api.php?action=clear_test_users', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' }
+  })
+  .then(res => res.json())
+  .then(data => {
+    DEMO_USERS = DEMO_USERS.filter(u => u.isAdmin || u.dni === '11111111');
+    localStorage.removeItem('alassia_custom_users');
+
+    services.forEach(s => {
+      s.staff = [];
+    });
+    localStorage.setItem('alassia_services', JSON.stringify(services));
+
+    renderUserCrudTable();
+    renderAdminServicesGrid();
+    renderServicesGrid();
+    populateStaffDropdowns();
+    populateStaffModalUserDropdown();
+
+    logEvent('ADMIN', 'Vaciado masivo de usuarios de prueba realizado por el Administrador General (Conservada cuenta 11111111)');
+    showToast('¡Se eliminaron todos los usuarios de prueba! Se mantuvo únicamente la cuenta Administrador General (11111111).');
+  })
+  .catch(err => {
+    DEMO_USERS = DEMO_USERS.filter(u => u.isAdmin || u.dni === '11111111');
+    localStorage.removeItem('alassia_custom_users');
+    renderUserCrudTable();
+    renderAdminServicesGrid();
+    renderServicesGrid();
+    populateStaffDropdowns();
+    populateStaffModalUserDropdown();
+    showToast('¡Se limpiaron los usuarios de prueba locales!');
+  });
+}
+
 /* Helper: Delivery Authorization Check */
 function canUserDeliverRecord(r, user) {
   if (!user) return false;

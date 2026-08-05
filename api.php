@@ -277,6 +277,22 @@ switch ($action) {
         }
         break;
 
+    // 7. VACIAR / ELIMINAR USUARIOS DE PRUEBA
+    case 'clear_test_users':
+        try {
+            $stmt = $pdo->prepare("DELETE FROM profesional WHERE es_admin = 0 AND dni != '11111111'");
+            $stmt->execute();
+            $deletedCount = $stmt->rowCount();
+
+            $stmtLog = $pdo->prepare("INSERT INTO auditoria_log (categoria, mensaje_evento, usuario_dni, IP_origen) VALUES ('ADMIN', 'Baja y vaciado masivo de usuarios de prueba', '11111111', :ip)");
+            $stmtLog->execute([':ip' => $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1']);
+
+            echo json_encode(['success' => true, 'deleted_count' => $deletedCount, 'message' => 'Se eliminaron todos los usuarios de prueba de MySQL (10.12.4.2) manteniendo la cuenta del Administrador General'], JSON_UNESCAPED_UNICODE);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'error' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
+        }
+        break;
+
     default:
         echo json_encode(['success' => true, 'message' => 'API Endpoint MySQL Hospital Alassia 10.12.4.2 activo']);
         break;
