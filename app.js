@@ -2671,6 +2671,7 @@ function switchTab(tabId) {
 
   // Re-render Admin Panel grids dynamically when switching tabs
   if (tabId === 'tab-admin') {
+    renderUserCrudTable();
     renderAdminFormPermissions();
     renderAdminServicesGrid();
     renderAdminReportPermissionsMatrix();
