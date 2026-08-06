@@ -265,7 +265,7 @@ async function buscarPacientePorDNI(dniInputId, fieldMap) {
 
   // Fallback to local demo patient dataset only if enabled in APP_CONFIG
   if (APP_CONFIG.ALLOW_MOCK_PATIENTS_FALLBACK) {
-    const localMatch = DEMO_PATIENTS.find(p => p.dni === cleanDni || p.hc.toLowerCase().includes(cleanDni.toLowerCase()));
+    const localMatch = DEMO_PATIENTS.find(p => p.dni === cleanDni || (p.hc || '').toLowerCase().includes((cleanDni || '').toLowerCase()));
 
     if (localMatch) {
       applyPatientData(localMatch, fieldMap);
@@ -1061,29 +1061,29 @@ function syncUsersWithServiceStaff() {
   DEMO_USERS.forEach(u => {
     if (!u.service || u.isAdmin) return;
 
-    // Find matching service
-    const targetService = services.find(s => 
-      s.name.toLowerCase() === u.service.toLowerCase() || 
-      s.code.toLowerCase() === u.service.toLowerCase() ||
-      u.service.toLowerCase().includes(s.name.toLowerCase()) ||
-      s.name.toLowerCase().includes(u.service.toLowerCase())
-    );
+    const uServ = (u.service || '').toLowerCase();
+    const targetService = services.find(s => {
+      const sName = (s.name || '').toLowerCase();
+      const sCode = (s.code || '').toLowerCase();
+      return sName === uServ || sCode === uServ || uServ.includes(sName) || (sName.length > 0 && sName.includes(uServ));
+    });
 
     if (targetService) {
       if (!targetService.staff) targetService.staff = [];
-      const cleanName = u.name.trim();
+      const cleanName = (u.name || '').trim();
       const exists = targetService.staff.some(m => 
-        m.name.toLowerCase() === cleanName.toLowerCase() || 
+        (m.name || '').toLowerCase() === cleanName.toLowerCase() || 
         (m.dni && u.dni && m.dni === u.dni)
       );
 
       if (!exists) {
+        const uRole = u.role || 'Médico de Servicio';
         targetService.staff.push({
-          name: u.name,
-          role: u.role,
-          mat: u.role.includes('Mat.') ? u.role.split('Mat.')[1].trim() : 'S/N',
+          name: u.name || 'Profesional',
+          role: uRole,
+          mat: uRole.includes('Mat.') ? uRole.split('Mat.')[1].trim() : 'S/N',
           dni: u.dni,
-          avatar: u.avatar || u.name.substring(0, 2).toUpperCase()
+          avatar: u.avatar || (u.name || 'MD').substring(0, 2).toUpperCase()
         });
       }
     }
