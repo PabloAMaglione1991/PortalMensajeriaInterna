@@ -2119,9 +2119,9 @@ function loadBackendDataFromDb() {
       renderAdminServicesGrid();
       updateUserServiceDropdowns();
       populateStaffDropdowns();
-      renderUserCrudTable();
     })
     .catch(err => console.log('Base MySQL 10.12.4.2 Offline o no disponible:', err));
+}
 /* Clear / Purge All Test Prescription Records & Interconsultations */
 function clearAllTestRecords() {
   if (!confirm('⚠️ ¿ATENCIÓN: Estás seguro de que deseas ELIMINAR Y VACIAR TODAS las recetas, solicitudes e interconsultas de prueba del sistema?\n\nEsta acción purgará la base de datos MySQL (10.12.4.2) y el almacenamiento del navegador.')) {
