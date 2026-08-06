@@ -2253,6 +2253,64 @@ function clearAllTestUsers() {
   });
 }
 
+/* Clear / Purge EVERYTHING (Records + Test Users) in 1 Action */
+function clearAllTestingData() {
+  if (!confirm('💥 ¿ATENCIÓN CRÍTICA: Estás seguro de que deseas VACIAR ABSOLUTAMENTE TODO EL TESTING DEL SISTEMA?\n\nEsta acción eliminará de MySQL (10.12.4.2):\n1. Todas las recetas, solicitudes e interconsultas.\n2. Todos los usuarios y profesionales de prueba (Se conservará únicamente el Administrador General DNI 11111111).')) {
+    return;
+  }
+
+  if (!confirm('🚨 CONFIRMACIÓN DEFINITIVA:\nSe purgará toda la base de datos de prueba y se reiniciará el portal a estado limpio de producción. ¿Proceder?')) {
+    return;
+  }
+
+  fetch('api.php?action=clear_all_testing_data', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' }
+  })
+  .then(res => res.json())
+  .then(data => {
+    records = [];
+    localStorage.removeItem('alassia_records');
+    localStorage.removeItem('alassia_custom_users');
+
+    DEMO_USERS = DEMO_USERS.filter(u => u.isAdmin || u.dni === '11111111');
+
+    services.forEach(s => {
+      s.staff = [];
+    });
+    localStorage.setItem('alassia_services', JSON.stringify(services));
+
+    renderInbox();
+    renderArchiveTable();
+    renderRecurringSection();
+    renderReportSection();
+    renderUserCrudTable();
+    renderAdminServicesGrid();
+    renderServicesGrid();
+    populateStaffDropdowns();
+    populateStaffModalUserDropdown();
+    updateStats();
+
+    logEvent('ADMIN', 'VACIADO TOTAL DE TESTING: Purgadas recetas y usuarios de prueba (Conservada cuenta 11111111)');
+    showToast('💥 ¡Se purgó y vació exitosamente TODO el testing del sistema!');
+  })
+  .catch(err => {
+    records = [];
+    localStorage.removeItem('alassia_records');
+    localStorage.removeItem('alassia_custom_users');
+    DEMO_USERS = DEMO_USERS.filter(u => u.isAdmin || u.dni === '11111111');
+    renderInbox();
+    renderArchiveTable();
+    renderRecurringSection();
+    renderReportSection();
+    renderUserCrudTable();
+    renderAdminServicesGrid();
+    renderServicesGrid();
+    updateStats();
+    showToast('💥 ¡Se limpió el testing local del navegador!');
+  });
+}
+
 /* Helper: Delivery Authorization Check */
 function canUserDeliverRecord(r, user) {
   if (!user) return false;

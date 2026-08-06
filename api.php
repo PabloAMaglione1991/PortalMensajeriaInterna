@@ -299,6 +299,25 @@ switch ($action) {
         }
         break;
 
+    // 8. VACIAR Y PURGAR TODO EL TESTING (SOLICITUDES + USUARIOS DE PRUEBA)
+    case 'clear_all_testing_data':
+        try {
+            $pdo->exec("SET FOREIGN_KEY_CHECKS = 0");
+            $pdo->exec("TRUNCATE TABLE solicitud");
+            $pdo->exec("TRUNCATE TABLE ausentismo_alerta");
+            $stmtUsers = $pdo->prepare("DELETE FROM profesional WHERE es_admin = 0 AND dni != '11111111'");
+            $stmtUsers->execute();
+            $pdo->exec("SET FOREIGN_KEY_CHECKS = 1");
+
+            $stmtLog = $pdo->prepare("INSERT INTO auditoria_log (categoria, mensaje_evento, usuario_dni, IP_origen) VALUES ('ADMIN', 'VACIADO TOTAL Y PURGA DE TESTING (RECETAS + USUARIOS)', '11111111', :ip)");
+            $stmtLog->execute([':ip' => $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1']);
+
+            echo json_encode(['success' => true, 'message' => 'Se eliminaron todas las recetas y usuarios de prueba conservando el Administrador General (11111111)'], JSON_UNESCAPED_UNICODE);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'error' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
+        }
+        break;
+
     default:
         echo json_encode(['success' => true, 'message' => 'API Endpoint MySQL Hospital Alassia 10.12.4.2 activo']);
         break;
