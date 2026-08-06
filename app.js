@@ -589,8 +589,9 @@ if (customUsers.length > 0) {
   });
 }
 
-let activeUser = JSON.parse(localStorage.getItem('alassia_user')) || DEMO_USERS[1];
-let isAuthenticated = JSON.parse(localStorage.getItem('alassia_auth')) || false;
+let activeUser = JSON.parse(localStorage.getItem('alassia_user')) || DEMO_USERS[0];
+let isAuthenticated = JSON.parse(localStorage.getItem('alassia_auth'));
+if (isAuthenticated === null || isAuthenticated === undefined) isAuthenticated = true;
 
 const INITIAL_FORM_PERMISSIONS = {
   cardio: { id: "cardio", name: "Interconsulta Cardiología", tab: "tab-cardio", enabled: true, tag: "cardio", icon: "ri-heart-pulse-line" },
@@ -973,11 +974,11 @@ function applyRoleContextualFiltering() {
     card.style.display = show ? 'flex' : 'none';
   });
 
-  // 3. Ocultar estadísticas globales del Dashboard para médicos no administradores
+  // 3. Mostrar estadísticas del Dashboard para todos los perfiles de usuario
   const quickStatsGrid = document.querySelector('#tab-dashboard .quick-stats-grid');
   const welcomeBanner = document.querySelector('#tab-dashboard .welcome-banner');
   if (quickStatsGrid) {
-    quickStatsGrid.style.display = isAdmin ? 'grid' : 'none';
+    quickStatsGrid.style.display = 'grid';
   }
   if (welcomeBanner) {
     const h2 = welcomeBanner.querySelector('h2');
