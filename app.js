@@ -1124,7 +1124,8 @@ function renderUserCrudTable() {
 
 /* User Edit Handlers */
 function openEditUserModal(dni) {
-  const user = DEMO_USERS.find(u => u.dni === dni);
+  const cleanDni = String(dni || '').trim();
+  const user = DEMO_USERS.find(u => String(u.dni || '').trim() === cleanDni);
   if (!user) return;
 
   const modal = document.getElementById('edit-user-modal');
@@ -1132,19 +1133,19 @@ function openEditUserModal(dni) {
 
   document.getElementById('edit-user-original-dni').value = user.dni;
   document.getElementById('edit-user-dni').value = user.dni;
-  document.getElementById('edit-user-name').value = user.name;
+  document.getElementById('edit-user-name').value = user.name || '';
   document.getElementById('edit-user-pass').value = '';
   document.getElementById('edit-user-email').value = user.email || '';
   document.getElementById('edit-user-is-admin').value = user.isAdmin ? 'true' : 'false';
 
-  let cleanRole = user.role;
+  let cleanRole = user.role || '';
   let cleanMat = '';
-  if (user.role.includes('• Mat.')) {
-    const parts = user.role.split('• Mat.');
+  if (cleanRole.includes('• Mat.')) {
+    const parts = cleanRole.split('• Mat.');
     cleanRole = parts[0].trim();
     cleanMat = parts[1].trim();
-  } else if (user.role.includes('Mat.')) {
-    const parts = user.role.split('Mat.');
+  } else if (cleanRole.includes('Mat.')) {
+    const parts = cleanRole.split('Mat.');
     cleanRole = parts[0].trim();
     cleanMat = parts[1].trim();
   }
@@ -1531,20 +1532,21 @@ function renderAdminServicesGrid() {
 
 /* Service Edit Handlers */
 function openEditServiceModal(serviceId) {
-  const service = services.find(s => s.id === serviceId);
+  const sTargetId = String(serviceId || '').trim();
+  const service = services.find(s => String(s.id || '').trim() === sTargetId || String(s.code || '').trim() === sTargetId);
   if (!service) return;
 
   const modal = document.getElementById('edit-service-modal');
   if (!modal) return;
 
   document.getElementById('edit-service-id').value = service.id;
-  document.getElementById('edit-service-code').value = service.code;
-  document.getElementById('edit-service-name').value = service.name;
-  document.getElementById('edit-service-head').value = service.headOfService;
-  document.getElementById('edit-service-email').value = service.email;
+  document.getElementById('edit-service-code').value = service.code || '';
+  document.getElementById('edit-service-name').value = service.name || '';
+  document.getElementById('edit-service-head').value = service.headOfService || '';
+  document.getElementById('edit-service-email').value = service.email || '';
   document.getElementById('edit-service-milk-auth').value = service.autorizadoLeches ? 'true' : 'false';
   document.getElementById('edit-service-report-auth').value = service.reportesHabilitados !== false ? 'true' : 'false';
-  document.getElementById('edit-service-enabled').value = service.enabled ? 'true' : 'false';
+  document.getElementById('edit-service-enabled').value = service.enabled !== false ? 'true' : 'false';
 
   modal.classList.add('active');
 }
