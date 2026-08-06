@@ -1295,7 +1295,7 @@ function forceSwitchToAdminMode() {
   renderActiveUser();
   renderInbox();
   renderArchiveTable();
-  renderRecurrenceTable();
+  renderRecurringSection();
   renderReportSection();
 
   switchTab('tab-admin');
@@ -2185,9 +2185,9 @@ function clearAllTestRecords() {
     records = [];
     localStorage.removeItem('alassia_records');
 
-    renderInboxTable();
+    renderInbox();
     renderArchiveTable();
-    renderRecurrenceTable();
+    renderRecurringSection();
     renderReportSection();
     updateStats();
 
@@ -2197,9 +2197,9 @@ function clearAllTestRecords() {
   .catch(err => {
     records = [];
     localStorage.removeItem('alassia_records');
-    renderInboxTable();
+    renderInbox();
     renderArchiveTable();
-    renderRecurrenceTable();
+    renderRecurringSection();
     renderReportSection();
     updateStats();
     showToast('¡Se vaciaron las recetas del navegador local!');
