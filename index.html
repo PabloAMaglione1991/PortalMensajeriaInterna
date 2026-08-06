@@ -1,9 +1,18 @@
 <!DOCTYPE html>
-<html lang="es" data-theme="light">
+<html lang="es" data-theme="light" data-fatkun-ignore="true">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
   <title>Portal de Mensajería e Interconsultas - Hospital de Niños Dr. Orlando Alassia</title>
+  <script>
+    // Suppress background noise and unhandled promises from third-party browser extensions
+    window.addEventListener('unhandledrejection', function(event) {
+      if (event && event.reason && (String(event.reason.stack || event.reason).includes('chrome-extension://') || String(event.reason).includes('Fatkun'))) {
+        event.preventDefault();
+      }
+    });
+  </script>
   <!-- Remixicon for modern medical icons -->
   <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
   <!-- html2pdf for direct PDF file downloads without print modals -->
