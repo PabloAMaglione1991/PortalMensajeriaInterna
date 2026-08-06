@@ -2503,19 +2503,32 @@ function renderServicesGrid() {
   const container = document.getElementById('services-cards-container');
   if (!container) return;
 
-  const enabledServices = services.filter(s => s.enabled);
+  const enabledServices = services.filter(s => s.enabled !== false);
   const isAdmin = activeUser ? activeUser.isAdmin : false;
 
-  container.innerHTML = enabledServices.map(s => `
+  if (!enabledServices || enabledServices.length === 0) {
+    container.innerHTML = `
+      <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; background: var(--bg-card); border-radius: var(--radius-lg); border: 1px dashed var(--border-color);">
+        <i class="ri-hospital-line" style="font-size: 3rem; color: var(--text-muted); opacity: 0.5;"></i>
+        <h3 style="margin-top: 1rem; color: var(--text-secondary);">No hay servicios hospitalarios cargados</h3>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem;">Crea un nuevo servicio utilizando el botón '➕ Crear Nuevo Servicio' o habilítalos desde el Panel de Administración.</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = enabledServices.map(s => {
+    const staffList = s.staff || [];
+    return `
     <div class="service-card">
       <div>
         <div class="service-card-header">
-          <h3>${s.name}</h3>
-          <span class="code-tag">${s.code}</span>
+          <h3>${s.name || 'Servicio'}</h3>
+          <span class="code-tag">${s.code || 'S/N'}</span>
         </div>
 
         <p style="font-size: 0.8rem; color: var(--primary-600); font-weight: 600; margin-bottom: 0.4rem;">
-          <i class="ri-user-star-line"></i> Jefe de Servicio: <strong>${s.headOfService}</strong>
+          <i class="ri-user-star-line"></i> Jefe de Servicio: <strong>${s.headOfService || 'Sin Asignar'}</strong>
         </p>
 
         <p style="font-size: 0.75rem; color: ${s.autorizadoLeches ? 'var(--emerald-600)' : 'var(--text-muted)'}; font-weight: 600; margin-bottom: 0.75rem;">
@@ -2523,22 +2536,22 @@ function renderServicesGrid() {
         </p>
 
         <h4 style="font-size: 0.8rem; text-transform: uppercase; color: var(--slate-600); margin-bottom: 0.75rem;">
-          Personal a Cargo (${s.staff.length})
+          Personal a Cargo (${staffList.length})
         </h4>
 
         <ul class="staff-list">
-          ${s.staff.map(m => `
+          ${staffList.map(m => `
             <li class="staff-member-item">
               <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
                 <div style="display: flex; align-items: center; gap: 0.75rem;">
-                  <div class="staff-avatar-mini">${m.avatar || m.name.substring(0, 2).toUpperCase()}</div>
+                  <div class="staff-avatar-mini">${m.avatar || (m.name || 'MD').substring(0, 2).toUpperCase()}</div>
                   <div class="staff-info-mini">
-                    <h5>${m.name}</h5>
-                    <p>${m.role}</p>
+                    <h5>${m.name || 'Agente'}</h5>
+                    <p>${m.role || 'Médico'}</p>
                   </div>
                 </div>
                 ${isAdmin ? `
-                  <button style="border: none; background: transparent; color: var(--rose-500); cursor: pointer;" onclick="removeStaffFromService('${s.id}', '${m.name}')" title="Quitar agente">
+                  <button style="border: none; background: transparent; color: var(--rose-500); cursor: pointer;" onclick="removeStaffFromService('${s.id}', '${m.name || ''}')" title="Quitar agente">
                     <i class="ri-delete-bin-line"></i>
                   </button>
                 ` : ''}
@@ -2562,7 +2575,8 @@ function renderServicesGrid() {
         </div>
       ` : ''}
     </div>
-  `).join('');
+  `;
+  }).join('');
 }
 
 /* Tab Navigation */
@@ -2611,11 +2625,13 @@ function switchTab(tabId) {
     }
   }
 
-  // Re-render Admin Panel grids dynamically when switching to tab-admin
+  // Re-render Admin Panel grids dynamically when switching tabs
   if (tabId === 'tab-admin') {
     renderAdminFormPermissions();
     renderAdminServicesGrid();
     renderAdminReportPermissionsMatrix();
+  } else if (tabId === 'tab-services') {
+    renderServicesGrid();
   }
 
   // Always update form availability state across sidebar, dashboard cards, and form containers
