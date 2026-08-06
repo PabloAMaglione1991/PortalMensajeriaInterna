@@ -225,17 +225,23 @@
         </ul>
       </nav>
 
-      <div class="sidebar-footer" style="display: flex; gap: 0.5rem; align-items: center;">
-        <div class="user-profile-card" style="flex: 1; display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0.75rem; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md);">
-          <div class="user-avatar" id="current-user-avatar">OA</div>
-          <div class="user-info" style="overflow: hidden;">
-            <h4 id="current-user-name" style="font-size: 0.825rem; font-weight: 700; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Dr. Orlando Alassia</h4>
-            <p id="current-user-role" style="font-size: 0.725rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Pediatría • Mat. 3410</p>
-          </div>
-        </div>
-        <button class="btn-secondary" style="padding: 0.55rem; color: var(--rose-600); border-color: rgba(225, 29, 72, 0.2); background: rgba(225, 29, 72, 0.05);" onclick="logoutUser()" title="Cerrar Sesión">
-          <i class="ri-logout-box-r-line" style="font-size: 1.1rem;"></i>
+      <div class="sidebar-footer" style="display: flex; flex-direction: column; gap: 0.5rem;">
+        <button type="button" class="btn-primary" style="width: 100%; justify-content: center; font-size: 0.8rem; background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); padding: 0.5rem;" onclick="forceSwitchToAdminMode()" title="Cambiar inmediatamente a perfil Administrador General">
+          <i class="ri-shield-user-line"></i> 👑 Cambiar a Modo Admin
         </button>
+
+        <div style="display: flex; gap: 0.5rem; align-items: center; width: 100%;">
+          <div class="user-profile-card" style="flex: 1; display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0.75rem; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md);" onclick="openLoginModal()" title="Cambiar Perfil Activo">
+            <div class="user-avatar" id="current-user-avatar">ADM</div>
+            <div class="user-info" style="overflow: hidden;">
+              <h4 id="current-user-name" style="font-size: 0.825rem; font-weight: 700; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Dirección Médica</h4>
+              <p id="current-user-role" style="font-size: 0.725rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Admin General</p>
+            </div>
+          </div>
+          <button class="btn-secondary" style="padding: 0.55rem; color: var(--rose-600); border-color: rgba(225, 29, 72, 0.2); background: rgba(225, 29, 72, 0.05);" onclick="logoutUser()" title="Cerrar Sesión">
+            <i class="ri-logout-box-r-line" style="font-size: 1.1rem;"></i>
+          </button>
+        </div>
       </div>
     </aside>
 

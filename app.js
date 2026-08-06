@@ -1269,6 +1269,49 @@ function selectUser(userId) {
   }
 }
 
+/* 1-Click Quick Switch to Admin Mode */
+function forceSwitchToAdminMode() {
+  let adminUser = DEMO_USERS.find(u => u.isAdmin || u.dni === '11111111');
+  if (!adminUser) {
+    adminUser = {
+      id: 'user-admin',
+      dni: '11111111',
+      password: 'admin123',
+      name: 'Dirección Médica (Admin)',
+      role: 'Administrador General del Hospital',
+      service: 'Dirección Médica',
+      avatar: 'ADM',
+      isAdmin: true,
+      email: 'direccion.alassia@santafe.gob.ar'
+    };
+    DEMO_USERS.unshift(adminUser);
+  }
+
+  activeUser = adminUser;
+  isAuthenticated = true;
+  localStorage.setItem('alassia_user', JSON.stringify(activeUser));
+  localStorage.setItem('alassia_auth', JSON.stringify(true));
+
+  renderActiveUser();
+  renderInbox();
+  renderArchiveTable();
+  renderRecurrenceTable();
+  renderReportSection();
+
+  switchTab('tab-admin');
+  logEvent('LOGIN', 'Conmutación manual a Modo Administrador General (11111111)', activeUser);
+  showToast('👑 ¡Perfil cambiado a Modo Administrador General!');
+}
+
+/* Console & UI Diagnostic Helper */
+window.checkAdminStatus = function() {
+  console.log('--- DIAGNÓSTICO DE PERFIL Y ACCESOS ALASSIA ---');
+  console.log('activeUser:', activeUser);
+  console.log('isAdmin:', activeUser ? activeUser.isAdmin : false);
+  console.log('localStorage user:', localStorage.getItem('alassia_user'));
+  return activeUser;
+};
+
 function closeLoginModal() {
   document.getElementById('login-modal').classList.remove('active');
 }
