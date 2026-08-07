@@ -35,6 +35,7 @@ function getDbConnection() {
     ];
 
     $credentials = [
+        ['user' => 'admindb', 'pass' => 'nokia3189'],
         ['user' => 'root', 'pass' => ''],
         ['user' => 'sa', 'pass' => ''],
         ['user' => 'root', 'pass' => 'root'],
