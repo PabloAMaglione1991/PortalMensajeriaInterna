@@ -246,6 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderServicesGrid();
   renderAdminServicesGrid();
   renderAdminFormPermissions();
+  renderUserCrudTable();
   updateFormAvailabilityState();
   updateUserServiceDropdowns();
   populateStaffDropdowns();
@@ -911,8 +912,18 @@ function handleEditUserSubmit(e) {
   e.preventDefault();
   const dni = document.getElementById('edit-user-original-dni').value;
   const norm = d => String(d || '').replace(/[^0-9]/g, '');
-  const user = systemUsers.find(u => norm(u.dni) === norm(dni));
-  if (!user) return;
+  let user = findUserByDniOrId(dni);
+  if (!user) {
+    user = {
+      dni: dni,
+      name: '',
+      role: '',
+      service: 'Clínica Pediátrica',
+      email: '',
+      isAdmin: false
+    };
+    systemUsers.push(user);
+  }
 
   const newName = document.getElementById('edit-user-name').value.trim();
   const newPass = document.getElementById('edit-user-pass').value.trim();
@@ -2036,7 +2047,7 @@ function loadBackendDataFromDb() {
 /* Helper: Delivery Authorization Check */
 function canUserDeliverRecord(r, user) {
   if (!user) return false;
-  if (user.isAdmin) return true; // Admin has full delivery override permission
+  if (isSuperUser(user)) return true; // Informática y Admin tienen permisos de entrega totales
 
   const userServ = (user.service || '').toLowerCase();
   const destServ = (r.destino || '').toLowerCase();
