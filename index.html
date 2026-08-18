@@ -17,7 +17,7 @@
   <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
   <!-- html2pdf for direct PDF file downloads without print modals -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  <link rel="stylesheet" href="styles.css?v=20260818-1325">
+  <link rel="stylesheet" href="styles.css?v=20260818-1335">
 </head>
 <body>
 
@@ -1770,6 +1770,8 @@
         </div>
       </form>
     </div>
+  </div>
+
   <!-- Dispense Quantity Modal (Single or Multi-Unit Delivery) -->
   <div class="modal-backdrop" id="dispense-modal">
     <div class="modal-card" style="max-width: 500px;">
@@ -1806,7 +1808,7 @@
         </div>
 
         <div class="form-group full-width" style="margin-bottom: 1.5rem;">
-          <label>O ingresar cantidad de módulos entregados en mano:</label>
+          <label for="dispense-modal-qty">O ingresar cantidad de módulos entregados en mano:</label>
           <input type="number" id="dispense-modal-qty" class="form-control" min="1" max="12" value="1" style="font-weight: 700;" required onchange="updateDispenseBtnStyles(this.value)">
         </div>
 
@@ -1861,44 +1863,44 @@
 
         <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.25rem;">
           <div class="form-group">
-            <label>D.N.I. (Usuario)</label>
+            <label for="edit-user-dni">D.N.I. (Usuario)</label>
             <input type="text" id="edit-user-dni" class="form-control" style="font-family: 'JetBrains Mono', monospace; font-weight: 700; background-color: var(--slate-100);" readonly>
           </div>
 
           <div class="form-group">
-            <label>Nombre y Apellido</label>
+            <label for="edit-user-name">Nombre y Apellido</label>
             <input type="text" id="edit-user-name" class="form-control" required>
           </div>
 
           <div class="form-group">
-            <label>Nueva Contraseña (Opcional)</label>
+            <label for="edit-user-pass">Nueva Contraseña (Opcional)</label>
             <input type="password" id="edit-user-pass" class="form-control" placeholder="Dejar en blanco para no cambiar">
           </div>
 
           <div class="form-group">
-            <label>Nº de Matrícula Profesional</label>
+            <label for="edit-user-mat">Nº de Matrícula Profesional</label>
             <input type="text" id="edit-user-mat" class="form-control" placeholder="Ej: Mat. 3410">
           </div>
 
           <div class="form-group">
-            <label>Especialidad / Rol Hospitalario</label>
+            <label for="edit-user-role">Especialidad / Rol Hospitalario</label>
             <input type="text" id="edit-user-role" class="form-control" required>
           </div>
 
           <div class="form-group">
-            <label>Servicio Asignado</label>
+            <label for="edit-user-service">Servicio Asignado</label>
             <select id="edit-user-service" class="form-control" required>
               <!-- Dynamic Services Options -->
             </select>
           </div>
 
           <div class="form-group">
-            <label>Email de Notificaciones</label>
+            <label for="edit-user-email">Email de Notificaciones</label>
             <input type="email" id="edit-user-email" class="form-control" required>
           </div>
 
           <div class="form-group">
-            <label>Nivel de Acceso</label>
+            <label for="edit-user-is-admin">Nivel de Acceso</label>
             <select id="edit-user-is-admin" class="form-control" style="font-weight: 700;">
               <option value="false">No (Médico de Servicio / Especialista)</option>
               <option value="true">Sí (Dirección Médica / Administrador Total)</option>
@@ -1933,27 +1935,27 @@
 
         <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.25rem;">
           <div class="form-group">
-            <label>Código / Sigla Oficial</label>
+            <label for="edit-service-code">Código / Sigla Oficial</label>
             <input type="text" id="edit-service-code" class="form-control" style="font-family: 'JetBrains Mono', monospace; font-weight: 700; background-color: var(--slate-100);" readonly>
           </div>
 
           <div class="form-group">
-            <label>Nombre del Servicio</label>
+            <label for="edit-service-name">Nombre del Servicio</label>
             <input type="text" id="edit-service-name" class="form-control" required>
           </div>
 
           <div class="form-group">
-            <label>Jefe / Coordinador de Servicio</label>
+            <label for="edit-service-head">Jefe / Coordinador de Servicio</label>
             <input type="text" id="edit-service-head" class="form-control" required>
           </div>
 
           <div class="form-group">
-            <label>Email Oficial del Servicio</label>
+            <label for="edit-service-email">Email Oficial del Servicio</label>
             <input type="email" id="edit-service-email" class="form-control" required>
           </div>
 
           <div class="form-group">
-            <label>Recetas de Leches / Fórmulas</label>
+            <label for="edit-service-milk-auth">Recetas de Leches / Fórmulas</label>
             <select id="edit-service-milk-auth" class="form-control">
               <option value="true">🥛 Autorizado</option>
               <option value="false">🚫 Restringido</option>
@@ -1961,7 +1963,7 @@
           </div>
 
           <div class="form-group">
-            <label>Reportes & Métricas del Sector</label>
+            <label for="edit-service-report-auth">Reportes & Métricas del Sector</label>
             <select id="edit-service-report-auth" class="form-control">
               <option value="true">📊 Habilitado</option>
               <option value="false">🚫 Deshabilitado</option>
@@ -1969,7 +1971,7 @@
           </div>
 
           <div class="form-group">
-            <label>Estado del Servicio en el Portal</label>
+            <label for="edit-service-enabled">Estado del Servicio en el Portal</label>
             <select id="edit-service-enabled" class="form-control" style="font-weight: 700;">
               <option value="true">🟢 Activo / Habilitado</option>
               <option value="false">🔴 Suspendido / Deshabilitado</option>
@@ -1988,6 +1990,6 @@
   <!-- Toast Container -->
   <div class="toast-container" id="toast-container"></div>
 
-  <script src="app.js?v=20260818-1325"></script>
+  <script src="app.js?v=20260818-1335"></script>
 </body>
 </html>
