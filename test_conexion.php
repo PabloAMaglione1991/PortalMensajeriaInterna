@@ -66,13 +66,11 @@ $s2 = [
     'estado' => 'Desconectado',
     'error' => null,
     'tablas_existentes' => [],
-    'columnas_paciente' => [],
-    'total_pacientes' => 0,
-    'muestra_pacientes' => []
+    'conteos' => []
 ];
 
 try {
-    $pdo2 = new PDO("mysql:host=10.12.4.2;dbname=alassia_mensajeria;charset=utf8", 'gestion_', 'GESTION_77', [
+    $pdo2 = new PDO("mysql:host=10.12.4.2;dbname=alassia_mensajeria;charset=utf8mb4", 'sql', 'sql77', [
         PDO::ATTR_TIMEOUT => 3,
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
     ]);
@@ -81,15 +79,12 @@ try {
     $tables2 = $pdo2->query("SHOW TABLES")->fetchAll(PDO::FETCH_COLUMN);
     $s2['tablas_existentes'] = $tables2;
 
-    if (in_array('paciente', $tables2)) {
-        $cols2 = $pdo2->query("DESCRIBE `paciente`")->fetchAll(PDO::FETCH_ASSOC);
-        $s2['columnas_paciente'] = array_column($cols2, 'Field');
-
-        $count2 = $pdo2->query("SELECT COUNT(*) FROM `paciente`")->fetchColumn();
-        $s2['total_pacientes'] = (int)$count2;
-
-        $sample2 = $pdo2->query("SELECT * FROM `paciente` LIMIT 3")->fetchAll(PDO::FETCH_ASSOC);
-        $s2['muestra_pacientes'] = $sample2;
+    $tablasVerificar = ['servicio', 'profesional', 'solicitud', 'auditoria_log', 'ausentismo_alerta', 'paciente'];
+    foreach ($tablasVerificar as $tbl) {
+        if (in_array($tbl, $tables2)) {
+            $cnt = $pdo2->query("SELECT COUNT(*) FROM `$tbl`")->fetchColumn();
+            $s2['conteos'][$tbl] = (int)$cnt;
+        }
     }
 } catch (PDOException $e) {
     $s2['estado'] = 'ERROR DE CONEXIÓN ❌';

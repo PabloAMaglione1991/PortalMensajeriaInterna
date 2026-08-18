@@ -18,46 +18,44 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'OPTIONS
 }
 
 // ----------------------------------------------------------------------
-// ⚙️ PARÁMETROS DE CONEXIÓN MYSQL (10.12.4.2)
+// ⚙️ PARÁMETROS DE CONEXIÓN MYSQL OFICIALES (10.12.4.2)
 // ----------------------------------------------------------------------
 define('DB_HOST_PRIMARY', '10.12.4.2');
 define('DB_HOST_FALLBACK', 'localhost');
-define('DB_USER', 'root');
-define('DB_PASS', '');
+define('DB_USER', 'sql');
+define('DB_PASS', 'sql77');
 define('DB_NAME', 'alassia_mensajeria');
 
 function getDbConnection() {
     $options = [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        PDO::ATTR_TIMEOUT => 1,
+        PDO::ATTR_TIMEOUT => 3,
         PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4 COLLATE utf8mb4_spanish_ci"
     ];
 
-    $credentials = [
-        ['user' => 'admindb', 'pass' => 'nokia3189'],
-        ['user' => 'root', 'pass' => ''],
-        ['user' => 'sa', 'pass' => ''],
-        ['user' => 'root', 'pass' => 'root'],
-        ['user' => 'sa', 'pass' => 'sa'],
-        ['user' => 'alassia', 'pass' => 'alassia123']
-    ];
-
-    $hosts = [DB_HOST_PRIMARY, DB_HOST_FALLBACK];
-
-    foreach ($hosts as $host) {
-        foreach ($credentials as $cred) {
+    // 1. Intento primario: Servidor de Base de Datos Hospitalario 10.12.4.2
+    try {
+        $dsn = "mysql:host=" . DB_HOST_PRIMARY . ";dbname=" . DB_NAME . ";charset=utf8mb4";
+        $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
+        return $pdo;
+    } catch (PDOException $e) {
+        // En caso de estar en desarrollo local, intentar fallback a localhost
+        try {
+            $dsnFallback = "mysql:host=" . DB_HOST_FALLBACK . ";dbname=" . DB_NAME . ";charset=utf8mb4";
+            $pdo = new PDO($dsnFallback, DB_USER, DB_PASS, $options);
+            return $pdo;
+        } catch (PDOException $e2) {
+            // Intentar con root sin pass solo si es localhost dev
             try {
-                $dsn = "mysql:host=" . $host . ";dbname=" . DB_NAME . ";charset=utf8mb4";
-                $pdo = new PDO($dsn, $cred['user'], $cred['pass'], $options);
-                $pdo->exec("SET NAMES utf8mb4 COLLATE utf8mb4_spanish_ci");
+                $dsnDev = "mysql:host=" . DB_HOST_FALLBACK . ";dbname=" . DB_NAME . ";charset=utf8mb4";
+                $pdo = new PDO($dsnDev, 'root', '', $options);
                 return $pdo;
-            } catch (PDOException $e) {
-                // Continuar intentando con el siguiente par de credenciales
+            } catch (PDOException $e3) {
+                return null;
             }
         }
     }
-    return null;
 }
 
 $rawInput = file_get_contents('php://input');
@@ -89,6 +87,11 @@ switch ($action) {
             exit;
         }
 
+        if (empty($password)) {
+            echo json_encode(['success' => false, 'message' => 'La contraseña es obligatoria']);
+            exit;
+        }
+
         try {
             $stmt = $pdo->prepare("
                 SELECT p.*, s.nombre AS servicio_nombre
@@ -101,7 +104,13 @@ switch ($action) {
             $userRow = $stmt->fetch();
 
             if (!$userRow) {
-                $stmtAlt = $pdo->prepare("SELECT p.*, s.nombre AS servicio_nombre FROM profesional p LEFT JOIN servicio s ON p.servicio_id = s.id WHERE LTRIM(RTRIM(p.dni)) = :dni AND p.activo = 1 LIMIT 1");
+                $stmtAlt = $pdo->prepare("
+                    SELECT p.*, s.nombre AS servicio_nombre 
+                    FROM profesional p 
+                    LEFT JOIN servicio s ON p.servicio_id = s.id 
+                    WHERE LTRIM(RTRIM(p.dni)) = :dni AND p.activo = 1 
+                    LIMIT 1
+                ");
                 $stmtAlt->execute([':dni' => $dni]);
                 $userRow = $stmtAlt->fetch();
             }
@@ -109,10 +118,10 @@ switch ($action) {
             if ($userRow) {
                 $passValid = false;
 
-                if (!empty($userRow['password_hash']) && password_verify($password, $userRow['password_hash'])) {
-                    $passValid = true;
-                } else if ($password === 'admin123' || $password === 'alassia123' || $password === '123456' || empty($password)) {
-                    $passValid = true;
+                if (!empty($userRow['password_hash'])) {
+                    if (password_verify($password, $userRow['password_hash']) || $userRow['password_hash'] === $password) {
+                        $passValid = true;
+                    }
                 }
 
                 if ($passValid) {
@@ -130,26 +139,33 @@ switch ($action) {
                         'id' => 'user-' . $userRow['id'],
                         'dni' => $userRow['dni'],
                         'name' => $nombre,
-                        'role' => $mat !== 'S/N' ? "{$rol} • Mat. {$mat}" : $rol,
+                        'role' => ($mat !== 'S/N' && !str_contains($rol, 'Mat.')) ? "{$rol} • Mat. {$mat}" : $rol,
                         'service' => $servicio,
                         'avatar' => strtoupper(substr($nombre, 0, 2)),
                         'isAdmin' => $isAdmin,
                         'email' => $userRow['email'] ?? ''
                     ];
 
-                    $stmtLog = $pdo->prepare("INSERT INTO auditoria_log (categoria, mensaje_evento, usuario_dni, IP_origen) VALUES ('LOGIN', :msg, :dni, :ip)");
+                    $stmtLog = $pdo->prepare("
+                        INSERT INTO auditoria_log (categoria, usuario_dni, usuario_nombre, detalle_accion, ip_origen) 
+                        VALUES ('LOGIN', :dni, :nom, :msg, :ip)
+                    ");
                     $stmtLog->execute([
-                        ':msg' => "Inicio de sesión exitoso desde MySQL para {$nombre} (DNI {$dni})",
                         ':dni' => $dni,
+                        ':nom' => $nombre,
+                        ':msg' => "Inicio de sesión exitoso en producción para {$nombre} (DNI {$dni})",
                         ':ip' => $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1'
                     ]);
 
-                    echo json_encode(['success' => true, 'user' => $userData, 'message' => 'Autenticación MySQL exitosa']);
+                    echo json_encode(['success' => true, 'user' => $userData, 'message' => 'Autenticación exitosa']);
+                    exit;
+                } else {
+                    echo json_encode(['success' => false, 'message' => 'Contraseña incorrecta']);
                     exit;
                 }
             }
 
-            echo json_encode(['success' => false, 'message' => 'D.N.I. o contraseña no coinciden en la base de datos MySQL']);
+            echo json_encode(['success' => false, 'message' => 'D.N.I. no registrado en el sistema']);
         } catch (Exception $e) {
             echo json_encode(['success' => false, 'error' => $e->getMessage()]);
         }
@@ -245,8 +261,9 @@ switch ($action) {
         $role = trim($data['role'] ?? '');
         $mat = trim($data['mat'] ?? 'S/N');
         $email = trim($data['email'] ?? '');
+        $serviceName = trim($data['service'] ?? '');
         $isAdmin = !empty($data['isAdmin']) ? 1 : 0;
-        $passHash = password_hash($data['password'] ?? 'alassia123', PASSWORD_DEFAULT);
+        $passwordInput = trim($data['password'] ?? '');
 
         if (empty($dni) || empty($name)) {
             echo json_encode(['success' => false, 'message' => 'DNI y Nombre obligatorios']);
@@ -254,15 +271,42 @@ switch ($action) {
         }
 
         try {
+            // Obtener ID del servicio si fue seleccionado
+            $servicioId = null;
+            if (!empty($serviceName) && !$isAdmin) {
+                $stmtServ = $pdo->prepare("SELECT id FROM servicio WHERE nombre = :sname OR codigo = :scode LIMIT 1");
+                $stmtServ->execute([':sname' => $serviceName, ':scode' => $serviceName]);
+                $servRow = $stmtServ->fetch();
+                if ($servRow) {
+                    $servicioId = $servRow['id'];
+                }
+            }
+
+            // Chequear si el usuario ya existe en base
+            $stmtCheck = $pdo->prepare("SELECT id, password_hash FROM profesional WHERE dni = :dni LIMIT 1");
+            $stmtCheck->execute([':dni' => $dni]);
+            $existing = $stmtCheck->fetch();
+
+            if (!empty($passwordInput)) {
+                $passHash = password_hash($passwordInput, PASSWORD_DEFAULT);
+            } else if ($existing && !empty($existing['password_hash'])) {
+                $passHash = $existing['password_hash'];
+            } else {
+                $passHash = password_hash('alassia123', PASSWORD_DEFAULT);
+            }
+
             $stmt = $pdo->prepare("
-                INSERT INTO profesional (dni, password_hash, nombre_completo, matricula, especialidad_rol, es_admin, email, activo)
-                VALUES (:dni, :pass, :nombre, :mat, :rol, :admin, :email, 1)
+                INSERT INTO profesional (dni, password_hash, nombre_completo, matricula, especialidad_rol, servicio_id, es_admin, email, activo)
+                VALUES (:dni, :pass, :nombre, :mat, :rol, :serv_id, :admin, :email, 1)
                 ON DUPLICATE KEY UPDATE 
+                    password_hash = VALUES(password_hash),
                     nombre_completo = VALUES(nombre_completo),
                     especialidad_rol = VALUES(especialidad_rol),
                     matricula = VALUES(matricula),
+                    servicio_id = VALUES(servicio_id),
                     email = VALUES(email),
-                    es_admin = VALUES(es_admin)
+                    es_admin = VALUES(es_admin),
+                    activo = 1
             ");
             $stmt->execute([
                 ':dni' => $dni,
@@ -270,6 +314,7 @@ switch ($action) {
                 ':nombre' => $name,
                 ':mat' => $mat,
                 ':rol' => $role,
+                ':serv_id' => $servicioId,
                 ':admin' => $isAdmin,
                 ':email' => $email
             ]);
@@ -280,7 +325,35 @@ switch ($action) {
         }
         break;
 
-    // 4. GUARDAR SOLICITUD, RECETA O RETIRO (solicitud)
+    // 4. BAJA DE PROFESIONAL/USUARIO (profesional)
+    case 'delete_user':
+        $dni = preg_replace('/[^0-9]/', '', $data['dni'] ?? '');
+        if (!empty($dni)) {
+            if ($dni === '11111111') {
+                echo json_encode(['success' => false, 'message' => 'No se puede dar de baja la cuenta principal de Dirección Médica.']);
+                exit;
+            }
+            try {
+                $stmt = $pdo->prepare("UPDATE profesional SET activo = 0 WHERE dni = :dni");
+                $stmt->execute([':dni' => $dni]);
+
+                $stmtLog = $pdo->prepare("
+                    INSERT INTO auditoria_log (categoria, usuario_dni, usuario_nombre, detalle_accion, ip_origen) 
+                    VALUES ('ADMIN', '11111111', 'Dirección Médica', :det, :ip)
+                ");
+                $stmtLog->execute([
+                    ':det' => "Baja del profesional con DNI {$dni}",
+                    ':ip' => $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1'
+                ]);
+
+                echo json_encode(['success' => true, 'message' => "Usuario DNI {$dni} dado de baja en MySQL (10.12.4.2)"]);
+            } catch (Exception $e) {
+                echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+            }
+        }
+        break;
+
+    // 5. GUARDAR SOLICITUD, RECETA O RETIRO (solicitud)
     case 'save_record':
         $codigo = trim($data['id'] ?? '');
         $tipo = trim($data['type'] ?? 'Solicitud General');
@@ -294,15 +367,17 @@ switch ($action) {
         $isRecurring = !empty($data['isRecurring']) ? 1 : 0;
         $moduloActual = intval($data['moduloActual'] ?? 1);
         $totalModulos = intval($data['totalModulos'] ?? 1);
+        $respuestaMedica = trim($data['respuestaMedica'] ?? '');
 
         try {
             $stmt = $pdo->prepare("
-                INSERT INTO solicitud (codigo_unico, tipo_formulario, paciente_dni, paciente_nombre, paciente_hc, motivo_consulta, es_recurrente, modulo_actual, total_modulos, estado)
-                VALUES (:codigo, :tipo, :dni, :nombre, :hc, :motivo, :recurrente, :mod_act, :mod_tot, :estado)
+                INSERT INTO solicitud (codigo_unico, tipo_formulario, paciente_dni, paciente_nombre, paciente_hc, motivo_consulta, respuesta_medica, es_recurrente, modulo_actual, total_modulos, estado)
+                VALUES (:codigo, :tipo, :dni, :nombre, :hc, :motivo, :resp, :recurrente, :mod_act, :mod_tot, :estado)
                 ON DUPLICATE KEY UPDATE
                     estado = VALUES(estado),
                     modulo_actual = VALUES(modulo_actual),
-                    motivo_consulta = VALUES(motivo_consulta)
+                    motivo_consulta = VALUES(motivo_consulta),
+                    respuesta_medica = VALUES(respuesta_medica)
             ");
             $stmt->execute([
                 ':codigo' => $codigo,
@@ -311,6 +386,7 @@ switch ($action) {
                 ':nombre' => $pacienteNombre,
                 ':hc' => $pacienteHc,
                 ':motivo' => $motivo,
+                ':resp' => $respuestaMedica,
                 ':recurrente' => $isRecurring,
                 ':mod_act' => $moduloActual,
                 ':mod_tot' => $totalModulos,
@@ -323,12 +399,18 @@ switch ($action) {
         }
         break;
 
-    // 5. CARGAR DATOS COMPLETOS DE LA BASE AL INICIAR
+    // 6. CARGAR DATOS COMPLETOS DE LA BASE AL INICIAR
     case 'get_all_data':
         try {
-            $servicios = $pdo->query("SELECT * FROM servicio ORDER BY nombre ASC")->fetchAll();
-            $profesionales = $pdo->query("SELECT id, dni, nombre_completo, especialidad_rol, matricula, email, es_admin FROM profesional WHERE activo=1")->fetchAll();
-            $solicitudes = $pdo->query("SELECT * FROM solicitud ORDER BY fecha_solicitud DESC LIMIT 100")->fetchAll();
+            $servicios = $pdo->query("SELECT * FROM servicio WHERE activo = 1 ORDER BY nombre ASC")->fetchAll();
+            $profesionales = $pdo->query("
+                SELECT p.id, p.dni, p.nombre_completo, p.especialidad_rol, p.matricula, p.email, p.es_admin, p.servicio_id, s.nombre AS servicio_nombre 
+                FROM profesional p 
+                LEFT JOIN servicio s ON p.servicio_id = s.id 
+                WHERE p.activo = 1 
+                ORDER BY p.es_admin DESC, p.nombre_completo ASC
+            ")->fetchAll();
+            $solicitudes = $pdo->query("SELECT * FROM solicitud ORDER BY fecha_solicitud DESC LIMIT 300")->fetchAll();
             $logs = $pdo->query("SELECT * FROM auditoria_log ORDER BY fecha_registro DESC LIMIT 200")->fetchAll();
 
             echo json_encode([
@@ -340,58 +422,6 @@ switch ($action) {
             ]);
         } catch (Exception $e) {
             echo json_encode(['success' => false, 'error' => $e->getMessage()]);
-        }
-        break;
-
-    // 6. PURGAR / VACIAR SOLICITUDES Y RECETAS DE PRUEBA
-    case 'clear_test_records':
-        try {
-            $pdo->exec("SET FOREIGN_KEY_CHECKS = 0");
-            $pdo->exec("TRUNCATE TABLE solicitud");
-            $pdo->exec("TRUNCATE TABLE ausentismo_alerta");
-            $pdo->exec("SET FOREIGN_KEY_CHECKS = 1");
-
-            $stmtLog = $pdo->prepare("INSERT INTO auditoria_log (categoria, mensaje_evento, usuario_dni, IP_origen) VALUES ('ADMIN', 'Purga total de recetas y solicitudes de prueba de la base de datos', '11111111', :ip)");
-            $stmtLog->execute([':ip' => $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1']);
-
-            echo json_encode(['success' => true, 'message' => 'Se purgaron todas las recetas de prueba de MySQL (10.12.4.2)'], JSON_UNESCAPED_UNICODE);
-        } catch (Exception $e) {
-            echo json_encode(['success' => false, 'error' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
-        }
-        break;
-
-    // 7. VACIAR / ELIMINAR USUARIOS DE PRUEBA
-    case 'clear_test_users':
-        try {
-            $stmt = $pdo->prepare("DELETE FROM profesional WHERE es_admin = 0 AND dni != '11111111'");
-            $stmt->execute();
-            $deletedCount = $stmt->rowCount();
-
-            $stmtLog = $pdo->prepare("INSERT INTO auditoria_log (categoria, mensaje_evento, usuario_dni, IP_origen) VALUES ('ADMIN', 'Baja y vaciado masivo de usuarios de prueba', '11111111', :ip)");
-            $stmtLog->execute([':ip' => $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1']);
-
-            echo json_encode(['success' => true, 'deleted_count' => $deletedCount, 'message' => 'Se eliminaron todos los usuarios de prueba de MySQL (10.12.4.2) manteniendo la cuenta del Administrador General'], JSON_UNESCAPED_UNICODE);
-        } catch (Exception $e) {
-            echo json_encode(['success' => false, 'error' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
-        }
-        break;
-
-    // 8. VACIAR Y PURGAR TODO EL TESTING (SOLICITUDES + USUARIOS DE PRUEBA)
-    case 'clear_all_testing_data':
-        try {
-            $pdo->exec("SET FOREIGN_KEY_CHECKS = 0");
-            $pdo->exec("TRUNCATE TABLE solicitud");
-            $pdo->exec("TRUNCATE TABLE ausentismo_alerta");
-            $stmtUsers = $pdo->prepare("DELETE FROM profesional WHERE es_admin = 0 AND dni != '11111111'");
-            $stmtUsers->execute();
-            $pdo->exec("SET FOREIGN_KEY_CHECKS = 1");
-
-            $stmtLog = $pdo->prepare("INSERT INTO auditoria_log (categoria, mensaje_evento, usuario_dni, IP_origen) VALUES ('ADMIN', 'VACIADO TOTAL Y PURGA DE TESTING (RECETAS + USUARIOS)', '11111111', :ip)");
-            $stmtLog->execute([':ip' => $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1']);
-
-            echo json_encode(['success' => true, 'message' => 'Se eliminaron todas las recetas y usuarios de prueba conservando el Administrador General (11111111)'], JSON_UNESCAPED_UNICODE);
-        } catch (Exception $e) {
-            echo json_encode(['success' => false, 'error' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
         }
         break;
 

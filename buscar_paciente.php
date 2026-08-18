@@ -95,7 +95,7 @@ $paciente = buscarEnBaseDeDatos('10.12.4.1', 'diagnose', 'gestion_', 'GESTION_77
 
 // 2. Si no se encuentra en 10.12.4.1, intentar búsqueda en Base del Portal "alassia_mensajeria" (10.12.4.2)
 if (!$paciente) {
-    $paciente = buscarEnBaseDeDatos('10.12.4.2', 'alassia_mensajeria', 'gestion_', 'GESTION_77', $rawInput, $dniLimpio, $dniLike, $debugLogs);
+    $paciente = buscarEnBaseDeDatos('10.12.4.2', 'alassia_mensajeria', 'sql', 'sql77', $rawInput, $dniLimpio, $dniLike, $debugLogs);
 }
 
 $response = [];

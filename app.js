@@ -1,11 +1,9 @@
-/* Global Environment Switch: 'production' | 'testing' */
+/* Global Environment: 'production' */
 const APP_CONFIG = {
-  ENV: 'production',                  // 'production' (versión real) o 'testing' (versión de pruebas)
-  SHOW_DEMO_USERS_MODAL: false,       // En producción se oculta el selector con 1-clic
-  ALLOW_MOCK_PATIENTS_FALLBACK: false // En producción NO usar pacientes ficticios, buscar SOLO en base diagnose (10.12.4.1)
+  ENV: 'production'
 };
 
-// Official Hospital Services with Authorized Milk Prescription Flags (autorizadoLeches)
+// Official Hospital Services (staff loaded and synchronized dynamically from database)
 const INITIAL_SERVICES = [
   {
     id: "serv-gastro",
@@ -15,10 +13,7 @@ const INITIAL_SERVICES = [
     headOfService: "Dra. Mariana López",
     enabled: true,
     autorizadoLeches: true,
-    staff: [
-      { name: "Dra. Mariana López", role: "Jefa de Gastroenterología Pediátrica", mat: "3920", avatar: "ML" },
-      { name: "Dr. Ignacio Peralta", role: "Gastroenterólogo Infantil", mat: "4410", avatar: "IP" }
-    ]
+    staff: []
   },
   {
     id: "serv-neona",
@@ -28,10 +23,7 @@ const INITIAL_SERVICES = [
     headOfService: "Dra. Silvina Benítez",
     enabled: true,
     autorizadoLeches: true,
-    staff: [
-      { name: "Dra. Silvina Benítez", role: "Jefa de Neonatología y Cuidados Intensivos", mat: "2910", avatar: "SB" },
-      { name: "Dr. Matías Carrizo", role: "Neonatólogo Pediátrico", mat: "3890", avatar: "MC" }
-    ]
+    staff: []
   },
   {
     id: "serv-nutri",
@@ -41,11 +33,7 @@ const INITIAL_SERVICES = [
     headOfService: "Maglione Pablo",
     enabled: true,
     autorizadoLeches: true,
-    staff: [
-      { name: "Maglione Pablo", role: "Lic. en Nutrición • Coordinador Lactario", mat: "1052", avatar: "MP" },
-      { name: "Lic. Paula Gómez", role: "Nutricionista Infantil", mat: "941", avatar: "PG" },
-      { name: "Lic. Mariana Varela", role: "Nutricionista Clínica", mat: "1104", avatar: "MV" }
-    ]
+    staff: []
   },
   {
     id: "serv-cardio",
@@ -55,11 +43,7 @@ const INITIAL_SERVICES = [
     headOfService: "Dr. Orlando Alassia",
     enabled: true,
     autorizadoLeches: true,
-    staff: [
-      { name: "Dr. Orlando Alassia", role: "Jefe de Servicio • Especialista en Cardiología", mat: "3410", avatar: "OA" },
-      { name: "Dra. Florencia Carrizo", role: "Cardióloga Infantil • Ecocardiografía", mat: "4812", avatar: "FC" },
-      { name: "Dr. Roberto Rossi", role: "Cardiólogo Pediátrico", mat: "5129", avatar: "RR" }
-    ]
+    staff: []
   },
   {
     id: "serv-cronicos",
@@ -69,10 +53,7 @@ const INITIAL_SERVICES = [
     headOfService: "Dr. Hernán Castro",
     enabled: true,
     autorizadoLeches: true,
-    staff: [
-      { name: "Dr. Hernán Castro", role: "Coordinador de Tratamientos Crónicos", mat: "3120", avatar: "HC" },
-      { name: "Dra. Romina Fernández", role: "Especialista en Seguimiento Crónico", mat: "4012", avatar: "RF" }
-    ]
+    staff: []
   },
   {
     id: "serv-internacion",
@@ -82,10 +63,7 @@ const INITIAL_SERVICES = [
     headOfService: "Dr. Esteban Martínez",
     enabled: true,
     autorizadoLeches: true,
-    staff: [
-      { name: "Dr. Esteban Martínez", role: "Jefe de Salas de Internación General", mat: "3990", avatar: "EM" },
-      { name: "Dra. Lucía Gómez", role: "Médica Pediatra de Internación", mat: "4812", avatar: "LG" }
-    ]
+    staff: []
   },
   {
     id: "serv-clinica-ped",
@@ -95,10 +73,7 @@ const INITIAL_SERVICES = [
     headOfService: "Dra. Andrea Morales",
     enabled: true,
     autorizadoLeches: true,
-    staff: [
-      { name: "Dra. Andrea Morales", role: "Jefa de Servicio Clínica Pediátrica", mat: "2840", avatar: "AM" },
-      { name: "Dr. Lucas Romero", role: "Médico Pediatra Clínico", mat: "3510", avatar: "LR" }
-    ]
+    staff: []
   },
   {
     id: "serv-farmacia",
@@ -108,10 +83,7 @@ const INITIAL_SERVICES = [
     headOfService: "Farm. Carlos Villalba",
     enabled: true,
     autorizadoLeches: false,
-    staff: [
-      { name: "Farm. Carlos Villalba", role: "Jefe de Farmacia Hospitalaria", mat: "1820", avatar: "CV" },
-      { name: "Farm. Sofía Mendoza", role: "Farmacéutica Clínica • Dispensa Digital", mat: "2140", avatar: "SM" }
-    ]
+    staff: []
   },
   {
     id: "serv-imagenes",
@@ -121,10 +93,7 @@ const INITIAL_SERVICES = [
     headOfService: "Dr. Andrés Cavallo",
     enabled: true,
     autorizadoLeches: false,
-    staff: [
-      { name: "Dr. Andrés Cavallo", role: "Jefe de Diagnóstico por Imágenes", mat: "3105", avatar: "AC" },
-      { name: "Dra. Elena Ramos", role: "Radióloga Pediátrica • Ultrasonografía", mat: "4019", avatar: "ER" }
-    ]
+    staff: []
   },
   {
     id: "serv-social",
@@ -134,103 +103,24 @@ const INITIAL_SERVICES = [
     headOfService: "Lic. Viviana Roldán",
     enabled: true,
     autorizadoLeches: false,
-    staff: [
-      { name: "Lic. Viviana Roldán", role: "Jefa de Servicio Social Hospitalario", mat: "1420", avatar: "VR" },
-      { name: "Lic. Claudio Giménez", role: "Trabajador Social Pediátrico", mat: "1890", avatar: "CG" }
-    ]
+    staff: []
   }
 ];
 
-// Pre-seeded Demo Users with DNI and Password Credentials
-const DEMO_USERS = [
-  {
-    id: "user-admin",
-    dni: "11111111",
-    password: "admin123",
-    name: "Dirección Médica (Admin)",
-    role: "Administrador General del Hospital",
-    avatar: "ADM",
-    email: "direccion.alassia@santafe.gob.ar",
-    service: "Todos los Servicios (Acceso Total)",
-    isAdmin: true
-  },
-  {
-    id: "user-cardio",
-    dni: "20341000",
-    password: "cardio123",
-    name: "Dr. Orlando Alassia",
-    role: "Jefe de Servicio • Cardiología (Mat. 3410)",
-    avatar: "OA",
-    email: "orlando.alassia@santafe.gob.ar",
-    service: "Cardiología Infantil",
-    isAdmin: false
-  },
-  {
-    id: "user-gastro",
-    dni: "25392000",
-    password: "gastro123",
-    name: "Dra. Mariana López",
-    role: "Jefa de Gastroenterología Pediátrica (Mat. 3920)",
-    avatar: "ML",
-    email: "mariana.lopez@santafe.gob.ar",
-    service: "Gastroenterología Infantil",
-    isAdmin: false
-  },
-  {
-    id: "user-nutri",
-    dni: "24105200",
-    password: "nutri123",
-    name: "Maglione Pablo",
-    role: "Lic. en Nutrición • Coordinador Lactario (Mat. 1052)",
-    avatar: "MP",
-    email: "pablo.maglione@santafe.gob.ar",
-    service: "Nutrición y Lactario",
-    isAdmin: false
-  },
-  {
-    id: "user-farmacia",
-    dni: "22182000",
-    password: "farmacia123",
-    name: "Farm. Carlos Villalba",
-    role: "Jefe de Farmacia Hospitalaria (Mat. 1820)",
-    avatar: "CV",
-    email: "carlos.villalba@santafe.gob.ar",
-    service: "Farmacia y Recetas Electrónicas",
-    isAdmin: false
-  },
-  {
-    id: "user-imagenes",
-    dni: "23310500",
-    password: "imagenes123",
-    name: "Dr. Andrés Cavallo",
-    role: "Jefe de Diagnóstico por Imágenes (Mat. 3105)",
-    avatar: "AC",
-    email: "andres.cavallo@santafe.gob.ar",
-    service: "Diagnóstico por Imágenes",
-    isAdmin: false
-  },
-  {
-    id: "user-social",
-    dni: "28410999",
-    password: "social123",
-    name: "Lic. Viviana Roldán",
-    role: "Jefa de Servicio Social Hospitalario (Mat. 1420)",
-    avatar: "VR",
-    email: "viviana.roldan@santafe.gob.ar",
-    service: "Servicio Social Hospitalario",
-    isAdmin: false
-  }
-];
+// Production Master Administrator Account
+const DEFAULT_ADMIN = {
+  id: "user-admin",
+  dni: "11111111",
+  name: "Dirección Médica (Admin)",
+  role: "Administrador General del Hospital",
+  avatar: "ADM",
+  email: "direccion.alassia@santafe.gob.ar",
+  service: "Dirección Médica",
+  isAdmin: true
+};
 
-// Pre-seeded Demo Patients database for local & offline testing (Database 'diagnose' on 10.12.4.1)
-const DEMO_PATIENTS = [
-  { dni: "48912304", nombre: "Mateo Benítez", hc: "HC-9821", edad: "3 años 4 meses", sexo: "M", telefono: "0342-4591029", email: "familia.benitez@gmail.com" },
-  { dni: "51092381", nombre: "Camilo Benavídez", hc: "HC-8812", edad: "5 años", sexo: "M", telefono: "0342-4819023", email: "benavidez.camilo@yahoo.com" },
-  { dni: "49301992", nombre: "Valentina Morales", hc: "HC-10492", edad: "7 años 2 meses", sexo: "F", telefono: "0342-4192019", email: "morales.valen@hotmail.com" },
-  { dni: "50119823", nombre: "Sofía Valentina Rossi", hc: "HC-40192", edad: "9 años", sexo: "F", telefono: "0342-4882190", email: "rossi.sofia@gmail.com" },
-  { dni: "52190431", nombre: "Joaquín Benjamín Silva", hc: "HC-5120", edad: "8 meses", sexo: "M", telefono: "0342-4771209", email: "silva.familia@gmail.com" },
-  { dni: "49812001", nombre: "Lucas Rivas", hc: "HC-3109", edad: "10 años", sexo: "M", telefono: "0342-4559102", email: "rivas.lucas@gmail.com" }
-];
+// System Users (Populated from MySQL 10.12.4.2)
+let systemUsers = [DEFAULT_ADMIN];
 
 async function buscarPacientePorDNI(dniInputId, fieldMap) {
   const inputEl = document.getElementById(dniInputId);
@@ -253,29 +143,16 @@ async function buscarPacientePorDNI(dniInputId, fieldMap) {
     if (data && data.success && data.paciente) {
       applyPatientData(data.paciente, fieldMap);
       logEvent('CONSULTA', `Búsqueda exitosa de paciente DNI ${cleanDni} en base diagnose (10.12.4.1)`);
-      showToast(`✅ Paciente ${data.paciente.nombre} encontrado e importado desde la base diagnose (10.12.4.1).`);
+      showToast(`✅ Paciente ${data.paciente.nombre} importado desde la base diagnose (10.12.4.1).`);
       return;
-    } else if (data && data.success === false && !APP_CONFIG.ALLOW_MOCK_PATIENTS_FALLBACK) {
+    } else {
       showToast(`⚠️ ${data.message || `Paciente con DNI ${rawDni} no encontrado en la base diagnose (10.12.4.1).`}`);
       return;
     }
   } catch (err) {
-    console.log("Intranet API offline or PHP error:", err);
+    console.log("Error al consultar base diagnose:", err);
+    showToast(`⚠️ No se pudo consultar la base central de pacientes (10.12.4.1). Podés ingresar los datos manualmente.`);
   }
-
-  // Fallback to local demo patient dataset only if enabled in APP_CONFIG
-  if (APP_CONFIG.ALLOW_MOCK_PATIENTS_FALLBACK) {
-    const localMatch = DEMO_PATIENTS.find(p => p.dni === cleanDni || (p.hc || '').toLowerCase().includes((cleanDni || '').toLowerCase()));
-
-    if (localMatch) {
-      applyPatientData(localMatch, fieldMap);
-      logEvent('CONSULTA', `Búsqueda local de paciente DNI ${cleanDni}`);
-      showToast(`✅ Paciente ${localMatch.nombre} cargado desde la base local de pruebas.`);
-      return;
-    }
-  }
-
-  showToast(`⚠️ No se encontró ningún paciente registrado con DNI ${rawDni} en la base diagnose (10.12.4.1). Podés ingresar los datos manualmente.`);
 }
 
 function applyPatientData(paciente, fieldMap) {
@@ -302,296 +179,29 @@ function applyPatientData(paciente, fieldMap) {
   }
 }
 
-// Initial Audit Trail Logs Data
-const INITIAL_LOGS = [
-  {
-    id: "LOG-1001",
-    timestamp: "2026-07-27 08:30:12",
-    category: "CREACION",
-    user: "Dra. Lucía Gómez",
-    role: "Médica Pediatra (Mat. 4812)",
-    service: "Pediatría II",
-    detail: "Emisión de Interconsulta con Cardiología #CARD-2026-001 (Paciente Mateo Benítez)",
-    ip: "192.168.10.42 (Terminal Sala 3)"
-  },
-  {
-    id: "LOG-1002",
-    timestamp: "2026-07-27 08:10:05",
-    category: "CREACION",
-    user: "Dr. Orlando Alassia",
-    role: "Jefe de Servicio (Mat. 3410)",
-    service: "Cardiología Infantil",
-    detail: "Emisión de Receta Electrónica #FARM-2026-102 en Farmacia (Camilo Benavídez)",
-    ip: "192.168.10.15 (Consultorio Cardio)"
-  },
-  {
-    id: "LOG-1003",
-    timestamp: "2026-07-27 07:45:20",
-    category: "RESOLUCION",
-    user: "Dr. Andrés Cavallo",
-    role: "Jefe de Imágenes (Mat. 3105)",
-    service: "Diagnóstico por Imágenes",
-    detail: "Dictamen e informe cargado para estudio RX #IMG-2026-088. Estado cambiado a Confirmado/Archivado.",
-    ip: "192.168.10.88 (Estación RX 1)"
-  },
-  {
-    id: "LOG-1004",
-    timestamp: "2026-07-27 07:00:00",
-    category: "LOGIN",
-    user: "Dirección Médica (Admin)",
-    role: "Administrador General",
-    service: "Todos los Servicios",
-    detail: "Inicio de sesión exitoso de administración hospitalaria",
-    ip: "192.168.10.1 (Intranet Central)"
-  }
-];
+// Production State Storage
+const INITIAL_LOGS = [];
+const INITIAL_DATA = [];
+const INITIAL_NOTIFS = [];
 
-// Seed Data for Interconsultations & Prescriptions History (All 5 Types)
-const INITIAL_DATA = [
-  {
-    id: "CARD-2026-001",
-    type: "Cardiología",
-    paciente: "Mateo Benítez",
-    dni: "48.912.304",
-    hc: "HC-9821",
-    edad: "3 años 4 meses",
-    servicio: "Cardiología Infantil",
-    staffAssigned: "Dr. Orlando Alassia (Jefe) / Dra. Florencia Carrizo",
-    diagnostico: "Síndrome febril prolongado / Soplo holosistólico 3/6 en foco mitral",
-    motivo: "Paciente internado en Sala 3 con fiebre de 7 días. Se ausculta soplo rudo. Se solicita Ecocardiograma Doppler Color urgente.",
-    medico: "Dra. Lucía Gómez (Mat. 4812)",
-    fecha: "2026-07-28 08:30",
-    estado: "Pendiente",
-    respuestaMedica: "",
-    medicoRespondedor: "",
-    isRecurring: false
-  },
-  {
-    id: "CARD-2026-045",
-    type: "Cardiología",
-    paciente: "Lautaro Ezequiel Gómez",
-    dni: "52.890.112",
-    hc: "HC-12049",
-    edad: "1 año 8 meses",
-    servicio: "Cardiología Infantil",
-    staffAssigned: "Dra. Florencia Carrizo",
-    diagnostico: "Coartación de Aorta / Control Posquirúrgico",
-    motivo: "Evaluación cardiológica pediátrica con Ecocardiograma Doppler Color. Paciente operado de coartación aórtica hace 6 meses. Presenta pulsos femorales simétricos.",
-    medico: "Dr. Orlando Alassia (Mat. 3410)",
-    fecha: "2026-07-28 09:15",
-    estado: "Pendiente",
-    respuestaMedica: "",
-    medicoRespondedor: "",
-    isRecurring: false
-  },
-  {
-    id: "GEN-2026-089",
-    type: "Interconsulta General",
-    paciente: "Emilia Paz Ferreyra",
-    dni: "53.401.882",
-    hc: "HC-14022",
-    edad: "5 meses",
-    servicio: "Clínica Pediátrica",
-    destino: "Gastroenterología Infantil",
-    staffAssigned: "Dra. Mariana López (Jefa de Gastroenterología)",
-    diagnostico: "Bronquiolitis Aguda Moderada (VRS (+)) con Rechazo del Alimento",
-    motivo: "Paciente internada en Sala 4 - Cama 18 B. Presenta dificultad respiratoria y rechazo alimentario de 24hs. Se solicita valoración digestiva y sonda SNG.",
-    medico: "Dra. Andrea Morales (Mat. 2840)",
-    fecha: "2026-07-28 09:40",
-    estado: "Pendiente",
-    respuestaMedica: "",
-    medicoRespondedor: "",
-    isRecurring: false
-  },
-  {
-    id: "FARM-2026-150",
-    type: "Receta Electrónica",
-    paciente: "Thiago Agustín Mansilla",
-    dni: "51.902.441",
-    hc: "HC-9930",
-    servicio: "Farmacia y Recetas Electrónicas",
-    staffAssigned: "Farm. Carlos Villalba (Jefe de Farmacia)",
-    diagnostico: "Diabetes Mellitus Tipo 1 Pediátrica",
-    rp1: "Insulina Glargina 100 UI/ml lapicera prellenada (12 UI SC nocturna) + Tiras reactivas glucemia (100 unidades/mes)",
-    medico: "Dra. Romina Fernández (Mat. 4012)",
-    fecha: "2026-07-28 10:05",
-    estado: "Pendiente",
-    respuestaMedica: "",
-    medicoRespondedor: "",
-    isRecurring: true,
-    moduloActual: 1,
-    totalModulos: 6,
-    proximoRetiro: "2026-07-28"
-  },
-  {
-    id: "IMG-2026-112",
-    type: "Solicitud de Imágenes",
-    paciente: "Santino Gabriel Cabrera",
-    dni: "50.812.309",
-    hc: "HC-7741",
-    edad: "4 años",
-    servicio: "Diagnóstico por Imágenes",
-    staffAssigned: "Dr. Andrés Cavallo (Jefe de Imágenes)",
-    diagnostico: "Neumonía Aguda Adquirida en la Comunidad / Descartar Derrame Pleural",
-    motivo: "Ecografía Pleural + Radiografía RX Tórax Frente y Perfil. Paciente febril de 39.2°C con hypoventilación en base derecha.",
-    medico: "Dr. Esteban Martínez (Mat. 3990)",
-    fecha: "2026-07-28 10:20",
-    estado: "Pendiente",
-    respuestaMedica: "",
-    medicoRespondedor: "",
-    isRecurring: false
-  },
-  {
-    id: "NUT-2026-030",
-    type: "Prescripción Nutricional",
-    paciente: "Delfina María Benítez",
-    dni: "54.102.990",
-    hc: "HC-15099",
-    edad: "2 meses (Prematura 32 sem)",
-    sexo: "F",
-    servicio: "Neonatología y UCNI",
-    destino: "Nutrición y Lactario",
-    staffAssigned: "Equipo Completo de Nutrición y Lactario",
-    pa: "2.450 kg",
-    talla: "44 cm",
-    diagnostico: "Prematurez Extrema / Retraso del Crecimiento Intrauterino (RCIU)",
-    rp1: "Fórmula para Prematuros con Hierro y Proteínas Concentradas - 15% dilución / 90 cc c/3hs por SNG",
-    rp2: "Módulo Calórico de Triglicéridos de Cadena Media (TCM) - 1.5 ml por toma",
-    medico: "Dra. Silvina Benítez (Mat. 3120)",
-    fecha: "2026-07-28 10:25",
-    estado: "Pendiente",
-    respuestaMedica: "",
-    medicoRespondedor: "",
-    isRecurring: true,
-    moduloActual: 1,
-    totalModulos: 6,
-    proximoRetiro: "2026-07-28"
-  },
-  {
-    id: "NUT-2026-031",
-    type: "Prescripción Nutricional",
-    paciente: "Joaquín Benjamín Silva",
-    dni: "52.190.431",
-    hc: "HC-5120",
-    edad: "8 meses",
-    sexo: "M",
-    servicio: "Gastroenterología Infantil",
-    destino: "Nutrición y Lactario",
-    staffAssigned: "Equipo Completo de Nutrición y Lactario",
-    pa: "6.850 kg",
-    talla: "66 cm",
-    diagnostico: "Alergia a la proteína de leche de vaca (APLV) / Lactante menor",
-    rp1: "Fórmula de Inicio Extensamente Hidrolizada (Sin Lactosa) - 13.5% / 150 cc - 8 tomas cada 3hs (VO)",
-    rp2: "Módulo de Polímeros de Glucosa (Maltodextrina 3%) - 3 g / 100 cc",
-    medico: "Dra. Mariana López (Mat. 3920)",
-    fecha: "2026-07-26 18:40",
-    estado: "En Proceso",
-    respuestaMedica: "Formulación Rp1 y Rp2 aprobada y preparada en Lactario.",
-    medicoRespondedor: "Maglione Pablo (Mat. 1052)",
-    isRecurring: true,
-    moduloActual: 2,
-    totalModulos: 6,
-    proximoRetiro: "2026-08-15"
-  },
-  {
-    id: "FARM-2026-102",
-    type: "Receta Electrónica",
-    paciente: "Camilo Benavídez",
-    dni: "51.092.381",
-    hc: "HC-8812",
-    servicio: "Farmacia y Recetas Electrónicas",
-    staffAssigned: "Farm. Carlos Villalba (Jefe de Farmacia)",
-    diagnostico: "Tratamiento de Mantenimiento Asma Pediátrico",
-    rp1: "Fluticasona 125mcg aerosol de inhalación + Cámara Espaciadora Pediátrica — 2 disparos c/12hs",
-    medico: "Dr. Orlando Alassia (Mat. 3410)",
-    fecha: "2026-07-27 08:10",
-    estado: "En Proceso",
-    respuestaMedica: "Procesando orden de medicamentos.",
-    medicoRespondedor: "Farm. Carlos Villalba (Mat. 1820)",
-    isRecurring: true,
-    moduloActual: 1,
-    totalModulos: 6,
-    proximoRetiro: "2026-07-27"
-  },
-  {
-    id: "IMG-2026-088",
-    type: "Solicitud de Imágenes",
-    paciente: "Valentina Morales",
-    dni: "49.301.992",
-    hc: "HC-10492",
-    servicio: "Diagnóstico por Imágenes",
-    staffAssigned: "Dr. Andrés Cavallo (Jefe de Imágenes)",
-    diagnostico: "Traumatismo cerrado de tórax con hipoventilación izquierda",
-    motivo: "Radiografía RX Tórax Frente y Perfil. Descartar neumotórax o fractura costal.",
-    medico: "Dr. Gonzalo Torres (Mat. 2840)",
-    fecha: "2026-07-27 07:45",
-    estado: "Confirmado / Resuelto",
-    respuestaMedica: "RX Tórax realizada: Sin trazo de fractura costal. Silueta cardíaca conservada.",
-    medicoRespondedor: "Dr. Andrés Cavallo (Mat. 3105)",
-    isRecurring: false
-  },
-  {
-    id: "GEN-2026-042",
-    type: "Interconsulta General",
-    paciente: "Sofía Valentina Rossi",
-    dni: "50.119.823",
-    hc: "HC-40192",
-    edad: "9 años",
-    servicio: "Clínica Pediátrica",
-    destino: "Gastroenterología Infantil",
-    staffAssigned: "Dra. Mariana López (Jefa de Gastroenterología)",
-    diagnostico: "Dolor abdominal agudo en FIDA",
-    motivo: "Cuadro de 48hs de dolor abdominal en fosa ilíaca derecha. Se solicita valoración gastroenterológica.",
-    medico: "Dra. Andrea Morales (Mat. 2840)",
-    fecha: "2026-07-27 07:15",
-    estado: "Confirmado / Resuelto",
-    respuestaMedica: "Evaluación completada. Plan nutricional ajustado.",
-    medicoRespondedor: "Dra. Mariana López (Mat. 3920)",
-    isRecurring: false
-  }
-];
-
-const INITIAL_NOTIFS = [
-  {
-    id: 1,
-    title: "🔴 Alarma por Ausentismo en Retiro",
-    text: "Paciente Lucas Rivas (#FARM-2026-090) superó los 7 días de atraso en retiro de Módulo 4/6.",
-    time: "Hace 15 minutos",
-    unread: true
-  }
-];
-
-// Active State Storage
 let services = INITIAL_SERVICES;
 localStorage.setItem('alassia_services', JSON.stringify(services));
-let records = JSON.parse(localStorage.getItem('alassia_records')) || INITIAL_DATA;
+let records = JSON.parse(localStorage.getItem('alassia_records')) || [];
+let auditLogs = JSON.parse(localStorage.getItem('alassia_audit_logs')) || [];
+let notifications = JSON.parse(localStorage.getItem('alassia_notifs')) || [];
 
-// Auto-patch records to ensure destination service is set for RBAC filtering
-records.forEach(r => {
-  if (!r.destino) {
-    if (r.type === 'Prescripción Nutricional') r.destino = 'Nutrición y Lactario';
-    else if (r.type === 'Receta Electrónica') r.destino = 'Farmacia y Recetas Electrónicas';
-    else if (r.type === 'Solicitud de Imágenes') r.destino = 'Diagnóstico por Imágenes';
-    else if (r.type === 'Cardiología') r.destino = 'Cardiología Infantil';
-    else r.destino = r.servicio || 'General';
-  }
-});
-localStorage.setItem('alassia_records', JSON.stringify(records));
-let auditLogs = JSON.parse(localStorage.getItem('alassia_audit_logs')) || INITIAL_LOGS;
-let notifications = JSON.parse(localStorage.getItem('alassia_notifs')) || INITIAL_NOTIFS;
 // Load any custom users created via Admin Panel
 let customUsers = JSON.parse(localStorage.getItem('alassia_custom_users')) || [];
 if (customUsers.length > 0) {
   customUsers.forEach(cu => {
-    if (!DEMO_USERS.some(u => u.dni === cu.dni)) {
-      DEMO_USERS.unshift(cu);
+    if (!systemUsers.some(u => u.dni === cu.dni)) {
+      systemUsers.unshift(cu);
     }
   });
 }
 
-let activeUser = JSON.parse(localStorage.getItem('alassia_user')) || DEMO_USERS[0];
-let isAuthenticated = JSON.parse(localStorage.getItem('alassia_auth'));
-if (isAuthenticated === null || isAuthenticated === undefined) isAuthenticated = true;
+let activeUser = JSON.parse(localStorage.getItem('alassia_user')) || null;
+let isAuthenticated = JSON.parse(localStorage.getItem('alassia_auth')) === true && activeUser !== null;
 
 const INITIAL_FORM_PERMISSIONS = {
   cardio: { id: "cardio", name: "Interconsulta Cardiología", tab: "tab-cardio", enabled: true, tag: "cardio", icon: "ri-heart-pulse-line" },
@@ -632,17 +242,10 @@ document.addEventListener('DOMContentLoaded', () => {
   setupSearch();
 });
 
-/* Global Environment & Demo UI Switch */
+/* Global Environment Switch */
 function applyEnvironmentMode() {
   const demoBox = document.getElementById('demo-credentials-box') || document.querySelector('.demo-credentials-box');
-  if (!demoBox) return;
-
-  const isProduction = APP_CONFIG.ENV === 'production' && !APP_CONFIG.SHOW_DEMO_USERS_MODAL;
-  if (isProduction) {
-    demoBox.style.display = 'none';
-  } else {
-    demoBox.style.display = 'block';
-  }
+  if (demoBox) demoBox.style.display = 'none';
 }
 
 /* Session & Authentication Guard */
@@ -674,23 +277,16 @@ function togglePasswordVisibility() {
   }
 }
 
-function fillDemoLogin(dni, pass) {
-  document.getElementById('login-dni-input').value = dni;
-  document.getElementById('login-pass-input').value = pass;
-  const alertEl = document.getElementById('login-error-alert');
-  if (alertEl) alertEl.style.display = 'none';
-}
-
 function handleLoginSubmit(e) {
   e.preventDefault();
   const dniInput = document.getElementById('login-dni-input').value.trim().replace(/\./g, '');
   const passInput = document.getElementById('login-pass-input').value.trim();
   const errorAlert = document.getElementById('login-error-alert');
 
-  if (!dniInput) {
+  if (!dniInput || !passInput) {
     if (errorAlert) {
       const txt = errorAlert.querySelector('span');
-      if (txt) txt.textContent = 'Por favor ingresa el D.N.I. de inicio de sesión.';
+      if (txt) txt.textContent = 'Por favor ingresá tu D.N.I. y contraseña.';
       errorAlert.style.display = 'flex';
     }
     return;
@@ -725,44 +321,18 @@ function handleLoginSubmit(e) {
       logEvent('LOGIN', `Inicio de sesión exitoso en MySQL con DNI ${dniInput} (${activeUser.name})`, activeUser);
       showToast(`¡Bienvenido/a ${activeUser.name}! (${activeUser.service})`);
     } else {
-      const foundUser = DEMO_USERS.find(u => u.dni === dniInput && (u.password === passInput || passInput === 'admin123' || passInput === 'alassia123'));
-      if (foundUser) {
-        activeUser = foundUser;
-        isAuthenticated = true;
-        localStorage.setItem('alassia_user', JSON.stringify(activeUser));
-        localStorage.setItem('alassia_auth', JSON.stringify(true));
-        if (errorAlert) errorAlert.style.display = 'none';
-        renderActiveUser();
-        renderInbox();
-        renderArchiveTable();
-        checkAuthSession();
-        showToast(`¡Bienvenido/a ${activeUser.name}!`);
-      } else {
-        if (errorAlert) {
-          const txt = errorAlert.querySelector('span');
-          if (txt) txt.textContent = data.message || 'D.N.I. o contraseña no coinciden en la base de datos MySQL.';
-          errorAlert.style.display = 'flex';
-        }
+      if (errorAlert) {
+        const txt = errorAlert.querySelector('span');
+        if (txt) txt.textContent = data.message || 'D.N.I. o contraseña no coinciden en la base de datos MySQL.';
+        errorAlert.style.display = 'flex';
       }
     }
   })
   .catch(err => {
-    const foundUser = DEMO_USERS.find(u => u.dni === dniInput);
-    if (foundUser) {
-      activeUser = foundUser;
-      isAuthenticated = true;
-      localStorage.setItem('alassia_user', JSON.stringify(activeUser));
-      localStorage.setItem('alassia_auth', JSON.stringify(true));
-      if (errorAlert) errorAlert.style.display = 'none';
-      renderActiveUser();
-      renderInbox();
-      checkAuthSession();
-    } else {
-      if (errorAlert) {
-        const txt = errorAlert.querySelector('span');
-        if (txt) txt.textContent = 'Error de conexión con el servidor de base de datos MySQL.';
-        errorAlert.style.display = 'flex';
-      }
+    if (errorAlert) {
+      const txt = errorAlert.querySelector('span');
+      if (txt) txt.textContent = 'Error de conexión con el servidor de base de datos MySQL (10.12.4.2).';
+      errorAlert.style.display = 'flex';
     }
   });
 }
@@ -771,10 +341,12 @@ function logoutUser() {
   if (activeUser) {
     logEvent('LOGIN', `Cierre de sesión registrado para ${activeUser.name}`, activeUser);
   }
+  activeUser = null;
   isAuthenticated = false;
+  localStorage.removeItem('alassia_user');
   localStorage.setItem('alassia_auth', JSON.stringify(false));
   checkAuthSession();
-  showToast(`Sesión cerrada correctamente.`);
+  showToast('Sesión cerrada correctamente.');
 }
 
 /* System Audit Logging Engine */
@@ -1069,7 +641,7 @@ function handleCreateUserSubmit(e) {
   const isAdmin = document.getElementById('new-user-is-admin').value === 'true';
 
   // Check if DNI already exists
-  if (DEMO_USERS.some(u => u.dni === dni)) {
+  if (systemUsers.some(u => u.dni === dni)) {
     showToast(`⚠️ El DNI ${dni} ya se encuentra registrado en el sistema.`, 'error');
     return;
   }
@@ -1089,7 +661,7 @@ function handleCreateUserSubmit(e) {
     email: email
   };
 
-  DEMO_USERS.unshift(newUser);
+  systemUsers.unshift(newUser);
   let customUsers = JSON.parse(localStorage.getItem('alassia_custom_users')) || [];
   customUsers.unshift(newUser);
   localStorage.setItem('alassia_custom_users', JSON.stringify(customUsers));
@@ -1117,7 +689,7 @@ function handleCreateUserSubmit(e) {
 
 /* Automatic Synchronization of Registered Users with Service Staff Rosters */
 function syncUsersWithServiceStaff() {
-  DEMO_USERS.forEach(u => {
+  systemUsers.forEach(u => {
     if (!u.service || u.isAdmin) return;
 
     const uServ = (u.service || '').toLowerCase();
@@ -1155,7 +727,7 @@ function renderUserCrudTable() {
   const tbody = document.getElementById('admin-users-crud-body');
   if (!tbody) return;
 
-  tbody.innerHTML = DEMO_USERS.map(u => `
+  tbody.innerHTML = systemUsers.map(u => `
     <tr>
       <td><span style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--primary-600);">${u.dni}</span></td>
       <td><strong>${u.name}</strong></td>
@@ -1183,7 +755,7 @@ function renderUserCrudTable() {
 /* User Edit Handlers */
 function openEditUserModal(dni) {
   const cleanDni = String(dni || '').trim();
-  const user = DEMO_USERS.find(u => String(u.dni || '').trim() === cleanDni);
+  const user = systemUsers.find(u => String(u.dni || '').trim() === cleanDni);
   if (!user) return;
 
   const modal = document.getElementById('edit-user-modal');
@@ -1228,7 +800,7 @@ function closeEditUserModal() {
 function handleEditUserSubmit(e) {
   e.preventDefault();
   const dni = document.getElementById('edit-user-original-dni').value;
-  const user = DEMO_USERS.find(u => u.dni === dni);
+  const user = systemUsers.find(u => u.dni === dni);
   if (!user) return;
 
   const newName = document.getElementById('edit-user-name').value.trim();
@@ -1275,104 +847,40 @@ function handleEditUserSubmit(e) {
 }
 
 function deleteUserByDNI(dni) {
+  if (dni === '11111111') {
+    showToast('⚠️ No se puede eliminar la cuenta principal de Dirección Médica.');
+    return;
+  }
   if (!confirm(`¿Estás seguro de eliminar al usuario con DNI ${dni}?`)) return;
 
-  const idx = DEMO_USERS.findIndex(u => u.dni === dni);
+  const idx = systemUsers.findIndex(u => u.dni === dni);
   if (idx !== -1) {
-    const deleted = DEMO_USERS.splice(idx, 1)[0];
+    const deleted = systemUsers.splice(idx, 1)[0];
     let customUsers = JSON.parse(localStorage.getItem('alassia_custom_users')) || [];
     customUsers = customUsers.filter(u => u.dni !== dni);
     localStorage.setItem('alassia_custom_users', JSON.stringify(customUsers));
 
+    // Quitar del staff de servicios
+    services.forEach(s => {
+      if (s.staff) {
+        s.staff = s.staff.filter(st => st.dni !== dni && st.name !== deleted.name);
+      }
+    });
+    localStorage.setItem('alassia_services', JSON.stringify(services));
+
+    fetch('api.php?action=delete_user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ dni: dni })
+    }).catch(err => console.log('MySQL User Delete Sync:', err));
+
     logEvent('ADMIN', `Baja de usuario DNI ${dni} (${deleted.name})`);
     showToast(`Usuario DNI ${dni} eliminado del sistema.`);
     renderUserCrudTable();
+    renderAdminServicesGrid();
+    renderServicesGrid();
+    populateStaffDropdowns();
   }
-}
-
-function openLoginModal() {
-  const container = document.getElementById('user-accounts-list');
-  const demoSection = container ? container.parentElement : null;
-
-  if (APP_CONFIG.ENV === 'production' && !APP_CONFIG.SHOW_DEMO_USERS_MODAL) {
-    if (demoSection) demoSection.style.display = 'none';
-  } else {
-    if (demoSection) demoSection.style.display = 'block';
-    container.innerHTML = DEMO_USERS.map(u => `
-      <div class="user-card-option ${u.id === activeUser.id ? 'selected' : ''}" onclick="selectUser('${u.id}')">
-        <div class="user-avatar" style="width: 44px; height: 44px; font-size: 0.9rem;">${u.avatar}</div>
-        <div>
-          <h4 style="font-size: 0.9rem; margin-bottom: 2px;">${u.name}</h4>
-          <p style="font-size: 0.75rem; color: var(--text-muted);">${u.role}</p>
-          <span style="font-size: 0.7rem; color: var(--primary-600); font-weight: 600;">${u.service}</span>
-        </div>
-      </div>
-    `).join('');
-  }
-
-  document.getElementById('login-modal').classList.add('active');
-}
-
-function selectUser(userId) {
-  const found = DEMO_USERS.find(u => u.id === userId);
-  if (found) {
-    activeUser = found;
-    localStorage.setItem('alassia_user', JSON.stringify(activeUser));
-    renderActiveUser();
-    renderInbox();
-    renderArchiveTable();
-    closeLoginModal();
-    
-    logEvent('LOGIN', `Cambio de perfil activo a ${activeUser.service}`, activeUser);
-    showToast(`Perfil cambiado a ${activeUser.name} (${activeUser.service})`);
-  }
-}
-
-/* 1-Click Quick Switch to Admin Mode */
-function forceSwitchToAdminMode() {
-  let adminUser = DEMO_USERS.find(u => u.isAdmin || u.dni === '11111111');
-  if (!adminUser) {
-    adminUser = {
-      id: 'user-admin',
-      dni: '11111111',
-      password: 'admin123',
-      name: 'Dirección Médica (Admin)',
-      role: 'Administrador General del Hospital',
-      service: 'Dirección Médica',
-      avatar: 'ADM',
-      isAdmin: true,
-      email: 'direccion.alassia@santafe.gob.ar'
-    };
-    DEMO_USERS.unshift(adminUser);
-  }
-
-  activeUser = adminUser;
-  isAuthenticated = true;
-  localStorage.setItem('alassia_user', JSON.stringify(activeUser));
-  localStorage.setItem('alassia_auth', JSON.stringify(true));
-
-  renderActiveUser();
-  renderInbox();
-  renderArchiveTable();
-  renderRecurringSection();
-  renderReportSection();
-
-  switchTab('tab-admin');
-  logEvent('LOGIN', 'Conmutación manual a Modo Administrador General (11111111)', activeUser);
-  showToast('👑 ¡Perfil cambiado a Modo Administrador General!');
-}
-
-/* Console & UI Diagnostic Helper */
-window.checkAdminStatus = function() {
-  console.log('--- DIAGNÓSTICO DE PERFIL Y ACCESOS ALASSIA ---');
-  console.log('activeUser:', activeUser);
-  console.log('isAdmin:', activeUser ? activeUser.isAdmin : false);
-  console.log('localStorage user:', localStorage.getItem('alassia_user'));
-  return activeUser;
-};
-
-function closeLoginModal() {
-  document.getElementById('login-modal').classList.remove('active');
 }
 
 /* Admin Panel: Order & Prescription Form Enable/Disable Toggles */
@@ -2007,7 +1515,7 @@ function populateStaffModalUserDropdown() {
   const userSelect = document.getElementById('staff-user-select');
   if (!userSelect) return;
 
-  const validUsers = DEMO_USERS.filter(u => !u.isAdmin);
+  const validUsers = systemUsers.filter(u => !u.isAdmin);
   if (validUsers.length === 0) {
     userSelect.innerHTML = `<option value="">⚠️ No hay profesionales registrados aún. Creá uno desde el Panel de Administración.</option>`;
     return;
@@ -2034,7 +1542,7 @@ function handleAddStaffSubmit(e) {
     return;
   }
 
-  const selectedUser = DEMO_USERS.find(u => u.dni === userDni);
+  const selectedUser = systemUsers.find(u => u.dni === userDni);
   const targetService = services.find(s => s.id === servId || s.name === servId);
 
   if (targetService && selectedUser) {
@@ -2157,61 +1665,101 @@ function loadBackendDataFromDb() {
 
       // 2. Sincronizar y Sanitizar Profesionales de MySQL 10.12.4.2
       if (data.profesionales && Array.isArray(data.profesionales)) {
+        const loadedUsers = [];
+        let hasAdmin = false;
+
         data.profesionales.forEach(p => {
           const cleanDni = (p.dni || '').trim();
           if (!cleanDni) return;
 
           const cleanName = sanitizeString(p.nombre_completo);
           const cleanRole = sanitizeString(p.especialidad_rol);
+          const cleanMat = p.matricula && p.matricula !== 'S/N' ? p.matricula : '';
+          const fullRole = (cleanMat && !cleanRole.includes('Mat.')) ? `${cleanRole} • Mat. ${cleanMat}` : cleanRole;
+          const isAdmin = p.es_admin == 1 || cleanDni === '11111111';
+          if (isAdmin) hasAdmin = true;
 
-          const existingUser = DEMO_USERS.find(u => u.dni === cleanDni);
-          if (!existingUser) {
-            DEMO_USERS.unshift({
-              id: `user-${p.id || Date.now()}`,
-              dni: cleanDni,
-              password: 'alassia123',
-              name: cleanName,
-              role: cleanRole,
-              service: 'Clínica Pediátrica',
-              avatar: cleanName.substring(0, 2).toUpperCase(),
-              isAdmin: p.es_admin == 1,
-              email: p.email
-            });
-          } else {
-            existingUser.name = cleanName;
-            existingUser.role = cleanRole;
-          }
+          const servName = p.servicio_nombre || (isAdmin ? 'Dirección Médica' : 'Clínica Pediátrica');
 
-          // Auto-reparación en MySQL 10.12.4.2
-          if (cleanName !== p.nombre_completo || cleanRole !== p.especialidad_rol) {
-            fetch('api.php?action=save_user', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                dni: cleanDni,
-                name: cleanName,
-                role: cleanRole,
-                service: existingUser ? existingUser.service : 'Clínica Pediátrica',
-                email: p.email,
-                isAdmin: p.es_admin == 1
-              })
-            }).catch(e => {});
-          }
+          loadedUsers.push({
+            id: `user-${p.id || cleanDni}`,
+            dni: cleanDni,
+            name: cleanName,
+            role: fullRole,
+            service: servName,
+            avatar: cleanName.substring(0, 2).toUpperCase() || 'MD',
+            isAdmin: isAdmin,
+            email: p.email || ''
+          });
         });
+
+        if (!hasAdmin) {
+          loadedUsers.unshift(DEFAULT_ADMIN);
+        }
+
+        systemUsers = loadedUsers;
+      }
+
+      // 3. Sincronizar Solicitudes e Interconsultas de MySQL 10.12.4.2
+      if (data.solicitudes && Array.isArray(data.solicitudes)) {
+        records = data.solicitudes.map(s => {
+          const recServOrigen = s.servicio_origen_nombre || s.servicio_origen || 'General';
+          const recServDestino = s.servicio_destino_nombre || s.servicio_destino || recServOrigen;
+          return {
+            id: s.codigo_unico,
+            type: s.tipo_formulario,
+            paciente: s.paciente_nombre,
+            dni: s.paciente_dni,
+            hc: s.paciente_hc,
+            edad: s.paciente_edad || '',
+            servicio: recServOrigen,
+            destino: recServDestino,
+            staffAssigned: s.staff_asignado || '',
+            diagnostico: s.diagnostico_presuntivo || '',
+            motivo: s.motivo_consulta || '',
+            rp1: s.datos_rp1 || '',
+            medico: s.medico_solicitante || '',
+            fecha: s.fecha_solicitud || '',
+            estado: s.estado || 'Pendiente',
+            respuestaMedica: s.respuesta_medica || '',
+            medicoRespondedor: s.medico_respondedor || '',
+            isRecurring: s.es_recurrente == 1,
+            moduloActual: parseInt(s.modulo_actual || 1),
+            totalModulos: parseInt(s.total_modulos || 1)
+          };
+        });
+        localStorage.setItem('alassia_records', JSON.stringify(records));
+      }
+
+      // 4. Sincronizar Registros de Auditoría de MySQL 10.12.4.2
+      if (data.logs && Array.isArray(data.logs)) {
+        auditLogs = data.logs.map(l => ({
+          id: `LOG-${l.id}`,
+          timestamp: l.fecha_registro,
+          category: l.categoria,
+          user: l.usuario_nombre || 'Usuario Sistema',
+          role: 'Profesional de Salud',
+          service: 'Hospital Alassia',
+          detail: l.detalle_accion,
+          ip: l.ip_origen || '10.12.4.221'
+        }));
+        localStorage.setItem('alassia_audit_logs', JSON.stringify(auditLogs));
       }
 
       // Sanitizar arreglos locales
       services.forEach(s => {
         s.name = sanitizeString(s.name);
         s.headOfService = sanitizeString(s.headOfService);
-        s.staff.forEach(st => {
-          st.name = sanitizeString(st.name);
-          st.role = sanitizeString(st.role);
-        });
+        if (s.staff) {
+          s.staff.forEach(st => {
+            st.name = sanitizeString(st.name);
+            st.role = sanitizeString(st.role);
+          });
+        }
       });
       localStorage.setItem('alassia_services', JSON.stringify(services));
 
-      DEMO_USERS.forEach(u => {
+      systemUsers.forEach(u => {
         u.name = sanitizeString(u.name);
         u.role = sanitizeString(u.role);
         u.service = sanitizeString(u.service);
@@ -2223,150 +1771,15 @@ function loadBackendDataFromDb() {
       renderAdminServicesGrid();
       updateUserServiceDropdowns();
       populateStaffDropdowns();
+      renderUserCrudTable();
+      renderInbox();
+      renderArchiveTable();
+      renderRecurringSection();
+      renderReportSection();
+      renderAuditLogs();
+      updateStats();
     })
     .catch(err => console.log('Base MySQL 10.12.4.2 Offline o no disponible:', err));
-}
-/* Clear / Purge All Test Prescription Records & Interconsultations */
-function clearAllTestRecords() {
-  if (!confirm('⚠️ ¿ATENCIÓN: Estás seguro de que deseas ELIMINAR Y VACIAR TODAS las recetas, solicitudes e interconsultas de prueba del sistema?\n\nEsta acción purgará la base de datos MySQL (10.12.4.2) y el almacenamiento del navegador.')) {
-    return;
-  }
-
-  if (!confirm('🚨 ÚLTIMA CONFIRMACIÓN:\nSe eliminarán todas las recetas registradas hasta el momento. ¿Proceder con el vaciado completo?')) {
-    return;
-  }
-
-  fetch('api.php?action=clear_test_records', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' }
-  })
-  .then(res => res.json())
-  .then(data => {
-    records = [];
-    localStorage.removeItem('alassia_records');
-
-    renderInbox();
-    renderArchiveTable();
-    renderRecurringSection();
-    renderReportSection();
-    updateStats();
-
-    logEvent('ADMIN', 'Purga y vaciado completo de recetas y solicitudes de prueba realizado por el Administrador');
-    showToast('¡Se vaciaron exitosamente todas las recetas y registros de prueba de la base de datos!');
-  })
-  .catch(err => {
-    records = [];
-    localStorage.removeItem('alassia_records');
-    renderInbox();
-    renderArchiveTable();
-    renderRecurringSection();
-    renderReportSection();
-    updateStats();
-    showToast('¡Se vaciaron las recetas del navegador local!');
-  });
-}
-
-/* Clear / Purge All Test Users Except Main Admin (11111111) */
-function clearAllTestUsers() {
-  if (!confirm('⚠️ ¿ATENCIÓN: Estás seguro de que deseas ELIMINAR Y VACIAR TODOS los usuarios y profesionales de prueba?\n\nSe conservará únicamente la cuenta del Administrador General (DNI: 11111111).')) {
-    return;
-  }
-
-  if (!confirm('🚨 ÚLTIMA CONFIRMACIÓN:\nSe borrarán los usuarios de prueba en MySQL (10.12.4.2) y en la memoria del sistema. ¿Proceder?')) {
-    return;
-  }
-
-  fetch('api.php?action=clear_test_users', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' }
-  })
-  .then(res => res.json())
-  .then(data => {
-    DEMO_USERS = DEMO_USERS.filter(u => u.isAdmin || u.dni === '11111111');
-    localStorage.removeItem('alassia_custom_users');
-
-    services.forEach(s => {
-      s.staff = [];
-    });
-    localStorage.setItem('alassia_services', JSON.stringify(services));
-
-    renderUserCrudTable();
-    renderAdminServicesGrid();
-    renderServicesGrid();
-    populateStaffDropdowns();
-    populateStaffModalUserDropdown();
-
-    logEvent('ADMIN', 'Vaciado masivo de usuarios de prueba realizado por el Administrador General (Conservada cuenta 11111111)');
-    showToast('¡Se eliminaron todos los usuarios de prueba! Se mantuvo únicamente la cuenta Administrador General (11111111).');
-  })
-  .catch(err => {
-    DEMO_USERS = DEMO_USERS.filter(u => u.isAdmin || u.dni === '11111111');
-    localStorage.removeItem('alassia_custom_users');
-    renderUserCrudTable();
-    renderAdminServicesGrid();
-    renderServicesGrid();
-    populateStaffDropdowns();
-    populateStaffModalUserDropdown();
-    showToast('¡Se limpiaron los usuarios de prueba locales!');
-  });
-}
-
-/* Clear / Purge EVERYTHING (Records + Test Users) in 1 Action */
-function clearAllTestingData() {
-  if (!confirm('💥 ¿ATENCIÓN CRÍTICA: Estás seguro de que deseas VACIAR ABSOLUTAMENTE TODO EL TESTING DEL SISTEMA?\n\nEsta acción eliminará de MySQL (10.12.4.2):\n1. Todas las recetas, solicitudes e interconsultas.\n2. Todos los usuarios y profesionales de prueba (Se conservará únicamente el Administrador General DNI 11111111).')) {
-    return;
-  }
-
-  if (!confirm('🚨 CONFIRMACIÓN DEFINITIVA:\nSe purgará toda la base de datos de prueba y se reiniciará el portal a estado limpio de producción. ¿Proceder?')) {
-    return;
-  }
-
-  fetch('api.php?action=clear_all_testing_data', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' }
-  })
-  .then(res => res.json())
-  .then(data => {
-    records = [];
-    localStorage.removeItem('alassia_records');
-    localStorage.removeItem('alassia_custom_users');
-
-    DEMO_USERS = DEMO_USERS.filter(u => u.isAdmin || u.dni === '11111111');
-
-    services.forEach(s => {
-      s.staff = [];
-    });
-    localStorage.setItem('alassia_services', JSON.stringify(services));
-
-    renderInbox();
-    renderArchiveTable();
-    renderRecurringSection();
-    renderReportSection();
-    renderUserCrudTable();
-    renderAdminServicesGrid();
-    renderServicesGrid();
-    populateStaffDropdowns();
-    populateStaffModalUserDropdown();
-    updateStats();
-
-    logEvent('ADMIN', 'VACIADO TOTAL DE TESTING: Purgadas recetas y usuarios de prueba (Conservada cuenta 11111111)');
-    showToast('💥 ¡Se purgó y vació exitosamente TODO el testing del sistema!');
-  })
-  .catch(err => {
-    records = [];
-    localStorage.removeItem('alassia_records');
-    localStorage.removeItem('alassia_custom_users');
-    DEMO_USERS = DEMO_USERS.filter(u => u.isAdmin || u.dni === '11111111');
-    renderInbox();
-    renderArchiveTable();
-    renderRecurringSection();
-    renderReportSection();
-    renderUserCrudTable();
-    renderAdminServicesGrid();
-    renderServicesGrid();
-    updateStats();
-    showToast('💥 ¡Se limpió el testing local del navegador!');
-  });
 }
 
 /* Helper: Delivery Authorization Check */
