@@ -26,7 +26,9 @@ define('DB_USER', 'sql');
 define('DB_PASS', 'sql77');
 define('DB_NAME', 'alassia_mensajeria');
 
-function getDbConnection() {
+$dbConnectionError = null;
+
+function getDbConnection(&$errorDetail = null) {
     $options = [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
@@ -34,42 +36,39 @@ function getDbConnection() {
         PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4 COLLATE utf8mb4_spanish_ci"
     ];
 
-    // 1. Intento primario: Servidor de Base de Datos Hospitalario 10.12.4.2
-    try {
-        $dsn = "mysql:host=" . DB_HOST_PRIMARY . ";dbname=" . DB_NAME . ";charset=utf8mb4";
-        $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
-        return $pdo;
-    } catch (PDOException $e) {
-        // En caso de estar en desarrollo local, intentar fallback a localhost
+    $attempts = [
+        ['host' => DB_HOST_PRIMARY, 'user' => DB_USER, 'pass' => DB_PASS, 'db' => DB_NAME],
+        ['host' => DB_HOST_FALLBACK, 'user' => DB_USER, 'pass' => DB_PASS, 'db' => DB_NAME],
+        ['host' => DB_HOST_FALLBACK, 'user' => 'root', 'pass' => '', 'db' => DB_NAME]
+    ];
+
+    $logErrors = [];
+    foreach ($attempts as $att) {
         try {
-            $dsnFallback = "mysql:host=" . DB_HOST_FALLBACK . ";dbname=" . DB_NAME . ";charset=utf8mb4";
-            $pdo = new PDO($dsnFallback, DB_USER, DB_PASS, $options);
+            $dsn = "mysql:host=" . $att['host'] . ";dbname=" . $att['db'] . ";charset=utf8mb4";
+            $pdo = new PDO($dsn, $att['user'], $att['pass'], $options);
             return $pdo;
-        } catch (PDOException $e2) {
-            // Intentar con root sin pass solo si es localhost dev
-            try {
-                $dsnDev = "mysql:host=" . DB_HOST_FALLBACK . ";dbname=" . DB_NAME . ";charset=utf8mb4";
-                $pdo = new PDO($dsnDev, 'root', '', $options);
-                return $pdo;
-            } catch (PDOException $e3) {
-                return null;
-            }
+        } catch (PDOException $e) {
+            $logErrors[] = "[$att[host] / $att[user]]: " . $e->getMessage();
         }
     }
+
+    $errorDetail = implode(' | ', $logErrors);
+    return null;
 }
 
 $rawInput = file_get_contents('php://input');
 $data = json_decode($rawInput, true) ?: $_POST;
 $action = $_GET['action'] ?? $data['action'] ?? '';
 
-$pdo = getDbConnection();
+$pdo = getDbConnection($dbConnectionError);
 
 // Manejo si la base no estuviera disponible en local o fallo de red
 if (!$pdo) {
     echo json_encode([
         'success' => false,
         'mode' => 'fallback',
-        'message' => '⚠️ No se pudo establecer conexión con el servidor MySQL (10.12.4.2). Operando en modo local.'
+        'message' => '⚠️ No se pudo conectar con MySQL (10.12.4.2): ' . ($dbConnectionError ?: 'Servidor no responde.')
     ]);
     exit;
 }
