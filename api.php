@@ -271,7 +271,7 @@ switch ($action) {
         $mat = trim($data['mat'] ?? 'S/N');
         $email = trim($data['email'] ?? '');
         $serviceName = trim($data['service'] ?? '');
-        $isAdmin = !empty($data['isAdmin']) ? 1 : 0;
+        $isAdmin = (!empty($data['isAdmin']) && $data['isAdmin'] === true) || ($data['isAdmin'] ?? '') === 'true' || ($data['isAdmin'] ?? '') === 1 || ($data['isAdmin'] ?? '') === '1' ? 1 : 0;
         $passwordInput = trim($data['password'] ?? '');
 
         if (empty($dni) || empty($name)) {
@@ -281,15 +281,29 @@ switch ($action) {
 
         try {
             // Obtener ID del servicio si fue seleccionado
-            $servicioId = null;
-            if (!empty($serviceName) && !$isAdmin) {
-                $stmtServ = $pdo->prepare("SELECT id FROM servicio WHERE nombre = :sname OR codigo = :scode LIMIT 1");
-                $stmtServ->execute([':sname' => $serviceName, ':scode' => $serviceName]);
+            $servicioId = intval($data['service_id'] ?? $data['servicio_id'] ?? 0);
+            if ($servicioId <= 0 && !empty($serviceName) && !$isAdmin) {
+                $stmtServ = $pdo->prepare("
+                    SELECT id FROM servicio 
+                    WHERE LOWER(nombre) = LOWER(:sname) 
+                       OR LOWER(codigo) = LOWER(:scode) 
+                       OR nombre LIKE :slike 
+                       OR :sname2 LIKE CONCAT('%', nombre, '%') 
+                    LIMIT 1
+                ");
+                $stmtServ->execute([
+                    ':sname' => $serviceName,
+                    ':scode' => $serviceName,
+                    ':slike' => '%' . $serviceName . '%',
+                    ':sname2' => $serviceName
+                ]);
                 $servRow = $stmtServ->fetch();
                 if ($servRow) {
-                    $servicioId = $servRow['id'];
+                    $servicioId = intval($servRow['id']);
                 }
             }
+
+            $finalServId = ($servicioId > 0 && !$isAdmin) ? $servicioId : null;
 
             // Chequear si el usuario ya existe en base
             $stmtCheck = $pdo->prepare("SELECT id, password_hash FROM profesional WHERE dni = :dni LIMIT 1");
@@ -323,7 +337,7 @@ switch ($action) {
                 ':nombre' => $name,
                 ':mat' => $mat,
                 ':rol' => $role,
-                ':serv_id' => $servicioId,
+                ':serv_id' => $finalServId,
                 ':admin' => $isAdmin,
                 ':email' => $email
             ]);

@@ -758,12 +758,20 @@ function renderUserCrudTable() {
 
 /* User Edit Handlers */
 function openEditUserModal(dni) {
-  const cleanDni = String(dni || '').trim();
-  const user = systemUsers.find(u => String(u.dni || '').trim() === cleanDni);
-  if (!user) return;
+  const norm = d => String(d || '').replace(/[^0-9]/g, '');
+  const targetDni = norm(dni);
+  const user = systemUsers.find(u => norm(u.dni) === targetDni) || (JSON.parse(localStorage.getItem('alassia_custom_users')) || []).find(u => norm(u.dni) === targetDni);
+  if (!user) {
+    console.warn("Usuario no encontrado para DNI:", dni, systemUsers);
+    showToast("⚠️ No se encontró el usuario a editar.");
+    return;
+  }
 
   const modal = document.getElementById('edit-user-modal');
-  if (!modal) return;
+  if (!modal) {
+    console.error("Modal #edit-user-modal no encontrado");
+    return;
+  }
 
   document.getElementById('edit-user-original-dni').value = user.dni;
   document.getElementById('edit-user-dni').value = user.dni;
@@ -789,22 +797,27 @@ function openEditUserModal(dni) {
   const servSelect = document.getElementById('edit-user-service');
   if (servSelect) {
     servSelect.innerHTML = services.map(s => `
-      <option value="${s.name}" ${s.name === user.service ? 'selected' : ''}>${s.name} (${s.code})</option>
+      <option value="${s.name}" ${s.name === user.service || (user.service && user.service.toLowerCase() === s.name.toLowerCase()) ? 'selected' : ''}>${s.name} (${s.code})</option>
     `).join('');
   }
 
   modal.classList.add('active');
+  modal.style.display = 'flex';
 }
 
 function closeEditUserModal() {
   const modal = document.getElementById('edit-user-modal');
-  if (modal) modal.classList.remove('active');
+  if (modal) {
+    modal.classList.remove('active');
+    modal.style.display = 'none';
+  }
 }
 
 function handleEditUserSubmit(e) {
   e.preventDefault();
   const dni = document.getElementById('edit-user-original-dni').value;
-  const user = systemUsers.find(u => u.dni === dni);
+  const norm = d => String(d || '').replace(/[^0-9]/g, '');
+  const user = systemUsers.find(u => norm(u.dni) === norm(dni));
   if (!user) return;
 
   const newName = document.getElementById('edit-user-name').value.trim();
@@ -817,14 +830,32 @@ function handleEditUserSubmit(e) {
 
   user.name = newName;
   if (newPass !== '') user.password = newPass;
-  user.role = `${newRole} • Mat. ${newMat}`;
-  user.service = newService;
+  user.role = (newMat && newMat !== 'S/N' && !newRole.includes('Mat.')) ? `${newRole} • Mat. ${newMat}` : newRole;
+  user.service = newIsAdmin ? 'Dirección Médica' : newService;
   user.email = newEmail;
   user.isAdmin = newIsAdmin;
   user.avatar = newName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'MD';
 
+  const matchedService = services.find(s => s.name === newService || s.code === newService);
+  if (matchedService) {
+    user.service_id = matchedService.id;
+  }
+
+  // Si el usuario editado es el que tiene la sesión abierta actualmente, actualizar su contexto
+  if (activeUser && norm(activeUser.dni) === norm(dni)) {
+    activeUser.name = newName;
+    activeUser.role = user.role;
+    activeUser.service = user.service;
+    activeUser.isAdmin = newIsAdmin;
+    activeUser.email = newEmail;
+    activeUser.avatar = user.avatar;
+    localStorage.setItem('alassia_user', JSON.stringify(activeUser));
+    renderActiveUser();
+    applyRoleContextualFiltering();
+  }
+
   let customUsers = JSON.parse(localStorage.getItem('alassia_custom_users')) || [];
-  const idx = customUsers.findIndex(u => u.dni === dni);
+  const idx = customUsers.findIndex(u => norm(u.dni) === norm(dni));
   if (idx !== -1) {
     customUsers[idx] = user;
   } else {
@@ -837,7 +868,12 @@ function handleEditUserSubmit(e) {
   fetch('api.php?action=save_user', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(user)
+    body: JSON.stringify({
+      ...user,
+      service_id: matchedService ? matchedService.id : null,
+      service: user.service,
+      mat: newMat
+    })
   }).catch(err => console.log('MySQL User Edit Sync:', err));
 
   closeEditUserModal();
@@ -846,7 +882,7 @@ function handleEditUserSubmit(e) {
   renderServicesGrid();
   populateStaffDropdowns();
 
-  logEvent('ADMIN', `Edición de usuario DNI ${dni}: actualizados datos de ${newName} (${newService})`);
+  logEvent('ADMIN', `Edición de usuario DNI ${dni}: actualizados datos de ${newName} (${user.service})`);
   showToast(`¡Usuario ${newName} (DNI ${dni}) actualizado exitosamente!`);
 }
 
@@ -1107,12 +1143,23 @@ function renderAdminServicesGrid() {
 
 /* Service Edit Handlers */
 function openEditServiceModal(serviceId) {
-  const sTargetId = String(serviceId || '').trim();
-  const service = services.find(s => String(s.id || '').trim() === sTargetId || String(s.code || '').trim() === sTargetId);
-  if (!service) return;
+  const sTargetId = String(serviceId || '').trim().toLowerCase();
+  const service = services.find(s => 
+    String(s.id || '').toLowerCase() === sTargetId || 
+    String(s.code || '').toLowerCase() === sTargetId ||
+    String(s.name || '').toLowerCase() === sTargetId
+  );
+  if (!service) {
+    console.warn("Servicio no encontrado para ID:", serviceId, services);
+    showToast("⚠️ No se encontró el servicio a editar.");
+    return;
+  }
 
   const modal = document.getElementById('edit-service-modal');
-  if (!modal) return;
+  if (!modal) {
+    console.error("Modal #edit-service-modal no encontrado");
+    return;
+  }
 
   document.getElementById('edit-service-id').value = service.id;
   document.getElementById('edit-service-code').value = service.code || '';
@@ -1124,25 +1171,44 @@ function openEditServiceModal(serviceId) {
   document.getElementById('edit-service-enabled').value = service.enabled !== false ? 'true' : 'false';
 
   modal.classList.add('active');
+  modal.style.display = 'flex';
 }
 
 function closeEditServiceModal() {
   const modal = document.getElementById('edit-service-modal');
-  if (modal) modal.classList.remove('active');
+  if (modal) {
+    modal.classList.remove('active');
+    modal.style.display = 'none';
+  }
 }
 
 function handleEditServiceSubmit(e) {
   e.preventDefault();
   const id = document.getElementById('edit-service-id').value;
-  const service = services.find(s => s.id === id);
+  const service = services.find(s => String(s.id).toLowerCase() === String(id).toLowerCase() || String(s.code).toLowerCase() === String(id).toLowerCase());
   if (!service) return;
 
-  service.name = document.getElementById('edit-service-name').value.trim();
+  const oldName = service.name;
+  const newName = document.getElementById('edit-service-name').value.trim();
+  service.name = newName;
   service.headOfService = document.getElementById('edit-service-head').value.trim();
   service.email = document.getElementById('edit-service-email').value.trim();
   service.autorizadoLeches = document.getElementById('edit-service-milk-auth').value === 'true';
   service.reportesHabilitados = document.getElementById('edit-service-report-auth').value === 'true';
   service.enabled = document.getElementById('edit-service-enabled').value === 'true';
+
+  // Si cambió el nombre del servicio, actualizar la referencia en los usuarios asignados
+  if (oldName !== newName) {
+    systemUsers.forEach(u => {
+      if (u.service === oldName) u.service = newName;
+    });
+    if (activeUser && activeUser.service === oldName) {
+      activeUser.service = newName;
+      localStorage.setItem('alassia_user', JSON.stringify(activeUser));
+      renderActiveUser();
+      applyRoleContextualFiltering();
+    }
+  }
 
   localStorage.setItem('alassia_services', JSON.stringify(services));
 
@@ -1158,6 +1224,7 @@ function handleEditServiceSubmit(e) {
   renderServicesGrid();
   populateStaffDropdowns();
   updateUserServiceDropdowns();
+  renderUserCrudTable();
 
   logEvent('ADMIN', `Edición de servicio ${service.name} (${service.code}): actualizados datos y permisos.`);
   showToast(`¡Servicio ${service.name} (${service.code}) actualizado exitosamente!`);
@@ -1513,11 +1580,19 @@ function handleModalCreateServiceSubmit(e) {
 
 function openAddStaffModal() {
   populateStaffModalUserDropdown();
-  document.getElementById('add-staff-modal').classList.add('active');
+  const modal = document.getElementById('add-staff-modal');
+  if (modal) {
+    modal.classList.add('active');
+    modal.style.display = 'flex';
+  }
 }
 
 function closeAddStaffModal() {
-  document.getElementById('add-staff-modal').classList.remove('active');
+  const modal = document.getElementById('add-staff-modal');
+  if (modal) {
+    modal.classList.remove('active');
+    modal.style.display = 'none';
+  }
 }
 
 function populateStaffModalUserDropdown() {
@@ -1551,17 +1626,35 @@ function handleAddStaffSubmit(e) {
     return;
   }
 
-  const selectedUser = systemUsers.find(u => u.dni === userDni);
-  const targetService = services.find(s => s.id === servId || s.name === servId);
+  const norm = d => String(d || '').replace(/[^0-9]/g, '');
+  const selectedUser = systemUsers.find(u => norm(u.dni) === norm(userDni));
+  const sTargetId = String(servId || '').trim().toLowerCase();
+  const targetService = services.find(s => 
+    String(s.id || '').toLowerCase() === sTargetId || 
+    String(s.code || '').toLowerCase() === sTargetId || 
+    String(s.name || '').toLowerCase() === sTargetId
+  );
 
   if (targetService && selectedUser) {
     // Update user's assigned service
     selectedUser.service = targetService.name;
+    selectedUser.service_id = targetService.id;
 
     let customUsers = JSON.parse(localStorage.getItem('alassia_custom_users')) || [];
-    const customUser = customUsers.find(u => u.dni === userDni);
-    if (customUser) customUser.service = targetService.name;
+    const customUser = customUsers.find(u => norm(u.dni) === norm(userDni));
+    if (customUser) {
+      customUser.service = targetService.name;
+      customUser.service_id = targetService.id;
+    }
     localStorage.setItem('alassia_custom_users', JSON.stringify(customUsers));
+
+    // Si el usuario asignado es el que tiene la sesión activa actualmente, actualizar su contexto
+    if (activeUser && norm(activeUser.dni) === norm(selectedUser.dni)) {
+      activeUser.service = targetService.name;
+      localStorage.setItem('alassia_user', JSON.stringify(activeUser));
+      renderActiveUser();
+      applyRoleContextualFiltering();
+    }
 
     // Re-sync service staff rosters
     syncUsersWithServiceStaff();
@@ -1570,7 +1663,11 @@ function handleAddStaffSubmit(e) {
     fetch('api.php?action=save_user', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(selectedUser)
+      body: JSON.stringify({
+        ...selectedUser,
+        service_id: targetService.id,
+        service: targetService.name
+      })
     }).catch(err => console.log('MySQL User Sync:', err));
 
     fetch('api.php?action=save_service', {
@@ -1678,7 +1775,7 @@ function loadBackendDataFromDb() {
         let hasAdmin = false;
 
         data.profesionales.forEach(p => {
-          const cleanDni = (p.dni || '').trim();
+          const cleanDni = String(p.dni || '').trim();
           if (!cleanDni) return;
 
           const cleanName = sanitizeString(p.nombre_completo);
@@ -1688,7 +1785,12 @@ function loadBackendDataFromDb() {
           const isAdmin = p.es_admin == 1 || cleanDni === '11111111';
           if (isAdmin) hasAdmin = true;
 
-          const servName = p.servicio_nombre || (isAdmin ? 'Dirección Médica' : 'Clínica Pediátrica');
+          const matchedServ = services.find(s => 
+            (p.servicio_id && String(s.id).toLowerCase() === String(p.servicio_id).toLowerCase()) ||
+            (p.servicio_nombre && s.name.toLowerCase() === p.servicio_nombre.toLowerCase())
+          );
+          const servName = matchedServ ? matchedServ.name : (p.servicio_nombre || (isAdmin ? 'Dirección Médica' : 'Clínica Pediátrica'));
+          const servId = matchedServ ? matchedServ.id : (p.servicio_id || null);
 
           loadedUsers.push({
             id: `user-${p.id || cleanDni}`,
@@ -1696,6 +1798,7 @@ function loadBackendDataFromDb() {
             name: cleanName,
             role: fullRole,
             service: servName,
+            service_id: servId,
             avatar: cleanName.substring(0, 2).toUpperCase() || 'MD',
             isAdmin: isAdmin,
             email: p.email || ''
@@ -1707,6 +1810,22 @@ function loadBackendDataFromDb() {
         }
 
         systemUsers = loadedUsers;
+
+        // Si hay una sesión activa, sincronizar sus características y permisos con los datos frescos de MySQL
+        if (activeUser) {
+          const norm = d => String(d || '').replace(/[^0-9]/g, '');
+          const freshActive = loadedUsers.find(u => norm(u.dni) === norm(activeUser.dni));
+          if (freshActive) {
+            activeUser.service = freshActive.service;
+            activeUser.role = freshActive.role;
+            activeUser.name = freshActive.name;
+            activeUser.isAdmin = freshActive.isAdmin;
+            activeUser.email = freshActive.email;
+            localStorage.setItem('alassia_user', JSON.stringify(activeUser));
+            renderActiveUser();
+            applyRoleContextualFiltering();
+          }
+        }
       }
 
       // 3. Sincronizar Solicitudes e Interconsultas de MySQL 10.12.4.2
