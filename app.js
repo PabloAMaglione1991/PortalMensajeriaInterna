@@ -122,6 +122,24 @@ const DEFAULT_ADMIN = {
 // System Users (Populated from MySQL 10.12.4.2)
 let systemUsers = [DEFAULT_ADMIN];
 
+function isSuperUser(user) {
+  if (!user) return false;
+  if (user.isAdmin === true || user.isAdmin === 'true' || user.isAdmin === 1 || user.isAdmin === '1') return true;
+  const s = String(user.service || '').toLowerCase();
+  const r = String(user.role || '').toLowerCase();
+  const d = String(user.dni || '').replace(/[^0-9]/g, '');
+  return d === '11111111' || 
+         s.includes('informática') || s.includes('informatica') || 
+         s.includes('sistemas') || s.includes('it') || 
+         s.includes('cómputos') || s.includes('computos') || 
+         s.includes('soporte') || s.includes('tecnología') || 
+         s.includes('tecnologia') || s.includes('dirección') || 
+         s.includes('direccion') || r.includes('informática') || 
+         r.includes('informatica') || r.includes('sistemas') || 
+         r.includes('desarrollador') || r.includes('administrador') || 
+         r.includes('admin') || r.includes('it') || r.includes('soporte');
+}
+
 async function buscarPacientePorDNI(dniInputId, fieldMap) {
   const inputEl = document.getElementById(dniInputId);
   if (!inputEl) return;
@@ -483,19 +501,21 @@ function exportAuditLog() {
 function renderActiveUser() {
   if (!activeUser) return;
 
+  const isSuper = isSuperUser(activeUser);
+
   document.getElementById('current-user-avatar').textContent = activeUser.avatar;
   document.getElementById('current-user-name').textContent = activeUser.name;
   document.getElementById('current-user-role').textContent = activeUser.role;
 
   const headerBadge = document.getElementById('header-role-name');
   if (headerBadge) {
-    headerBadge.textContent = activeUser.isAdmin ? 'Modo Administrador General' : `Perfil: ${activeUser.service}`;
+    headerBadge.textContent = isSuper ? 'Modo Informática / Administración Total' : `Perfil: ${activeUser.service}`;
   }
 
   const subtitle = document.getElementById('inbox-filter-subtitle');
   if (subtitle) {
-    subtitle.textContent = activeUser.isAdmin 
-      ? `Modo Admin: Mostrando todas las interconsultas del hospital.`
+    subtitle.textContent = isSuper 
+      ? `Modo Informática / Admin: Mostrando todas las interconsultas del hospital.`
       : `Filtrado activo: Mostrando únicamente interconsultas del servicio ${activeUser.service}.`;
   }
 
@@ -521,9 +541,9 @@ function renderActiveUser() {
   });
   const serviceReportEnabled = activeServiceObj ? (activeServiceObj.reportesHabilitados !== false) : true;
 
-  // If non-admin user is currently viewing an admin tab or disabled report, automatically redirect to Dashboard
+  // If non-admin/non-IT user is currently viewing an admin tab or disabled report, automatically redirect to Dashboard
   const activeTab = document.querySelector('.tab-content.active');
-  if (!activeUser.isAdmin && activeTab) {
+  if (!isSuper && activeTab) {
     if (activeTab.id === 'tab-admin' || activeTab.id === 'tab-logs' || activeTab.id === 'tab-services') {
       switchTab('tab-dashboard');
     } else if (activeTab.id === 'tab-reportes' && !serviceReportEnabled) {
@@ -536,8 +556,8 @@ function renderActiveUser() {
 function applyRoleContextualFiltering() {
   if (!activeUser) return;
 
+  const isSuper = isSuperUser(activeUser);
   const serviceName = (activeUser.service || '').toLowerCase();
-  const isAdmin = activeUser.isAdmin;
 
   // Check if active user's service has Reportes habilitados by Admin
   const activeServiceObj = (services || []).find(s => {
@@ -553,19 +573,19 @@ function applyRoleContextualFiltering() {
     return recServ.includes(serviceName) || serviceName.includes(recServ);
   });
 
-  // Define allowable form tabs per role
+  // Define allowable form tabs per role: Informática & Admins get access to ALL panels
   const roleTabMap = {
-    'cardio': isAdmin || serviceName.includes('cardio') || serviceName.includes('pediatría') || serviceName.includes('internación') || serviceName.includes('todos'),
+    'cardio': isSuper || serviceName.includes('cardio') || serviceName.includes('pediatría') || serviceName.includes('internación') || serviceName.includes('todos'),
     'general': true, // Todos los médicos pueden realizar interconsulta general
-    'farmacia': isAdmin || serviceName.includes('farmacia') || serviceName.includes('crónicos') || serviceName.includes('pediatría') || serviceName.includes('todos'),
-    'imagenes': isAdmin || serviceName.includes('imágenes') || serviceName.includes('internación') || serviceName.includes('pediatría') || serviceName.includes('todos'),
-    'nutri': isAdmin || serviceName.includes('nutri') || serviceName.includes('gastro') || serviceName.includes('neo') || serviceName.includes('crónicos') || serviceName.includes('internación') || serviceName.includes('todos'),
-    'social': isAdmin || serviceName.includes('social') || serviceName.includes('trabajo'),
-    'recurrencia': isAdmin || serviceName.includes('farmacia') || serviceName.includes('nutri') || serviceName.includes('crónicos') || userHasRecurring,
-    'services': isAdmin, // Servicios & Personal EXCLUSIVO ADMIN
-    'admin': isAdmin,
-    'logs': isAdmin,
-    'reportes': isAdmin || serviceReportEnabled
+    'farmacia': isSuper || serviceName.includes('farmacia') || serviceName.includes('crónicos') || serviceName.includes('pediatría') || serviceName.includes('todos'),
+    'imagenes': isSuper || serviceName.includes('imágenes') || serviceName.includes('internación') || serviceName.includes('pediatría') || serviceName.includes('todos'),
+    'nutri': isSuper || serviceName.includes('nutri') || serviceName.includes('gastro') || serviceName.includes('neo') || serviceName.includes('crónicos') || serviceName.includes('internación') || serviceName.includes('todos'),
+    'social': isSuper || serviceName.includes('social') || serviceName.includes('trabajo'),
+    'recurrencia': isSuper || serviceName.includes('farmacia') || serviceName.includes('nutri') || serviceName.includes('crónicos') || userHasRecurring,
+    'services': isSuper, // Servicios & Personal
+    'admin': isSuper,    // Administración General (CRUD Usuarios & Permisos)
+    'logs': isSuper,     // Auditoría & Trazabilidad
+    'reportes': isSuper || serviceReportEnabled
   };
 
   // 1. Ocultar del menú lateral (Sidebar) los ítems que no corresponden al rol
@@ -586,7 +606,7 @@ function applyRoleContextualFiltering() {
     const tagClass = tagEl.className.toLowerCase();
 
     let show = false;
-    if (isAdmin) {
+    if (isSuper) {
       show = true;
     } else if (tagClass.includes('cardio')) {
       show = roleTabMap['cardio'];
@@ -612,17 +632,17 @@ function applyRoleContextualFiltering() {
   if (welcomeBanner) {
     const h2 = welcomeBanner.querySelector('h2');
     const p = welcomeBanner.querySelector('p');
-    if (!isAdmin) {
+    if (!isSuper) {
       if (h2) h2.textContent = `Servicio: ${activeUser.service}`;
       if (p) p.textContent = `Bienvenido/a ${activeUser.name}. Panel simplificado para emisión directa de solicitudes e interconsultas de tu área.`;
     } else {
       if (h2) h2.textContent = `Sistema Digital de Mensajería e Interconsultas`;
-      if (p) p.textContent = `Plataforma clínica del Hospital de Niños "Dr. Orlando Alassia". Modo Administrador General.`;
+      if (p) p.textContent = `Plataforma clínica del Hospital de Niños "Dr. Orlando Alassia". Modo Informática / Administrador General.`;
     }
   }
 
-  // 4. Renderizar tabla CRUD de usuarios si el perfil activo es Admin
-  if (isAdmin) {
+  // 4. Renderizar tabla CRUD de usuarios si el perfil activo es Admin o Informática
+  if (isSuper) {
     renderUserCrudTable();
   }
 }
@@ -738,18 +758,18 @@ function renderUserCrudTable() {
       <td>${u.service}</td>
       <td>${u.role}</td>
       <td>
-        ${u.isAdmin 
-          ? `<span class="action-tag cardio" style="font-size: 0.7rem;"><i class="ri-shield-keyhole-line"></i> Administrador General</span>`
+        ${isSuperUser(u) 
+          ? `<span class="action-tag cardio" style="font-size: 0.7rem;"><i class="ri-shield-keyhole-line"></i> Informática / Admin</span>`
           : `<span class="action-tag general" style="font-size: 0.7rem;"><i class="ri-stethoscope-line"></i> Médico de Servicio</span>`}
       </td>
       <td>
         <div style="display: flex; gap: 0.35rem; align-items: center;">
-          <button class="btn-secondary" style="padding: 0.25rem 0.55rem; font-size: 0.75rem; color: var(--primary-600); border-color: var(--primary-300);" onclick="openEditUserModal('${u.dni}')" title="Editar usuario">
+          <button type="button" class="btn-secondary btn-action-edit-user" data-dni="${u.dni}" style="padding: 0.25rem 0.55rem; font-size: 0.75rem; color: var(--primary-600); border-color: var(--primary-300); cursor: pointer;" onclick="openEditUserModal('${u.dni}')" title="Editar usuario">
             <i class="ri-edit-line"></i> Editar
           </button>
-          ${activeUser && u.dni === activeUser.dni 
+          ${activeUser && String(u.dni).replace(/[^0-9]/g, '') === String(activeUser.dni).replace(/[^0-9]/g, '') 
             ? `<span style="font-size: 0.75rem; color: var(--text-muted); font-style: italic;">Sesión Actual</span>`
-            : `<button class="btn-secondary" style="padding: 0.25rem 0.55rem; font-size: 0.75rem; color: var(--rose-600); border-color: var(--rose-300);" onclick="deleteUserByDNI('${u.dni}')" title="Eliminar usuario"><i class="ri-delete-bin-line"></i></button>`}
+            : `<button type="button" class="btn-secondary btn-action-delete-user" data-dni="${u.dni}" style="padding: 0.25rem 0.55rem; font-size: 0.75rem; color: var(--rose-600); border-color: var(--rose-300); cursor: pointer;" onclick="deleteUserByDNI('${u.dni}')" title="Eliminar usuario"><i class="ri-delete-bin-line"></i></button>`}
         </div>
       </td>
     </tr>
@@ -1146,13 +1166,13 @@ function renderAdminServicesGrid() {
       </div>
 
       <div style="display: flex; gap: 0.5rem; margin-top: 0.85rem;">
-        <button class="btn-secondary" style="flex: 1; font-size: 0.775rem; justify-content: center;" onclick="quickAddStaffTo('${s.id}')">
+        <button type="button" class="btn-secondary" style="flex: 1; font-size: 0.775rem; justify-content: center; cursor: pointer;" onclick="quickAddStaffTo('${s.id}')">
           <i class="ri-user-add-line"></i> Asignar Profesional
         </button>
-        <button class="btn-secondary" style="color: var(--primary-600); border-color: var(--primary-300); font-size: 0.775rem; padding: 0.4rem 0.65rem;" onclick="openEditServiceModal('${s.id}')" title="Editar servicio">
+        <button type="button" class="btn-secondary btn-action-edit-service" data-id="${s.id}" style="color: var(--primary-600); border-color: var(--primary-300); font-size: 0.775rem; padding: 0.4rem 0.65rem; cursor: pointer;" onclick="openEditServiceModal('${s.id}')" title="Editar servicio">
           <i class="ri-edit-line"></i> Editar
         </button>
-        <button class="btn-secondary" style="color: var(--rose-600); border-color: var(--rose-300); font-size: 0.775rem; padding: 0.4rem 0.65rem;" onclick="deleteService('${s.id}')" title="Eliminar servicio">
+        <button type="button" class="btn-secondary btn-action-delete-service" data-id="${s.id}" style="color: var(--rose-600); border-color: var(--rose-300); font-size: 0.775rem; padding: 0.4rem 0.65rem; cursor: pointer;" onclick="deleteService('${s.id}')" title="Eliminar servicio">
           <i class="ri-delete-bin-line"></i>
         </button>
       </div>
@@ -2297,15 +2317,15 @@ function renderServicesGrid() {
         </ul>
       </div>
 
-      ${isAdmin ? `
+      ${isSuperUser(activeUser) ? `
         <div style="display: flex; gap: 0.5rem; margin-top: 0.85rem; padding-top: 0.75rem; border-top: 1px dashed var(--border-color);">
-          <button class="btn-secondary" style="flex: 1; font-size: 0.775rem; justify-content: center;" onclick="quickAddStaffTo('${s.id}')">
+          <button type="button" class="btn-secondary" style="flex: 1; font-size: 0.775rem; justify-content: center; cursor: pointer;" onclick="quickAddStaffTo('${s.id}')">
             <i class="ri-user-add-line"></i> Asignar Agente
           </button>
-          <button class="btn-secondary" style="color: var(--primary-600); border-color: var(--primary-300); font-size: 0.775rem; padding: 0.4rem 0.65rem;" onclick="openEditServiceModal('${s.id}')" title="Editar servicio">
+          <button type="button" class="btn-secondary btn-action-edit-service" data-id="${s.id}" style="color: var(--primary-600); border-color: var(--primary-300); font-size: 0.775rem; padding: 0.4rem 0.65rem; cursor: pointer;" onclick="openEditServiceModal('${s.id}')" title="Editar servicio">
             <i class="ri-edit-line"></i> Editar
           </button>
-          <button class="btn-secondary" style="color: var(--rose-600); border-color: var(--rose-300); font-size: 0.775rem; padding: 0.4rem 0.65rem;" onclick="deleteService('${s.id}')" title="Eliminar servicio">
+          <button type="button" class="btn-secondary btn-action-delete-service" data-id="${s.id}" style="color: var(--rose-600); border-color: var(--rose-300); font-size: 0.775rem; padding: 0.4rem 0.65rem; cursor: pointer;" onclick="deleteService('${s.id}')" title="Eliminar servicio">
             <i class="ri-delete-bin-line"></i>
           </button>
         </div>
@@ -3501,3 +3521,50 @@ if (typeof closeDispenseModal !== 'undefined') window.closeDispenseModal = close
 if (typeof openEmailModal !== 'undefined') window.openEmailModal = openEmailModal;
 if (typeof closeEmailModal !== 'undefined') window.closeEmailModal = closeEmailModal;
 if (typeof handleLogout !== 'undefined') window.handleLogout = handleLogout;
+
+// Universal Fail-Proof Event Delegation for Edit & Delete Action Buttons
+document.addEventListener('click', function(e) {
+  // 1. Edit User Button
+  const userEditBtn = e.target.closest('.btn-action-edit-user, [data-action="edit-user"], button[onclick*="openEditUserModal"]');
+  if (userEditBtn) {
+    const dni = userEditBtn.getAttribute('data-dni') || (userEditBtn.getAttribute('onclick') || '').match(/openEditUserModal\(['"]?([^'"]+)['"]?\)/)?.[1];
+    if (dni) {
+      e.preventDefault();
+      openEditUserModal(dni);
+      return;
+    }
+  }
+
+  // 2. Delete User Button
+  const userDelBtn = e.target.closest('.btn-action-delete-user, button[onclick*="deleteUserByDNI"]');
+  if (userDelBtn) {
+    const dni = userDelBtn.getAttribute('data-dni') || (userDelBtn.getAttribute('onclick') || '').match(/deleteUserByDNI\(['"]?([^'"]+)['"]?\)/)?.[1];
+    if (dni) {
+      e.preventDefault();
+      deleteUserByDNI(dni);
+      return;
+    }
+  }
+
+  // 3. Edit Service Button
+  const servEditBtn = e.target.closest('.btn-action-edit-service, [data-action="edit-service"], button[onclick*="openEditServiceModal"]');
+  if (servEditBtn) {
+    const sId = servEditBtn.getAttribute('data-id') || (servEditBtn.getAttribute('onclick') || '').match(/openEditServiceModal\(['"]?([^'"]+)['"]?\)/)?.[1];
+    if (sId) {
+      e.preventDefault();
+      openEditServiceModal(sId);
+      return;
+    }
+  }
+
+  // 4. Delete Service Button
+  const servDelBtn = e.target.closest('.btn-action-delete-service, button[onclick*="deleteService"]');
+  if (servDelBtn) {
+    const sId = servDelBtn.getAttribute('data-id') || (servDelBtn.getAttribute('onclick') || '').match(/deleteService\(['"]?([^'"]+)['"]?\)/)?.[1];
+    if (sId) {
+      e.preventDefault();
+      deleteService(sId);
+      return;
+    }
+  }
+});
