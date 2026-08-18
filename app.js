@@ -520,15 +520,16 @@ function renderActiveUser() {
       : `Filtrado activo: Mostrando únicamente interconsultas del servicio ${activeUser.service}.`;
   }
 
-  // Update physician input and paper signature previews with active doctor name
+  // Update physician input and paper signature previews with active doctor name & matricula
+  const docDisplayName = activeUser ? `${activeUser.name}${activeUser.matricula ? ' • Mat. ' + activeUser.matricula : ''}` : 'Médico Autorizado';
   ['c-medico', 'g-medico', 'f-medico', 'i-medico', 'n-medico'].forEach(id => {
     const el = document.getElementById(id);
-    if (el) el.value = activeUser.name;
+    if (el) el.value = docDisplayName;
   });
 
   ['prev-c-medico', 'prev-g-medico', 'prev-f-medico', 'prev-i-medico', 'prev-n-medico'].forEach(id => {
     const el = document.getElementById(id);
-    if (el) el.textContent = activeUser.name;
+    if (el) el.textContent = docDisplayName;
   });
 
   // Strict Role-Based Sidebar & Dashboard Action Filtering (Ultra Simplicity)
@@ -2213,6 +2214,7 @@ function renderInbox(filterType = 'all') {
         <td><span style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--primary-600);">${r.id}</span></td>
         <td>
           <strong>${r.type}</strong>
+          ${r.fechaRetiro ? `<br><span class="action-tag" style="background: #fef3c7; color: #b45309; border: 1px solid #fde68a; font-size: 0.675rem; padding: 2px 6px; margin-top: 3px; display: inline-flex; align-items: center; gap: 3px;"><i class="ri-calendar-todo-line"></i> Retiro: ${r.fechaRetiro}</span>` : ''}
           ${r.isRecurring ? `<br><span style="font-size: 0.7rem; color: #b45309; font-weight: 700;"><i class="ri-repeat-line"></i> Módulo ${r.moduloActual}/${r.totalModulos}</span>` : ''}
         </td>
         <td>${r.paciente}</td>
@@ -2633,7 +2635,7 @@ function initLivePreviewBindings() {
   bindInputToText('c-edad', 'prev-c-edad', '3 años 4 meses');
   bindInputToText('c-diag', 'prev-c-diag', 'Síndrome febril prolongado');
   bindInputToText('c-motivo', 'prev-c-motivo', 'Paciente con soplo holosistólico 3/6 en foco mitral.');
-  bindInputToText('c-medico', 'prev-c-medico', 'Dra. Lucía Gómez');
+  bindObsToggle('c-observaciones', 'prev-c-observaciones', 'prev-c-obs-container');
 
   bindInputToText('g-nombre', 'prev-g-nombre', 'Sofía Valentina Rossi');
   bindInputToText('g-hc', 'prev-g-hc', 'HC-40192');
@@ -2641,7 +2643,7 @@ function initLivePreviewBindings() {
   bindInputToText('g-sala', 'prev-g-sala', 'Sala 4 - Cama 12 B');
   bindInputToText('g-destino', 'prev-g-destino', 'Gastroenterología Infantil');
   bindInputToText('g-motivo', 'prev-g-motivo', 'Paciente cursando 48hs de dolor abdominal en fosa ilíaca derecha.');
-  bindInputToText('g-medico', 'prev-g-medico', 'Dra. Andrea Morales');
+  bindObsToggle('g-observaciones', 'prev-g-observaciones', 'prev-g-obs-container');
 
   bindInputToText('f-nombre', 'prev-f-nombre', 'Camilo Benavídez');
   bindInputToText('f-dni', 'prev-f-dni', '51.092.381 / HC-8812');
@@ -2650,7 +2652,8 @@ function initLivePreviewBindings() {
   bindInputToText('f-rp', 'prev-f-rp', 'Amoxicilina + Ácido Clavulánico 500mg/125mg suspensión oral');
   bindInputToText('f-dosis', 'prev-f-dosis', '5 ml cada 8 horas por vía oral (VO)');
   bindInputToText('f-duracion', 'prev-f-duracion', '7 días completación');
-  bindInputToText('f-medico', 'prev-f-medico', 'Dr. Orlando Alassia');
+  bindDatePreview('f-fecha-retiro', 'prev-f-fecha-retiro');
+  bindObsToggle('f-observaciones', 'prev-f-observaciones', 'prev-f-obs-container');
 
   bindInputToText('i-nombre', 'prev-i-nombre', 'Valentina Morales');
   bindInputToText('i-dni', 'prev-i-dni', '49.301.992 / HC-10492');
@@ -2658,7 +2661,7 @@ function initLivePreviewBindings() {
   bindInputToText('i-modalidad', 'prev-i-modalidad', 'Radiografía RX');
   bindInputToText('i-region', 'prev-i-region', 'Tórax Frente y Perfil');
   bindInputToText('i-motivo', 'prev-i-motivo', 'Traumatismo cerrado de tórax con hipoventilación izquierda.');
-  bindInputToText('i-medico', 'prev-i-medico', 'Dr. Esteban Martínez');
+  bindObsToggle('i-observaciones', 'prev-i-observaciones', 'prev-i-obs-container');
 
   bindInputToText('n-nombre', 'prev-n-nombre', 'Joaquín Benjamín Silva');
   bindInputToText('n-dni', 'prev-n-dni', '52.190.431');
@@ -2669,7 +2672,51 @@ function initLivePreviewBindings() {
   bindInputToText('n-rp1-formula', 'prev-n-rp1-formula', 'Fórmula de Inicio Extensamente Hidrolizada');
   bindInputToText('n-rp1-vol', 'prev-n-rp1-vol', 'Dilución 13.5% / 150 cc');
   bindInputToText('n-rp1-via', 'prev-n-rp1-via', '8 tomas cada 3hs (VO)');
-  bindInputToText('n-medico', 'prev-n-medico', 'Dra. Mariana López');
+  bindDatePreview('n-fecha-retiro', 'prev-n-fecha-retiro');
+  bindObsToggle('n-observaciones', 'prev-n-observaciones', 'prev-n-obs-container');
+}
+
+function bindObsToggle(inputId, prevId, containerId) {
+  const input = document.getElementById(inputId);
+  const prev = document.getElementById(prevId);
+  const container = document.getElementById(containerId);
+  if (!input || !prev || !container) return;
+
+  const update = () => {
+    const val = input.value.trim();
+    if (val) {
+      prev.textContent = val;
+      container.style.display = 'block';
+    } else {
+      container.style.display = 'none';
+    }
+  };
+
+  input.addEventListener('input', update);
+  input.addEventListener('change', update);
+}
+
+function bindDatePreview(inputId, prevId) {
+  const input = document.getElementById(inputId);
+  const prev = document.getElementById(prevId);
+  if (!input || !prev) return;
+
+  const update = () => {
+    const val = input.value;
+    if (val) {
+      const parts = val.split('-');
+      if (parts.length === 3) {
+        prev.textContent = `${parts[2]}/${parts[1]}/${parts[0]}`;
+      } else {
+        prev.textContent = val;
+      }
+    } else {
+      prev.textContent = 'Inmediato';
+    }
+  };
+
+  input.addEventListener('input', update);
+  input.addEventListener('change', update);
 }
 
 function updateNutriService(val) {
@@ -2734,10 +2781,14 @@ function handleFormSubmit(event, type) {
 
   playAudioAlert();
   
+  const currentDocName = activeUser ? `${activeUser.name}${activeUser.matricula ? ' (Mat. ' + activeUser.matricula + ')' : ''}` : 'Médico Autorizado';
+
   let newRecord = {
     id: `${type.substring(0, 4).toUpperCase()}-2026-${Math.floor(100 + Math.random() * 900)}`,
     type: type,
     fecha: new Date().toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' }),
+    fechaRetiro: '',
+    observaciones: '',
     estado: 'Pendiente',
     respuestaMedica: '',
     medicoRespondedor: '',
@@ -2751,34 +2802,40 @@ function handleFormSubmit(event, type) {
     newRecord.dni = document.getElementById('c-dni').value || 'Sin DNI';
     newRecord.hc = document.getElementById('c-dni').value || 'HC-9821';
     newRecord.edad = document.getElementById('c-edad').value;
-    newRecord.servicio = 'Cardiología Infantil';
+    newRecord.servicio = (activeUser && activeUser.service) ? activeUser.service : 'Pediatría General';
     newRecord.destino = 'Cardiología Infantil';
     newRecord.staffAssigned = 'Equipo Completo de Cardiología Infantil';
     newRecord.diagnostico = document.getElementById('c-diag').value;
     newRecord.motivo = document.getElementById('c-motivo').value;
-    newRecord.medico = document.getElementById('c-medico').value || activeUser.name;
-    targetEmail = document.getElementById('c-email').value || 'cardiologia.alassia@santafe.gob.ar';
+    newRecord.fechaRetiro = document.getElementById('c-fecha-retiro')?.value || '';
+    newRecord.observaciones = document.getElementById('c-observaciones')?.value || '';
+    newRecord.medico = currentDocName;
+    targetEmail = document.getElementById('c-email')?.value || 'cardiologia.alassia@santafe.gob.ar';
   } else if (type === 'Interconsulta General') {
     newRecord.paciente = document.getElementById('g-nombre').value;
     newRecord.dni = 's/d';
     newRecord.hc = document.getElementById('g-hc').value || 'HC-SN';
-    newRecord.servicio = document.getElementById('g-servicio').value;
+    newRecord.servicio = document.getElementById('g-servicio').value || (activeUser ? activeUser.service : 'Clínica Pediátrica');
     newRecord.destino = document.getElementById('g-destino').value;
     newRecord.staffAssigned = `Equipo Completo de ${newRecord.destino}`;
     newRecord.motivo = document.getElementById('g-motivo').value;
-    newRecord.medico = document.getElementById('g-medico').value || activeUser.name;
-    targetEmail = document.getElementById('g-email').value || 'gastroenterologia.alassia@santafe.gob.ar';
+    newRecord.fechaRetiro = document.getElementById('g-fecha-retiro')?.value || '';
+    newRecord.observaciones = document.getElementById('g-observaciones')?.value || '';
+    newRecord.medico = currentDocName;
+    targetEmail = document.getElementById('g-email')?.value || 'cirugia.infantil@santafe.gob.ar';
   } else if (type === 'Receta Electrónica') {
     newRecord.paciente = document.getElementById('f-nombre').value;
     newRecord.dni = document.getElementById('f-dni').value || 'Sin DNI';
     newRecord.hc = document.getElementById('f-dni').value || 'HC-REC';
-    newRecord.servicio = 'Farmacia y Recetas Electrónicas';
+    newRecord.servicio = document.getElementById('f-servicio').value || (activeUser ? activeUser.service : 'Pediatría General');
     newRecord.destino = 'Farmacia y Recetas Electrónicas';
     newRecord.staffAssigned = 'Equipo Completo de Farmacia Hospitalaria';
     newRecord.diagnostico = document.getElementById('f-diag').value;
     newRecord.rp1 = `${document.getElementById('f-rp').value} — ${document.getElementById('f-dosis').value}`;
-    newRecord.medico = document.getElementById('f-medico').value || activeUser.name;
-    targetEmail = document.getElementById('f-email').value || 'farmacia.alassia@santafe.gob.ar';
+    newRecord.fechaRetiro = document.getElementById('f-fecha-retiro')?.value || '';
+    newRecord.observaciones = document.getElementById('f-observaciones')?.value || '';
+    newRecord.medico = currentDocName;
+    targetEmail = document.getElementById('f-email')?.value || 'farmacia.alassia@santafe.gob.ar';
 
     const isRec = document.getElementById('f-is-recurring').checked;
     if (isRec) {
@@ -2793,24 +2850,28 @@ function handleFormSubmit(event, type) {
     newRecord.paciente = document.getElementById('i-nombre').value;
     newRecord.dni = document.getElementById('i-dni').value || 'Sin DNI';
     newRecord.hc = document.getElementById('i-dni').value || 'HC-IMG';
-    newRecord.servicio = 'Diagnóstico por Imágenes';
+    newRecord.servicio = document.getElementById('i-servicio').value || (activeUser ? activeUser.service : 'Internación');
     newRecord.destino = 'Diagnóstico por Imágenes';
     newRecord.staffAssigned = 'Equipo Guardia de Diagnóstico por Imágenes';
     newRecord.diagnostico = document.getElementById('i-modalidad').value;
     newRecord.motivo = `Estudio: ${document.getElementById('i-modalidad').value} en ${document.getElementById('i-region').value}. Indicación: ${document.getElementById('i-motivo').value}`;
-    newRecord.medico = document.getElementById('i-medico').value || activeUser.name;
-    targetEmail = document.getElementById('i-email').value || 'imagenes.alassia@santafe.gob.ar';
+    newRecord.fechaRetiro = document.getElementById('i-fecha-retiro')?.value || '';
+    newRecord.observaciones = document.getElementById('i-observaciones')?.value || '';
+    newRecord.medico = currentDocName;
+    targetEmail = document.getElementById('i-email')?.value || 'imagenes.alassia@santafe.gob.ar';
   } else if (type === 'Prescripción Nutricional') {
     newRecord.paciente = document.getElementById('n-nombre').value;
     newRecord.dni = document.getElementById('n-dni').value || 's/d';
     newRecord.hc = 'HC-NUT';
-    newRecord.servicio = document.getElementById('n-servicio-select').value || 'Nutrición y Lactario';
+    newRecord.servicio = document.getElementById('n-servicio-select').value || (activeUser ? activeUser.service : 'Nutrición y Lactario');
     newRecord.destino = 'Nutrición y Lactario';
     newRecord.staffAssigned = 'Equipo Completo de Nutrición y Lactario';
     newRecord.diagnostico = document.getElementById('n-diag').value;
     newRecord.rp1 = `${document.getElementById('n-rp1-formula').value} - ${document.getElementById('n-rp1-vol').value}`;
-    newRecord.medico = document.getElementById('n-medico').value || activeUser.name;
-    targetEmail = document.getElementById('n-email').value || 'lactario.alassia@santafe.gob.ar';
+    newRecord.fechaRetiro = document.getElementById('n-fecha-retiro')?.value || '';
+    newRecord.observaciones = document.getElementById('n-observaciones')?.value || '';
+    newRecord.medico = currentDocName;
+    targetEmail = document.getElementById('n-email')?.value || 'lactario.alassia@santafe.gob.ar';
 
     const isRec = document.getElementById('n-is-recurring').checked;
     if (isRec) {
@@ -3509,9 +3570,10 @@ function viewRecordDetail(id) {
           <div class="paper-field"><strong>Paciente:</strong> <span>${record.paciente}</span></div>
           <div class="paper-field"><strong>DNI / HC:</strong> <span>${record.dni} / ${record.hc}</span></div>
           <div class="paper-field"><strong>Fecha Emisión:</strong> <span>${record.fecha}</span></div>
+          <div class="paper-field"><strong>Retiro / Vigencia:</strong> <span style="color: ${record.fechaRetiro ? '#b45309' : '#16a34a'}; font-weight: 700;">${record.fechaRetiro ? 'Programado para ' + record.fechaRetiro : 'Inmediato (Hoy)'}</span></div>
           <div class="paper-field"><strong>Servicio Solicitante:</strong> <span>${record.servicio || 'General'}</span></div>
           <div class="paper-field"><strong>Personal Notificado:</strong> <span style="color: #0284c7; font-weight: 700;">${record.staffAssigned || 'Equipo del Servicio'}</span></div>
-          ${record.isRecurring ? `<div class="paper-field"><strong>Esquema Recurrente:</strong> <span style="color: #b45309; font-weight: 700;">Módulo ${record.moduloActual} de ${record.totalModulos} (Próx. Retiro: ${record.proximoRetiro})</span></div>` : ''}
+          ${record.isRecurring ? `<div class="paper-field" style="grid-column: span 2;"><strong>Esquema Recurrente:</strong> <span style="color: #b45309; font-weight: 700;">Módulo ${record.moduloActual} de ${record.totalModulos} (Próx. Retiro: ${record.proximoRetiro})</span></div>` : ''}
         </div>
       </div>
 
@@ -3521,6 +3583,14 @@ function viewRecordDetail(id) {
           ${record.motivo || record.diagnostico || record.rp1 || 'Sin especificaciones detalladas'}
         </div>
       </div>
+
+      ${record.observaciones ? `
+      <div class="paper-section">
+        <div class="paper-section-title">Observaciones / Indicaciones Especiales</div>
+        <div class="paper-box-content" style="font-size: 0.85rem; background: var(--slate-50); border-color: var(--slate-300);">
+          ${record.observaciones}
+        </div>
+      </div>` : ''}
 
       <div class="paper-section">
         <div class="paper-section-title">Informe de Respuesta / Dictamen del Especialista</div>
@@ -3532,7 +3602,7 @@ function viewRecordDetail(id) {
       <div class="paper-signatures" style="margin-top: 2rem;">
         <div class="signature-box">
           <div class="signature-line"></div>
-          <p>Solicitante<br><span>${record.medico}</span></p>
+          <p>Médico Prescriptor / Solicitante<br><span style="font-weight: 600;">${record.medico || 'Médico Autorizado'}</span></p>
         </div>
         <div class="signature-box">
           <div class="signature-line"></div>

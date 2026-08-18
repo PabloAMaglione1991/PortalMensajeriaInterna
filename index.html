@@ -17,7 +17,7 @@
   <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
   <!-- html2pdf for direct PDF file downloads without print modals -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  <link rel="stylesheet" href="styles.css?v=20260818-1335">
+  <link rel="stylesheet" href="styles.css?v=20260818-1345">
 </head>
 <body>
 
@@ -913,27 +913,23 @@
                   </div>
 
                   <div class="form-group full-width">
-                    <label>Motivo de la Interconsulta</label>
+                    <label for="c-motivo">Motivo de la Interconsulta</label>
                     <textarea id="c-motivo" class="form-control" placeholder="Describa los síntomas cardiológicos, hallazgos auscultatorios y requerimientos del estudio..."></textarea>
                   </div>
 
-                  <div class="form-group full-width" style="background: var(--slate-50); border: 1px dashed var(--primary-300); padding: 0.75rem 1rem; border-radius: var(--radius-md); display: flex; align-items: center; gap: 0.75rem;">
-                    <i class="ri-group-line" style="font-size: 1.4rem; color: var(--primary-600);"></i>
-                    <div>
-                      <strong style="font-size: 0.825rem; color: var(--primary-700);">Notificación General al Servicio Completo</strong>
-                      <p style="font-size: 0.75rem; color: var(--text-muted); margin: 0;">El pedido ingresará a la bandeja de entrada compartida de Cardiología Infantil para todo el equipo.</p>
-                    </div>
+                  <div class="form-group">
+                    <label for="c-fecha-retiro"><i class="ri-calendar-event-line"></i> Fecha de Atención / Retiro Programada (Opcional)</label>
+                    <input type="date" id="c-fecha-retiro" class="form-control">
                   </div>
 
-                  <div class="form-group">
-                    <label>Email Servicio Cardiología</label>
-                    <input type="email" id="c-email" class="form-control" value="cardiologia.alassia@santafe.gob.ar" required>
+                  <div class="form-group full-width">
+                    <label for="c-observaciones">Observaciones / Indicaciones Especiales (Opcional)</label>
+                    <textarea id="c-observaciones" class="form-control" rows="2" placeholder="Aclaraciones adicionales para el equipo de Cardiología..."></textarea>
                   </div>
 
-                  <div class="form-group">
-                    <label>Médico Solicitante</label>
-                    <input type="text" id="c-medico" class="form-control" placeholder="Ej: Dra. Lucía Gómez (Mat. 4812)">
-                  </div>
+                  <!-- Hidden inputs for automated team notification & logged doctor -->
+                  <input type="hidden" id="c-email" value="cardiologia.alassia@santafe.gob.ar">
+                  <input type="hidden" id="c-medico">
                 </div>
 
                 <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
@@ -979,6 +975,11 @@
                   <div class="paper-box-content" id="prev-c-motivo">Paciente con soplo holosistólico 3/6 en foco mitral. Se requiere ecocardiograma Doppler color y evaluación por especialista de guardia.</div>
                 </div>
 
+                <div class="paper-section" id="prev-c-obs-container" style="display: none;">
+                  <div class="paper-section-title">Observaciones / Indicaciones</div>
+                  <div class="paper-box-content" id="prev-c-observaciones" style="font-size: 0.85rem;"></div>
+                </div>
+
                 <div class="paper-section">
                   <div class="paper-section-title">Respuesta a la Interconsulta (Servicio de Cardiología)</div>
                   <div class="paper-box-content" style="min-height: 90px; color: #94a3b8;">
@@ -1014,12 +1015,12 @@
               <form id="form-general-el" onsubmit="handleFormSubmit(event, 'Interconsulta General')">
                 <div class="form-grid">
                   <div class="form-group full-width">
-                    <label>Apellido y Nombres del Paciente</label>
+                    <label for="g-nombre">Apellido y Nombres del Paciente</label>
                     <input type="text" id="g-nombre" class="form-control" placeholder="Ej: Sofía Valentina Rossi" required>
                   </div>
 
                   <div class="form-group">
-                    <label>DNI / H.C. Nº</label>
+                    <label for="g-hc">DNI / H.C. Nº</label>
                     <div style="display: flex; gap: 0.4rem;">
                       <input type="text" id="g-hc" class="form-control" placeholder="Ej: 50.119.823 / HC-40192" onkeydown="if(event.key==='Enter'){event.preventDefault();buscarPacientePorDNI('g-hc',{nombre:'g-nombre',hc:'g-hc'});}">
                       <button type="button" class="btn-secondary" style="padding: 0.4rem 0.65rem; font-size: 0.75rem; white-space: nowrap;" onclick="buscarPacientePorDNI('g-hc',{nombre:'g-nombre',hc:'g-hc'})" title="Buscar paciente en Base diagnose (10.12.4.1)">
@@ -1029,44 +1030,40 @@
                   </div>
 
                   <div class="form-group">
-                    <label>Servicio de Origen</label>
+                    <label for="g-servicio">Servicio de Origen</label>
                     <input type="text" id="g-servicio" class="form-control" placeholder="Ej: Pediatría II">
                   </div>
 
                   <div class="form-group">
-                    <label>Sala / Cama</label>
+                    <label for="g-sala">Sala / Cama</label>
                     <input type="text" id="g-sala" class="form-control" placeholder="Ej: Sala 4 - Cama 12B">
                   </div>
 
                   <div class="form-group full-width">
-                    <label>PEDIDO DE CONSULTA A (Servicio Receptor)</label>
+                    <label for="g-destino">PEDIDO DE CONSULTA A (Servicio Receptor)</label>
                     <select id="g-destino" class="form-control" onchange="updateGeneralStaffList()">
                       <!-- Dynamic Active Services Dropdown -->
                     </select>
                   </div>
 
-                  <div class="form-group full-width" style="background: var(--slate-50); border: 1px dashed var(--primary-300); padding: 0.75rem 1rem; border-radius: var(--radius-md); display: flex; align-items: center; gap: 0.75rem;">
-                    <i class="ri-group-line" style="font-size: 1.4rem; color: var(--primary-600);"></i>
-                    <div>
-                      <strong style="font-size: 0.825rem; color: var(--primary-700);">Notificación General al Servicio Receptor</strong>
-                      <p style="font-size: 0.75rem; color: var(--text-muted); margin: 0;">El pedido notificará a todo el equipo del servicio destino seleccionado.</p>
-                    </div>
-                  </div>
-
                   <div class="form-group full-width">
-                    <label>Motivo de la Interconsulta y Resumen Clínico</label>
+                    <label for="g-motivo">Motivo de la Interconsulta y Resumen Clínico</label>
                     <textarea id="g-motivo" class="form-control" placeholder="Describa antecedentes pertinentes, examen físico y la inquietud clínica puntual..."></textarea>
                   </div>
 
                   <div class="form-group">
-                    <label>Email Servicio Destino</label>
-                    <input type="email" id="g-email" class="form-control" value="cirugia.infantil@santafe.gob.ar" required>
+                    <label for="g-fecha-retiro"><i class="ri-calendar-event-line"></i> Fecha de Atención / Retiro Programada (Opcional)</label>
+                    <input type="date" id="g-fecha-retiro" class="form-control">
                   </div>
 
-                  <div class="form-group">
-                    <label>Médico Solicitante</label>
-                    <input type="text" id="g-medico" class="form-control" placeholder="Ej: Dr. Martín Peralta">
+                  <div class="form-group full-width">
+                    <label for="g-observaciones">Observaciones / Indicaciones Especiales (Opcional)</label>
+                    <textarea id="g-observaciones" class="form-control" rows="2" placeholder="Aclaraciones adicionales para el servicio consultado..."></textarea>
                   </div>
+
+                  <!-- Hidden inputs for automated team notification & logged doctor -->
+                  <input type="hidden" id="g-email" value="cirugia.infantil@santafe.gob.ar">
+                  <input type="hidden" id="g-medico">
                 </div>
 
                 <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
@@ -1113,6 +1110,11 @@
                   <div class="paper-box-content" id="prev-g-motivo">Paciente cursando 48hs de dolor abdominal en fosa ilíaca derecha, náuseas y leucocitosis. Se solicita valoración quirúrgica por sospecha de apendicitis aguda.</div>
                 </div>
 
+                <div class="paper-section" id="prev-g-obs-container" style="display: none;">
+                  <div class="paper-section-title">Observaciones / Indicaciones</div>
+                  <div class="paper-box-content" id="prev-g-observaciones" style="font-size: 0.85rem;"></div>
+                </div>
+
                 <div class="paper-section">
                   <div class="paper-section-title">INFORME DE CONSULTA (Procedimiento / Diagnóstico)</div>
                   <div class="paper-box-content" style="min-height: 90px; color: #94a3b8;">
@@ -1148,12 +1150,12 @@
               <form id="form-farmacia-el" onsubmit="handleFormSubmit(event, 'Receta Electrónica')">
                 <div class="form-grid">
                   <div class="form-group full-width">
-                    <label>Nombre y Apellido del Paciente</label>
+                    <label for="f-nombre">Nombre y Apellido del Paciente</label>
                     <input type="text" id="f-nombre" class="form-control" placeholder="Ej: Camilo Benavídez" required>
                   </div>
 
                   <div class="form-group">
-                    <label>DNI / HC del Paciente</label>
+                    <label for="f-dni">DNI / HC del Paciente</label>
                     <div style="display: flex; gap: 0.4rem;">
                       <input type="text" id="f-dni" class="form-control" placeholder="Ej: 51.092.381" onkeydown="if(event.key==='Enter'){event.preventDefault();buscarPacientePorDNI('f-dni',{nombre:'f-nombre',hc:'f-dni'});}">
                       <button type="button" class="btn-secondary" style="padding: 0.4rem 0.65rem; font-size: 0.75rem; white-space: nowrap;" onclick="buscarPacientePorDNI('f-dni',{nombre:'f-nombre',hc:'f-dni'})" title="Buscar paciente en Base diagnose (10.12.4.1)">
@@ -1163,28 +1165,39 @@
                   </div>
 
                   <div class="form-group">
-                    <label>Servicio Solicitante</label>
+                    <label for="f-servicio">Servicio Solicitante</label>
                     <input type="text" id="f-servicio" class="form-control" placeholder="Ej: Pediatría I / Guardia Pediatría">
                   </div>
 
                   <div class="form-group full-width">
-                    <label>Diagnóstico que motiva la Prescripción</label>
+                    <label for="f-diag">Diagnóstico que motiva la Prescripción</label>
                     <input type="text" id="f-diag" class="form-control" placeholder="Ej: Neumonía aguda de la comunidad / Otitis media aguda">
                   </div>
 
                   <div class="form-group full-width" style="border-top: 1px solid var(--border-color); padding-top: 1rem;">
-                    <label style="color: #b45309;">Rp: Medicamento / Droga Prescripta</label>
+                    <label for="f-rp" style="color: #b45309;">Rp: Medicamento / Droga Prescripta</label>
                     <input type="text" id="f-rp" class="form-control" placeholder="Ej: Amoxicilina + Ácido Clavulánico 500mg/125mg suspensión oral" required>
                   </div>
 
                   <div class="form-group">
-                    <label>Dosis, Vía y Frecuencia</label>
+                    <label for="f-dosis">Dosis, Vía y Frecuencia</label>
                     <input type="text" id="f-dosis" class="form-control" placeholder="Ej: 5 ml cada 8 horas por vía oral (VO)">
                   </div>
 
                   <div class="form-group">
-                    <label>Duración del Tratamiento</label>
+                    <label for="f-duracion">Duración del Tratamiento</label>
                     <input type="text" id="f-duracion" class="form-control" placeholder="Ej: 7 días completación">
+                  </div>
+
+                  <div class="form-group">
+                    <label for="f-fecha-retiro"><i class="ri-calendar-event-line"></i> Fecha de Retiro Programada en Farmacia (Opcional)</label>
+                    <input type="date" id="f-fecha-retiro" class="form-control">
+                    <small style="font-size: 0.75rem; color: var(--text-muted);">Dejar vacío para retiro inmediato.</small>
+                  </div>
+
+                  <div class="form-group full-width">
+                    <label for="f-observaciones">Observaciones / Indicaciones Especiales (Opcional)</label>
+                    <textarea id="f-observaciones" class="form-control" rows="2" placeholder="Aclaraciones para el paciente o para el equipo de Farmacia..."></textarea>
                   </div>
 
                   <!-- RECURRENCE TOGGLE -->
@@ -1214,23 +1227,9 @@
                     <input type="text" class="form-control" value="Cada 30 días (1 módulo/mes)" readonly>
                   </div>
 
-                  <div class="form-group full-width" style="background: var(--slate-50); border: 1px dashed var(--primary-300); padding: 0.75rem 1rem; border-radius: var(--radius-md); display: flex; align-items: center; gap: 0.75rem;">
-                    <i class="ri-group-line" style="font-size: 1.4rem; color: var(--primary-600);"></i>
-                    <div>
-                      <strong style="font-size: 0.825rem; color: var(--primary-700);">Notificación General a Farmacia Hospitalaria</strong>
-                      <p style="font-size: 0.75rem; color: var(--text-muted); margin: 0;">La receta ingresará a la bandeja compartida de Farmacia para todo el equipo farmacéutico.</p>
-                    </div>
-                  </div>
-
-                  <div class="form-group">
-                    <label>Email Farmacia Hospitalaria</label>
-                    <input type="email" id="f-email" class="form-control" value="farmacia.alassia@santafe.gob.ar" required>
-                  </div>
-
-                  <div class="form-group">
-                    <label>Médico Prescriptor</label>
-                    <input type="text" id="f-medico" class="form-control" placeholder="Ej: Dr. Orlando Alassia">
-                  </div>
+                  <!-- Hidden inputs for automated team notification & logged doctor -->
+                  <input type="hidden" id="f-email" value="farmacia.alassia@santafe.gob.ar">
+                  <input type="hidden" id="f-medico">
                 </div>
 
                 <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
@@ -1268,6 +1267,7 @@
                     <div class="paper-field"><strong>DNI / HC:</strong> <span id="prev-f-dni"> 51.092.381 / HC-8812</span></div>
                     <div class="paper-field"><strong>Servicio:</strong> <span id="prev-f-servicio"> Pediatría I</span></div>
                     <div class="paper-field"><strong>Diagnóstico:</strong> <span id="prev-f-diag"> Neumonía aguda de la comunidad</span></div>
+                    <div class="paper-field" style="grid-column: span 2;"><strong>Retiro / Disponibilidad:</strong> <span id="prev-f-fecha-retiro" style="color: #b45309; font-weight: 700;">Inmediato</span></div>
                   </div>
                 </div>
 
@@ -1278,6 +1278,11 @@
                     <span>Posología / Vía: </span><span id="prev-f-dosis">5 ml cada 8 horas por vía oral (VO)</span><br>
                     <span>Duración Tratamiento: </span><span id="prev-f-duracion">7 días completación</span>
                   </div>
+                </div>
+
+                <div class="paper-section" id="prev-f-obs-container" style="display: none;">
+                  <div class="paper-section-title">Observaciones / Indicaciones</div>
+                  <div class="paper-box-content" id="prev-f-observaciones" style="font-size: 0.85rem;"></div>
                 </div>
 
                 <div class="paper-signatures">
@@ -1308,12 +1313,12 @@
               <form id="form-imagenes-el" onsubmit="handleFormSubmit(event, 'Solicitud de Imágenes')">
                 <div class="form-grid">
                   <div class="form-group full-width">
-                    <label>Nombre y Apellido del Paciente</label>
+                    <label for="i-nombre">Nombre y Apellido del Paciente</label>
                     <input type="text" id="i-nombre" class="form-control" placeholder="Ej: Valentina Morales" required>
                   </div>
 
                   <div class="form-group">
-                    <label>DNI / HC del Paciente</label>
+                    <label for="i-dni">DNI / HC del Paciente</label>
                     <div style="display: flex; gap: 0.4rem;">
                       <input type="text" id="i-dni" class="form-control" placeholder="Ej: 49.301.992" onkeydown="if(event.key==='Enter'){event.preventDefault();buscarPacientePorDNI('i-dni',{nombre:'i-nombre',hc:'i-dni'});}">
                       <button type="button" class="btn-secondary" style="padding: 0.4rem 0.65rem; font-size: 0.75rem; white-space: nowrap;" onclick="buscarPacientePorDNI('i-dni',{nombre:'i-nombre',hc:'i-dni'})" title="Buscar paciente en Base diagnose (10.12.4.1)">
@@ -1323,12 +1328,12 @@
                   </div>
 
                   <div class="form-group">
-                    <label>Servicio Solicitante & Cama</label>
+                    <label for="i-servicio">Servicio Solicitante & Cama</label>
                     <input type="text" id="i-servicio" class="form-control" placeholder="Ej: Traumatología / Sala 2 Cama 5">
                   </div>
 
                   <div class="form-group full-width">
-                    <label>Modalidad de Estudio Solicitado</label>
+                    <label for="i-modalidad">Modalidad de Estudio Solicitado</label>
                     <select id="i-modalidad" class="form-control">
                       <option value="Radiografía RX">Radiografía Simple / Contrastada (RX)</option>
                       <option value="Ecografía Pediátrica">Ecografía Pediátrica / Doppler</option>
@@ -1338,32 +1343,28 @@
                   </div>
 
                   <div class="form-group full-width">
-                    <label>Región Anatómica a Estudiar</label>
+                    <label for="i-region">Región Anatómica a Estudiar</label>
                     <input type="text" id="i-region" class="form-control" placeholder="Ej: Tórax Frente y Perfil / Abdomen Completo / Fémur Derecho" required>
                   </div>
 
                   <div class="form-group full-width">
-                    <label>Indicación Clínica / Diagnóstico Presuntivo</label>
+                    <label for="i-motivo">Indicación Clínica / Diagnóstico Presuntivo</label>
                     <textarea id="i-motivo" class="form-control" placeholder="Describa síntomas, traumatismo previo o hallazgos clínicos que justifican el estudio..."></textarea>
                   </div>
 
-                  <div class="form-group full-width" style="background: var(--slate-50); border: 1px dashed var(--primary-300); padding: 0.75rem 1rem; border-radius: var(--radius-md); display: flex; align-items: center; gap: 0.75rem;">
-                    <i class="ri-group-line" style="font-size: 1.4rem; color: var(--primary-600);"></i>
-                    <div>
-                      <strong style="font-size: 0.825rem; color: var(--primary-700);">Notificación General al Sector de Imágenes</strong>
-                      <p style="font-size: 0.75rem; color: var(--text-muted); margin: 0;">El pedido ingresará a la bandeja de guardia del equipo de Diagnóstico por Imágenes.</p>
-                    </div>
+                  <div class="form-group">
+                    <label for="i-fecha-retiro"><i class="ri-calendar-event-line"></i> Fecha Preferente de Realización (Opcional)</label>
+                    <input type="date" id="i-fecha-retiro" class="form-control">
                   </div>
 
-                  <div class="form-group">
-                    <label>Email Sector Imágenes</label>
-                    <input type="email" id="i-email" class="form-control" value="imagenes.alassia@santafe.gob.ar" required>
+                  <div class="form-group full-width">
+                    <label for="i-observaciones">Observaciones / Indicaciones Especiales (Opcional)</label>
+                    <textarea id="i-observaciones" class="form-control" rows="2" placeholder="Aclaraciones adicionales para el sector de Imágenes..."></textarea>
                   </div>
 
-                  <div class="form-group">
-                    <label>Médico Solicitante</label>
-                    <input type="text" id="i-medico" class="form-control" placeholder="Ej: Dr. Gonzalo Torres">
-                  </div>
+                  <!-- Hidden inputs for automated team notification & logged doctor -->
+                  <input type="hidden" id="i-email" value="imagenes.alassia@santafe.gob.ar">
+                  <input type="hidden" id="i-medico">
                 </div>
 
                 <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
@@ -1412,6 +1413,11 @@
                   </div>
                 </div>
 
+                <div class="paper-section" id="prev-i-obs-container" style="display: none;">
+                  <div class="paper-section-title">Observaciones / Indicaciones</div>
+                  <div class="paper-box-content" id="prev-i-observaciones" style="font-size: 0.85rem;"></div>
+                </div>
+
                 <div class="paper-signatures">
                   <div class="signature-box">
                     <div class="signature-line"></div>
@@ -1445,7 +1451,7 @@
               <form id="form-nutri-el" onsubmit="handleFormSubmit(event, 'Prescripción Nutricional')">
                 <div class="form-grid">
                   <div class="form-group full-width">
-                    <label style="font-weight: 700; color: #15803d;"><i class="ri-hospital-line"></i> Servicio Solicitante Autorizado (Seleccioná tu Servicio)</label>
+                    <label for="n-servicio-select" style="font-weight: 700; color: #15803d;"><i class="ri-hospital-line"></i> Servicio Solicitante Autorizado (Seleccioná tu Servicio)</label>
                     <select id="n-servicio-select" class="form-control" style="font-weight: 700; border-color: #86efac; background-color: #f0fdf4;" onchange="updateNutriService(this.value)" required>
                       <!-- Dynamic Authorized Milk Services -->
                     </select>
@@ -1453,7 +1459,7 @@
                   </div>
 
                   <div class="form-group">
-                    <label>D.N.I. Nº del Paciente</label>
+                    <label for="n-dni">D.N.I. Nº del Paciente</label>
                     <div style="display: flex; gap: 0.4rem;">
                       <input type="text" id="n-dni" class="form-control" placeholder="Ej: 52.190.431" onkeydown="if(event.key==='Enter'){event.preventDefault();buscarPacientePorDNI('n-dni',{nombre:'n-nombre',edad:'n-edad',hc:'n-dni'});}">
                       <button type="button" class="btn-secondary" style="padding: 0.4rem 0.65rem; font-size: 0.75rem; white-space: nowrap;" onclick="buscarPacientePorDNI('n-dni',{nombre:'n-nombre',edad:'n-edad',hc:'n-dni'})" title="Buscar paciente en Base diagnose (10.12.4.1)">
@@ -1463,39 +1469,50 @@
                   </div>
 
                   <div class="form-group">
-                    <label>Edad del Paciente</label>
+                    <label for="n-edad">Edad del Paciente</label>
                     <input type="text" id="n-edad" class="form-control" placeholder="Ej: 8 meses">
                   </div>
 
                   <div class="form-group full-width">
-                    <label>Nombre y Apellido del Lactante / Paciente</label>
+                    <label for="n-nombre">Nombre y Apellido del Lactante / Paciente</label>
                     <input type="text" id="n-nombre" class="form-control" placeholder="Ej: Joaquín Benjamín Silva" required>
                   </div>
 
                   <div class="form-group">
-                    <label>Peso Actual (PA)</label>
+                    <label for="n-pa">Peso Actual (PA)</label>
                     <input type="text" id="n-pa" class="form-control" placeholder="Ej: 6.850 kg">
                   </div>
 
                   <div class="form-group">
-                    <label>Diagnóstico Nutricional</label>
+                    <label for="n-diag">Diagnóstico Nutricional</label>
                     <input type="text" id="n-diag" class="form-control" placeholder="Ej: APLV / Lactante menor">
                   </div>
 
                   <!-- Prescripción 1 -->
                   <div class="form-group full-width" style="border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 0.5rem;">
-                    <label style="color: var(--primary-600);">Rp1: Fórmula Láctea / Módulo Calórico Autorizado</label>
+                    <label for="n-rp1-formula" style="color: var(--primary-600);">Rp1: Fórmula Láctea / Módulo Calórico Autorizado</label>
                     <input type="text" id="n-rp1-formula" class="form-control" placeholder="Ej: Fórmula de Inicio Extensamente Hidrolizada (Sin Lactosa)" required>
                   </div>
 
                   <div class="form-group">
-                    <label>Dilución / Vol (cc)</label>
+                    <label for="n-rp1-vol">Dilución / Vol (cc)</label>
                     <input type="text" id="n-rp1-vol" class="form-control" placeholder="Ej: Dilución 13.5% / 150 cc">
                   </div>
 
                   <div class="form-group">
-                    <label>Nº de Tomas & Vía</label>
+                    <label for="n-rp1-via">Nº de Tomas & Vía</label>
                     <input type="text" id="n-rp1-via" class="form-control" placeholder="Ej: 8 tomas cada 3hs (Vía VO)">
+                  </div>
+
+                  <div class="form-group">
+                    <label for="n-fecha-retiro"><i class="ri-calendar-event-line"></i> Fecha de Retiro Programada en Lactario (Opcional)</label>
+                    <input type="date" id="n-fecha-retiro" class="form-control">
+                    <small style="font-size: 0.75rem; color: var(--text-muted);">Dejar vacío para retiro inmediato.</small>
+                  </div>
+
+                  <div class="form-group full-width">
+                    <label for="n-observaciones">Observaciones / Indicaciones Nutricionales (Opcional)</label>
+                    <textarea id="n-observaciones" class="form-control" rows="2" placeholder="Indicaciones especiales de dilución, conservación o tolerancia..."></textarea>
                   </div>
 
                   <!-- RECURRENCE TOGGLE NUTRICION -->
@@ -1525,23 +1542,9 @@
                     <input type="text" class="form-control" value="Cada 30 días en Lactario" readonly>
                   </div>
 
-                  <div class="form-group full-width" style="background: var(--slate-50); border: 1px dashed var(--primary-300); padding: 0.75rem 1rem; border-radius: var(--radius-md); display: flex; align-items: center; gap: 0.75rem;">
-                    <i class="ri-group-line" style="font-size: 1.4rem; color: var(--primary-600);"></i>
-                    <div>
-                      <strong style="font-size: 0.825rem; color: var(--primary-700);">Notificación General al Equipo de Nutrición y Lactario</strong>
-                      <p style="font-size: 0.75rem; color: var(--text-muted); margin: 0;">La prescripción ingresará a la bandeja compartida de Lactario para todo el equipo.</p>
-                    </div>
-                  </div>
-
-                  <div class="form-group full-width">
-                    <label>Email Destino Lactario / Farmacia</label>
-                    <input type="email" id="n-email" class="form-control" value="lactario.alassia@santafe.gob.ar" required>
-                  </div>
-
-                  <div class="form-group full-width">
-                    <label>Profesional Prescriptor Autorizado</label>
-                    <input type="text" id="n-medico" class="form-control" placeholder="Ej: Lic. Nutrición Paula Gómez (Mat. 941)">
-                  </div>
+                  <!-- Hidden inputs for automated team notification & logged doctor -->
+                  <input type="hidden" id="n-email" value="lactario.alassia@santafe.gob.ar">
+                  <input type="hidden" id="n-medico">
                 </div>
 
                 <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
@@ -1581,6 +1584,7 @@
                     <div class="paper-field"><strong>Servicio Solicitante:</strong> <span id="prev-n-servicio"> Nutrición y Lactario</span></div>
                     <div class="paper-field"><strong>PA / Talla:</strong> <span id="prev-n-pa"> 6.850 kg</span></div>
                     <div class="paper-field"><strong>Diagnóstico:</strong> <span id="prev-n-diag"> APLV / Lactante menor</span></div>
+                    <div class="paper-field" style="grid-column: span 2;"><strong>Retiro en Lactario:</strong> <span id="prev-n-fecha-retiro" style="color: #16a34a; font-weight: 700;">Inmediato</span></div>
                   </div>
                 </div>
 
@@ -1591,6 +1595,11 @@
                     <span>Dilución / Vol: </span><span id="prev-n-rp1-vol">Dilución 13.5% / 150 cc</span> | 
                     <span>Tomas/Vía: </span><span id="prev-n-rp1-via">8 tomas cada 3hs (VO)</span>
                   </div>
+                </div>
+
+                <div class="paper-section" id="prev-n-obs-container" style="display: none;">
+                  <div class="paper-section-title">Observaciones / Indicaciones</div>
+                  <div class="paper-box-content" id="prev-n-observaciones" style="font-size: 0.85rem;"></div>
                 </div>
 
                 <p style="font-size: 0.7rem; color: #64748b; font-style: italic; margin-top: 1rem;">
@@ -1990,6 +1999,6 @@
   <!-- Toast Container -->
   <div class="toast-container" id="toast-container"></div>
 
-  <script src="app.js?v=20260818-1335"></script>
+  <script src="app.js?v=20260818-1345"></script>
 </body>
 </html>
