@@ -3181,9 +3181,11 @@ function handleResolveSubmit(e) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(record)
+    }).then(res => res.json()).then(data => {
+      console.log('✅ Estado actualizado y archivado en MySQL 10.12.4.2:', data);
     }).catch(err => console.log('MySQL Sync Resolve Error:', err));
 
-    logEvent('RESOLUCION', `Solicitud #${record.id} dictaminada y confirmada por ${doctorName}. Estado: ${newStatus}. Archivada.`);
+    logEvent('RESOLUCION', `Solicitud #${record.id} entregada y resuelta por ${doctorName}. Estado: ${newStatus}. Archivada.`);
 
     addNotification({
       title: `Interconsulta Resuelta: ${record.id}`,
@@ -3191,11 +3193,12 @@ function handleResolveSubmit(e) {
       time: "Ahora"
     });
 
+    closeResolveModal();
     renderInbox();
     renderArchiveTable();
     renderReportSection();
+    renderRecurringSection();
     updateStats();
-    closeResolveModal();
     showToast(`¡Solicitud ${record.id} confirmada y archivada exitosamente!`);
   }
 }
@@ -3203,7 +3206,7 @@ function handleResolveSubmit(e) {
 function changeStatusInline(id, newStatus) {
   const record = records.find(r => r.id === id);
   if (record) {
-    if (newStatus === 'Confirmado / Resuelto') {
+    if (newStatus === 'Confirmado / Resuelto' || newStatus.includes('Confirmado')) {
       openResolveModal(id);
       return;
     }
@@ -3215,6 +3218,8 @@ function changeStatusInline(id, newStatus) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(record)
+    }).then(res => res.json()).then(data => {
+      console.log('✅ Estado actualizado en MySQL:', data);
     }).catch(err => console.log('MySQL Sync Status Error:', err));
 
     logEvent('RESOLUCION', `Estado de solicitud #${record.id} cambiado a "${newStatus}"`);

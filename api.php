@@ -496,65 +496,106 @@ switch ($action) {
                 $respId = $st->fetchColumn() ?: null;
             }
 
-            // Construir dinámicamente el INSERT con los campos que realmente existan en MySQL
-            $fields = [];
-            $values = [];
-            $updates = [];
-            $params = [];
-
-            $addCol = function($colName, $val, $shouldUpdate = true) use (&$fields, &$values, &$updates, &$params, $existingCols) {
-                if (in_array($colName, $existingCols)) {
-                    $paramKey = ":param_" . $colName;
-                    $fields[] = "`$colName`";
-                    $values[] = $paramKey;
-                    if ($shouldUpdate) {
-                        $updates[] = "`$colName` = VALUES(`$colName`)";
-                    }
-                    $params[$paramKey] = $val;
-                }
-            };
-
-            $addCol('codigo_unico', $codigo, false);
-            $addCol('tipo_formulario', $tipoNorm);
-            $addCol('paciente_dni', $pacienteDni);
-            $addCol('paciente_nombre', $pacienteNombre);
-            $addCol('paciente_hc', $pacienteHc);
-            $addCol('paciente_edad', $pacienteEdad);
-            $addCol('servicio_origen_id', $origId);
-            $addCol('servicio_destino_id', $destId);
-            $addCol('profesional_solicitante_id', $profId);
-            $addCol('profesional_respondedor_id', $respId);
-            $addCol('servicio_origen_nombre', $servicioOrigen);
-            $addCol('servicio_destino_nombre', $servicioDestino);
-            $addCol('staff_asignado', $staffAsignado);
-            $addCol('diagnostico_presuntivo', $diagnostico);
-            $addCol('motivo_consulta', $motivoFull);
-            $addCol('datos_rp1', $rp1Full);
-            $addCol('medico_solicitante', $medico);
-            $addCol('medico_respondedor', $medicoRespondedor);
-            $addCol('fecha_solicitud', in_array('fecha_solicitud', $existingCols) ? date('Y-m-d H:i:s') : null);
-            $addCol('fecha_retiro', $fechaRetiro);
-            $addCol('observaciones', $observaciones);
-            $addCol('respuesta_medica', $respuestaMedica);
-            $addCol('es_recurrente', $isRecurring);
-            $addCol('modulo_actual', $moduloActual);
-            $addCol('total_modulos', $totalModulos);
-            $addCol('proximo_retiro', $proximoRetiroVal);
-            $addCol('estado', $estado);
-
-            $sql = "INSERT INTO solicitud (" . implode(', ', $fields) . ") VALUES (" . implode(', ', $values) . ")";
-            if (!empty($updates)) {
-                $sql .= " ON DUPLICATE KEY UPDATE " . implode(', ', $updates);
+            // Normalizar estado para compatibilidad estricta con MySQL ENUM
+            $estadoNorm = $estado;
+            if (stripos($estado, 'confirm') !== false || stripos($estado, 'resuelt') !== false) {
+                $estadoNorm = 'Confirmado / Resuelto';
+            } else if (stripos($estado, 'proceso') !== false) {
+                $estadoNorm = 'En Proceso';
+            } else if (stripos($estado, 'complet') !== false) {
+                $estadoNorm = 'Tratamiento Completado';
+            } else if (stripos($estado, 'cancel') !== false) {
+                $estadoNorm = 'Cancelado';
+            } else {
+                $estadoNorm = 'Pendiente';
             }
 
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute($params);
+            // Verificar si el registro ya existe en MySQL por codigo_unico
+            $stCheck = $pdo->prepare("SELECT id FROM solicitud WHERE codigo_unico = :cod LIMIT 1");
+            $stCheck->execute([':cod' => $codigo]);
+            $existingId = $stCheck->fetchColumn();
 
-            echo json_encode([
-                'success' => true, 
-                'message' => "Prescripción / Solicitud {$codigo} sincronizada en MySQL (10.12.4.2)",
-                'id' => $codigo
-            ]);
+            $colData = [
+                'tipo_formulario' => $tipoNorm,
+                'paciente_dni' => $pacienteDni,
+                'paciente_nombre' => $pacienteNombre,
+                'paciente_hc' => $pacienteHc,
+                'paciente_edad' => $pacienteEdad,
+                'servicio_origen_id' => $origId,
+                'servicio_destino_id' => $destId,
+                'profesional_solicitante_id' => $profId,
+                'profesional_respondedor_id' => $respId,
+                'servicio_origen_nombre' => $servicioOrigen,
+                'servicio_destino_nombre' => $servicioDestino,
+                'staff_asignado' => $staffAsignado,
+                'diagnostico_presuntivo' => $diagnostico,
+                'motivo_consulta' => $motivoFull,
+                'datos_rp1' => $rp1Full,
+                'medico_solicitante' => $medico,
+                'medico_respondedor' => $medicoRespondedor,
+                'fecha_retiro' => $fechaRetiro,
+                'observaciones' => $observaciones,
+                'respuesta_medica' => $respuestaMedica,
+                'es_recurrente' => $isRecurring,
+                'modulo_actual' => $moduloActual,
+                'total_modulos' => $totalModulos,
+                'proximo_retiro' => $proximoRetiroVal,
+                'estado' => $estadoNorm
+            ];
+
+            if ($existingId) {
+                // UPDATE explícito por ID garantizado
+                $setParts = [];
+                $params = [':db_id' => $existingId];
+                foreach ($colData as $col => $val) {
+                    if (in_array($col, $existingCols)) {
+                        $setParts[] = "`$col` = :p_$col";
+                        $params[":p_$col"] = $val;
+                    }
+                }
+                if (in_array('fecha_resolucion', $existingCols) && ($estadoNorm === 'Confirmado / Resuelto' || $estadoNorm === 'Tratamiento Completado')) {
+                    $setParts[] = "`fecha_resolucion` = :p_fresol";
+                    $params[':p_fresol'] = date('Y-m-d H:i:s');
+                }
+
+                $sql = "UPDATE solicitud SET " . implode(', ', $setParts) . " WHERE id = :db_id";
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute($params);
+
+                echo json_encode([
+                    'success' => true, 
+                    'message' => "Solicitud {$codigo} actualizada en MySQL (Estado: {$estadoNorm})",
+                    'id' => $codigo,
+                    'estado' => $estadoNorm
+                ]);
+            } else {
+                // INSERT explícito de nueva solicitud
+                $colData['codigo_unico'] = $codigo;
+                if (in_array('fecha_solicitud', $existingCols)) {
+                    $colData['fecha_solicitud'] = date('Y-m-d H:i:s');
+                }
+                $fields = [];
+                $placeholders = [];
+                $params = [];
+                foreach ($colData as $col => $val) {
+                    if (in_array($col, $existingCols)) {
+                        $fields[] = "`$col`";
+                        $placeholders[] = ":p_$col";
+                        $params[":p_$col"] = $val;
+                    }
+                }
+
+                $sql = "INSERT INTO solicitud (" . implode(', ', $fields) . ") VALUES (" . implode(', ', $placeholders) . ")";
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute($params);
+
+                echo json_encode([
+                    'success' => true, 
+                    'message' => "Prescripción / Solicitud {$codigo} sincronizada en MySQL (10.12.4.2)",
+                    'id' => $codigo,
+                    'estado' => $estadoNorm
+                ]);
+            }
         } catch (Exception $e) {
             echo json_encode([
                 'success' => false, 
