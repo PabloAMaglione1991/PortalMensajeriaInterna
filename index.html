@@ -20,7 +20,7 @@
   <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
   <!-- html2pdf for direct PDF file downloads without print modals -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  <link rel="stylesheet" href="styles.css?v=20260818-1420">
+  <link rel="stylesheet" href="styles.css?v=20260818-1430">
 </head>
 <body>
 
@@ -936,6 +936,7 @@
                   <!-- Hidden inputs for automated team notification & logged doctor -->
                   <input type="hidden" id="c-email" value="cardiologia.alassia@santafe.gob.ar">
                   <input type="hidden" id="c-medico">
+                  <input type="hidden" id="c-tipo-formulario" value="Interconsulta Cardiología">
                 </div>
 
                 <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
@@ -1070,6 +1071,7 @@
                   <!-- Hidden inputs for automated team notification & logged doctor -->
                   <input type="hidden" id="g-email" value="cirugia.infantil@santafe.gob.ar">
                   <input type="hidden" id="g-medico">
+                  <input type="hidden" id="g-tipo-formulario" value="Interconsulta General">
                 </div>
 
                 <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
@@ -1236,6 +1238,7 @@
                   <!-- Hidden inputs for automated team notification & logged doctor -->
                   <input type="hidden" id="f-email" value="farmacia.alassia@santafe.gob.ar">
                   <input type="hidden" id="f-medico">
+                  <input type="hidden" id="f-tipo-formulario" value="Receta Electrónica">
                 </div>
 
                 <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
@@ -1371,6 +1374,7 @@
                   <!-- Hidden inputs for automated team notification & logged doctor -->
                   <input type="hidden" id="i-email" value="imagenes.alassia@santafe.gob.ar">
                   <input type="hidden" id="i-medico">
+                  <input type="hidden" id="i-tipo-formulario" value="Solicitud de Imágenes">
                 </div>
 
                 <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
@@ -1551,6 +1555,7 @@
                   <!-- Hidden inputs for automated team notification & logged doctor -->
                   <input type="hidden" id="n-email" value="lactario.alassia@santafe.gob.ar">
                   <input type="hidden" id="n-medico">
+                  <input type="hidden" id="n-tipo-formulario" value="Prescripción Nutricional">
                 </div>
 
                 <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
@@ -2005,6 +2010,6 @@
   <!-- Toast Container -->
   <div class="toast-container" id="toast-container"></div>
 
-  <script src="app.js?v=20260818-1420"></script>
+  <script src="app.js?v=20260818-1430"></script>
 </body>
 </html>

@@ -1977,18 +1977,31 @@ function loadBackendDataFromDb() {
       // 3. Sincronizar Solicitudes e Interconsultas de MySQL 10.12.4.2
       if (data.solicitudes && Array.isArray(data.solicitudes)) {
         const dbRecords = data.solicitudes.map(s => {
-          const recServOrigen = s.servicio_origen_nombre || s.servicio_origen || 'General';
-          const recServDestino = s.servicio_destino_nombre || s.servicio_destino || recServOrigen;
+          const recType = s.tipo_formulario || 'Interconsulta General';
+          let recServOrigen = s.servicio_origen_nombre || s.servicio_origen || 'General';
+          let recServDestino = s.servicio_destino_nombre || s.servicio_destino || '';
+
+          // Fallbacks automáticos por tipo de formulario si el destino viniera vacío
+          if (!recServDestino || recServDestino === 'General') {
+            const t = recType.toLowerCase();
+            if (t.includes('nutri') || t.includes('leche') || t.includes('fórmula')) recServDestino = 'Nutrición y Lactario';
+            else if (t.includes('farmacia') || t.includes('receta')) recServDestino = 'Farmacia y Recetas Electrónicas';
+            else if (t.includes('imágen') || t.includes('imagen')) recServDestino = 'Diagnóstico por Imágenes';
+            else if (t.includes('cardio')) recServDestino = 'Cardiología Infantil';
+            else if (t.includes('social')) recServDestino = 'Servicio Social Hospitalario';
+            else recServDestino = recServOrigen;
+          }
+
           return {
             id: s.codigo_unico,
-            type: s.tipo_formulario,
+            type: recType,
             paciente: s.paciente_nombre,
             dni: s.paciente_dni,
             hc: s.paciente_hc,
             edad: s.paciente_edad || '',
             servicio: recServOrigen,
             destino: recServDestino,
-            staffAssigned: s.staff_asignado || '',
+            staffAssigned: s.staff_asignado || `Equipo de ${recServDestino}`,
             diagnostico: s.diagnostico_presuntivo || '',
             motivo: s.motivo_consulta || '',
             rp1: s.datos_rp1 || '',
@@ -2088,11 +2101,11 @@ function canUserDeliverRecord(r, user) {
   }
 
   // 2. Specialty mapping for destination service
-  if (userServ.includes('cardio') && recType.includes('cardio')) return true;
-  if ((userServ.includes('nutri') || userServ.includes('lactario')) && (recType.includes('nutri') || recType.includes('leche') || recType.includes('prescripción'))) return true;
-  if (userServ.includes('farmacia') && (recType.includes('farmacia') || recType.includes('receta'))) return true;
-  if (userServ.includes('imágenes') && recType.includes('imágenes')) return true;
-  if (userServ.includes('social') && recType.includes('social')) return true;
+  if (userServ.includes('cardio') && (recType.includes('cardio') || destServ.includes('cardio'))) return true;
+  if ((userServ.includes('nutri') || userServ.includes('lactario')) && (recType.includes('nutri') || recType.includes('leche') || recType.includes('prescripción') || destServ.includes('nutri') || destServ.includes('lactario'))) return true;
+  if (userServ.includes('farmacia') && (recType.includes('farmacia') || recType.includes('receta') || destServ.includes('farmacia'))) return true;
+  if ((userServ.includes('imágen') || userServ.includes('imagen')) && (recType.includes('imágen') || recType.includes('imagen') || destServ.includes('imágen') || destServ.includes('imagen'))) return true;
+  if (userServ.includes('social') && (recType.includes('social') || destServ.includes('social'))) return true;
 
   return false;
 }
@@ -2129,11 +2142,11 @@ function isRecordForService(r, userServiceName) {
   if (isDest || isOrig) return true;
 
   // Specialty keyword fallback mapping
-  if (userServ.includes('cardio')) return recType.includes('cardio');
-  if (userServ.includes('nutri') || userServ.includes('lactario')) return recType.includes('nutri') || recType.includes('leche') || recType.includes('prescripción');
-  if (userServ.includes('farmacia')) return recType.includes('farmacia') || recType.includes('receta');
-  if (userServ.includes('imágenes')) return recType.includes('imágenes');
-  if (userServ.includes('social')) return recType.includes('social');
+  if (userServ.includes('cardio')) return recType.includes('cardio') || destServ.includes('cardio') || origServ.includes('cardio');
+  if (userServ.includes('nutri') || userServ.includes('lactario')) return recType.includes('nutri') || recType.includes('leche') || recType.includes('prescripción') || destServ.includes('nutri') || destServ.includes('lactario') || origServ.includes('nutri') || origServ.includes('lactario');
+  if (userServ.includes('farmacia')) return recType.includes('farmacia') || recType.includes('receta') || destServ.includes('farmacia') || origServ.includes('farmacia');
+  if (userServ.includes('imágen') || userServ.includes('imagen')) return recType.includes('imágen') || recType.includes('imagen') || destServ.includes('imágen') || destServ.includes('imagen') || origServ.includes('imágen') || origServ.includes('imagen');
+  if (userServ.includes('social')) return recType.includes('social') || destServ.includes('social') || origServ.includes('social');
 
   return false;
 }
@@ -2830,9 +2843,18 @@ function handleFormSubmit(event, type) {
   
   const currentDocName = activeUser ? `${activeUser.name}${activeUser.matricula ? ' (Mat. ' + activeUser.matricula + ')' : ''}` : 'Médico Autorizado';
 
+  let officialType = type;
+  if (type.includes('Nutri') || type.includes('Leche')) officialType = 'Prescripción Nutricional';
+  else if (type.includes('Farmacia') || type.includes('Receta')) officialType = 'Receta Electrónica';
+  else if (type.includes('Imágen') || type.includes('Imagen')) officialType = 'Solicitud de Imágenes';
+  else if (type.includes('Cardio')) officialType = 'Interconsulta Cardiología';
+  else if (type.includes('General')) officialType = 'Interconsulta General';
+
   let newRecord = {
-    id: `${type.substring(0, 4).toUpperCase()}-2026-${Math.floor(100 + Math.random() * 900)}`,
-    type: type,
+    id: `${officialType.substring(0, 4).toUpperCase()}-2026-${Math.floor(100 + Math.random() * 900)}`,
+    type: officialType,
+    tipo: officialType,
+    tipo_formulario: officialType,
     fecha: new Date().toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' }),
     fechaRetiro: '',
     observaciones: '',
@@ -2844,7 +2866,10 @@ function handleFormSubmit(event, type) {
 
   let targetEmail = "";
 
-  if (type === 'Cardiología') {
+  if (officialType === 'Interconsulta Cardiología' || type === 'Cardiología') {
+    newRecord.type = 'Interconsulta Cardiología';
+    newRecord.tipo = 'Interconsulta Cardiología';
+    newRecord.tipo_formulario = 'Interconsulta Cardiología';
     newRecord.paciente = document.getElementById('c-nombre').value;
     newRecord.dni = document.getElementById('c-dni').value || 'Sin DNI';
     newRecord.hc = document.getElementById('c-dni').value || 'HC-9821';
@@ -2858,19 +2883,25 @@ function handleFormSubmit(event, type) {
     newRecord.observaciones = document.getElementById('c-observaciones')?.value || '';
     newRecord.medico = currentDocName;
     targetEmail = document.getElementById('c-email')?.value || 'cardiologia.alassia@santafe.gob.ar';
-  } else if (type === 'Interconsulta General') {
+  } else if (officialType === 'Interconsulta General' || type === 'Interconsulta General') {
+    newRecord.type = 'Interconsulta General';
+    newRecord.tipo = 'Interconsulta General';
+    newRecord.tipo_formulario = 'Interconsulta General';
     newRecord.paciente = document.getElementById('g-nombre').value;
     newRecord.dni = 's/d';
     newRecord.hc = document.getElementById('g-hc').value || 'HC-SN';
     newRecord.servicio = document.getElementById('g-servicio').value || (activeUser ? activeUser.service : 'Clínica Pediátrica');
-    newRecord.destino = document.getElementById('g-destino').value;
+    newRecord.destino = document.getElementById('g-destino').value || 'Cirugía Infantil';
     newRecord.staffAssigned = `Equipo Completo de ${newRecord.destino}`;
     newRecord.motivo = document.getElementById('g-motivo').value;
     newRecord.fechaRetiro = document.getElementById('g-fecha-retiro')?.value || '';
     newRecord.observaciones = document.getElementById('g-observaciones')?.value || '';
     newRecord.medico = currentDocName;
     targetEmail = document.getElementById('g-email')?.value || 'cirugia.infantil@santafe.gob.ar';
-  } else if (type === 'Receta Electrónica') {
+  } else if (officialType === 'Receta Electrónica' || type === 'Receta Electrónica') {
+    newRecord.type = 'Receta Electrónica';
+    newRecord.tipo = 'Receta Electrónica';
+    newRecord.tipo_formulario = 'Receta Electrónica';
     newRecord.paciente = document.getElementById('f-nombre').value;
     newRecord.dni = document.getElementById('f-dni').value || 'Sin DNI';
     newRecord.hc = document.getElementById('f-dni').value || 'HC-REC';
@@ -2897,7 +2928,10 @@ function handleFormSubmit(event, type) {
       nextDate.setDate(nextDate.getDate() + 30);
       newRecord.proximoRetiro = nextDate.toISOString().split('T')[0];
     }
-  } else if (type === 'Solicitud de Imágenes') {
+  } else if (officialType === 'Solicitud de Imágenes' || type === 'Solicitud de Imágenes') {
+    newRecord.type = 'Solicitud de Imágenes';
+    newRecord.tipo = 'Solicitud de Imágenes';
+    newRecord.tipo_formulario = 'Solicitud de Imágenes';
     newRecord.paciente = document.getElementById('i-nombre').value;
     newRecord.dni = document.getElementById('i-dni').value || 'Sin DNI';
     newRecord.hc = document.getElementById('i-dni').value || 'HC-IMG';
@@ -2910,7 +2944,10 @@ function handleFormSubmit(event, type) {
     newRecord.observaciones = document.getElementById('i-observaciones')?.value || '';
     newRecord.medico = currentDocName;
     targetEmail = document.getElementById('i-email')?.value || 'imagenes.alassia@santafe.gob.ar';
-  } else if (type === 'Prescripción Nutricional') {
+  } else if (officialType === 'Prescripción Nutricional' || type === 'Prescripción Nutricional') {
+    newRecord.type = 'Prescripción Nutricional';
+    newRecord.tipo = 'Prescripción Nutricional';
+    newRecord.tipo_formulario = 'Prescripción Nutricional';
     newRecord.paciente = document.getElementById('n-nombre').value;
     newRecord.dni = document.getElementById('n-dni').value || 's/d';
     newRecord.hc = 'HC-NUT';

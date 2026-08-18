@@ -401,39 +401,51 @@ switch ($action) {
     // 5. GUARDAR SOLICITUD, RECETA O RETIRO (solicitud)
     case 'save_record':
         $codigo = trim($data['id'] ?? '');
-        $tipoRaw = trim($data['type'] ?? 'Solicitud General');
+        $tipoRaw = trim($data['tipo_formulario'] ?? $data['tipo'] ?? $data['type'] ?? '');
         $pacienteDni = trim($data['dni'] ?? $data['pacienteDni'] ?? 's/d');
         $pacienteNombre = trim($data['paciente'] ?? 'Sin Nombre');
         $pacienteHc = trim($data['hc'] ?? '');
         $pacienteEdad = trim($data['edad'] ?? '');
         $servicioOrigen = trim($data['servicio'] ?? 'General');
-        $servicioDestino = trim($data['destino'] ?? 'General');
-        $staffAsignado = trim($data['staffAssigned'] ?? '');
-        $diagnostico = trim($data['diagnostico'] ?? '');
-        $motivo = trim($data['motivo'] ?? '');
-        $rp1 = trim($data['rp1'] ?? '');
-        $medico = trim($data['medico'] ?? '');
-        $medicoRespondedor = trim($data['medicoRespondedor'] ?? '');
-        $fecha = trim($data['fecha'] ?? date('d/m/Y, H:i'));
-        $fechaRetiro = trim($data['fechaRetiro'] ?? '');
-        $observaciones = trim($data['observaciones'] ?? '');
-        $estado = trim($data['estado'] ?? 'Pendiente');
-        $respuestaMedica = trim($data['respuestaMedica'] ?? '');
-        $isRecurring = !empty($data['isRecurring']) ? 1 : 0;
-        $moduloActual = intval($data['moduloActual'] ?? 1);
-        $totalModulos = intval($data['totalModulos'] ?? 1);
-        $proximoRetiro = trim($data['proximoRetiro'] ?? '');
-        $proximoRetiroVal = (!empty($proximoRetiro) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $proximoRetiro)) ? $proximoRetiro : null;
+        $servicioDestino = trim($data['destino'] ?? '');
 
-        // Normalizar Tipo de Formulario para compatibilidad con ENUM
+        // Auto-detección estricta y automática del tipo_formulario oficial y destino
         $tipoNorm = 'Interconsulta General';
-        if (stripos($tipoRaw, 'cardio') !== false) $tipoNorm = 'Interconsulta Cardiología';
-        else if (stripos($tipoRaw, 'receta') !== false || stripos($tipoRaw, 'farmacia') !== false) $tipoNorm = 'Receta Electrónica';
-        else if (stripos($tipoRaw, 'imágen') !== false || stripos($tipoRaw, 'imagen') !== false) $tipoNorm = 'Solicitud de Imágenes';
-        else if (stripos($tipoRaw, 'nutri') !== false || stripos($tipoRaw, 'leche') !== false) $tipoNorm = 'Prescripción Nutricional';
-        else if (stripos($tipoRaw, 'social') !== false) $tipoNorm = 'Intervención Servicio Social';
-        else if (stripos($tipoRaw, 'general') !== false) $tipoNorm = 'Interconsulta General';
-        else $tipoNorm = $tipoRaw;
+        if (stripos($tipoRaw, 'nutri') !== false || stripos($tipoRaw, 'leche') !== false || stripos($tipoRaw, 'fórmula') !== false || stripos($codigo, 'NUTR') !== false) {
+            $tipoNorm = 'Prescripción Nutricional';
+            if (empty($servicioDestino) || $servicioDestino === 'General') $servicioDestino = 'Nutrición y Lactario';
+        } else if (stripos($tipoRaw, 'receta') !== false || stripos($tipoRaw, 'farmacia') !== false || stripos($codigo, 'FARM') !== false || stripos($codigo, 'RECE') !== false) {
+            $tipoNorm = 'Receta Electrónica';
+            if (empty($servicioDestino) || $servicioDestino === 'General') $servicioDestino = 'Farmacia y Recetas Electrónicas';
+        } else if (stripos($tipoRaw, 'imágen') !== false || stripos($tipoRaw, 'imagen') !== false || stripos($codigo, 'IMAG') !== false || stripos($codigo, 'SOLI') !== false) {
+            $tipoNorm = 'Solicitud de Imágenes';
+            if (empty($servicioDestino) || $servicioDestino === 'General') $servicioDestino = 'Diagnóstico por Imágenes';
+        } else if (stripos($tipoRaw, 'cardio') !== false || stripos($codigo, 'CARD') !== false) {
+            $tipoNorm = 'Interconsulta Cardiología';
+            if (empty($servicioDestino) || $servicioDestino === 'General') $servicioDestino = 'Cardiología Infantil';
+        } else if (stripos($tipoRaw, 'social') !== false || stripos($codigo, 'SOC') !== false) {
+            $tipoNorm = 'Intervención Servicio Social';
+            if (empty($servicioDestino) || $servicioDestino === 'General') $servicioDestino = 'Servicio Social Hospitalario';
+        } else {
+            $tipoNorm = 'Interconsulta General';
+            if (empty($servicioDestino)) $servicioDestino = 'General';
+        }
+
+        // Auto-reparar registros huérfanos con tipo vacío en MySQL 10.12.4.2
+        try {
+            $pdo->exec("
+                UPDATE solicitud 
+                SET tipo_formulario = CASE
+                    WHEN codigo_unico LIKE 'NUTR%' THEN 'Prescripción Nutricional'
+                    WHEN codigo_unico LIKE 'FARM%' OR codigo_unico LIKE 'RECE%' THEN 'Receta Electrónica'
+                    WHEN codigo_unico LIKE 'IMAG%' OR codigo_unico LIKE 'SOLI%' THEN 'Solicitud de Imágenes'
+                    WHEN codigo_unico LIKE 'CARD%' THEN 'Interconsulta Cardiología'
+                    WHEN codigo_unico LIKE 'SOC%' THEN 'Intervención Servicio Social'
+                    ELSE 'Interconsulta General'
+                END
+                WHERE tipo_formulario IS NULL OR tipo_formulario = '' OR tipo_formulario = '0'
+            ");
+        } catch (Exception $eFix) {}
 
         // Concatenar observaciones y fecha de retiro si se guardan en texto
         $extraObs = [];
@@ -459,9 +471,16 @@ switch ($action) {
                 $st->execute([':n' => "%$servicioOrigen%", ':c' => "%$servicioOrigen%"]);
                 $origId = $st->fetchColumn() ?: null;
             }
-            if (in_array('servicio_destino_id', $existingCols) && !empty($servicioDestino)) {
+            if (in_array('servicio_destino_id', $existingCols)) {
+                $targetDestSearch = $servicioDestino;
+                if (stripos($tipoNorm, 'nutri') !== false) $targetDestSearch = 'Nutrición';
+                else if (stripos($tipoNorm, 'receta') !== false || stripos($tipoNorm, 'farmacia') !== false) $targetDestSearch = 'Farmacia';
+                else if (stripos($tipoNorm, 'imágen') !== false || stripos($tipoNorm, 'imagen') !== false) $targetDestSearch = 'Imágenes';
+                else if (stripos($tipoNorm, 'cardio') !== false) $targetDestSearch = 'Cardiología';
+                else if (stripos($tipoNorm, 'social') !== false) $targetDestSearch = 'Social';
+
                 $st = $pdo->prepare("SELECT id FROM servicio WHERE nombre LIKE :n OR codigo LIKE :c LIMIT 1");
-                $st->execute([':n' => "%$servicioDestino%", ':c' => "%$servicioDestino%"]);
+                $st->execute([':n' => "%$targetDestSearch%", ':c' => "%$targetDestSearch%"]);
                 $destId = $st->fetchColumn() ?: null;
             }
             if (in_array('profesional_solicitante_id', $existingCols) && !empty($medico)) {
@@ -560,8 +579,28 @@ switch ($action) {
             if (in_array('servicio_origen_id', $existingCols)) {
                 $solicitudes = $pdo->query("
                     SELECT s.*, 
+                           COALESCE(NULLIF(s.tipo_formulario, ''), 
+                               CASE 
+                                   WHEN s.codigo_unico LIKE 'NUTR%' THEN 'Prescripción Nutricional'
+                                   WHEN s.codigo_unico LIKE 'FARM%' OR s.codigo_unico LIKE 'RECE%' THEN 'Receta Electrónica'
+                                   WHEN s.codigo_unico LIKE 'IMAG%' OR s.codigo_unico LIKE 'SOLI%' THEN 'Solicitud de Imágenes'
+                                   WHEN s.codigo_unico LIKE 'CARD%' THEN 'Interconsulta Cardiología'
+                                   WHEN s.codigo_unico LIKE 'SOC%' THEN 'Intervención Servicio Social'
+                                   ELSE 'Interconsulta General'
+                               END
+                           ) AS tipo_formulario,
                            COALESCE(so.nombre, 'General') AS servicio_origen_nombre, 
-                           COALESCE(sd.nombre, so.nombre, 'General') AS servicio_destino_nombre,
+                           COALESCE(
+                               sd.nombre, 
+                               CASE 
+                                   WHEN s.tipo_formulario LIKE '%Nutri%' OR s.tipo_formulario LIKE '%Leche%' OR s.codigo_unico LIKE 'NUTR%' THEN 'Nutrición y Lactario'
+                                   WHEN s.tipo_formulario LIKE '%Farmacia%' OR s.tipo_formulario LIKE '%Receta%' OR s.codigo_unico LIKE 'FARM%' OR s.codigo_unico LIKE 'RECE%' THEN 'Farmacia y Recetas Electrónicas'
+                                   WHEN s.tipo_formulario LIKE '%Imágen%' OR s.tipo_formulario LIKE '%Imagen%' OR s.codigo_unico LIKE 'IMAG%' THEN 'Diagnóstico por Imágenes'
+                                   WHEN s.tipo_formulario LIKE '%Cardio%' OR s.codigo_unico LIKE 'CARD%' THEN 'Cardiología Infantil'
+                                   WHEN s.tipo_formulario LIKE '%Social%' OR s.codigo_unico LIKE 'SOC%' THEN 'Servicio Social Hospitalario'
+                                   ELSE 'General'
+                               END
+                           ) AS servicio_destino_nombre,
                            COALESCE(ps.nombre_completo, 'Médico Solicitante') AS medico_solicitante,
                            COALESCE(pr.nombre_completo, '') AS medico_respondedor
                     FROM solicitud s
