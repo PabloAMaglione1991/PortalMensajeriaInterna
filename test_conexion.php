@@ -80,10 +80,13 @@ try {
     $s2['tablas_existentes'] = $tables2;
 
     $tablasVerificar = ['servicio', 'profesional', 'solicitud', 'auditoria_log', 'ausentismo_alerta', 'paciente'];
+    $s2['columnas_tablas'] = [];
     foreach ($tablasVerificar as $tbl) {
         if (in_array($tbl, $tables2)) {
             $cnt = $pdo2->query("SELECT COUNT(*) FROM `$tbl`")->fetchColumn();
             $s2['conteos'][$tbl] = (int)$cnt;
+            $cols = $pdo2->query("DESCRIBE `$tbl`")->fetchAll(PDO::FETCH_COLUMN);
+            $s2['columnas_tablas'][$tbl] = $cols;
         }
     }
 } catch (PDOException $e) {

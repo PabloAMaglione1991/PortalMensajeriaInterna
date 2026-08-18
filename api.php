@@ -401,9 +401,9 @@ switch ($action) {
     // 5. GUARDAR SOLICITUD, RECETA O RETIRO (solicitud)
     case 'save_record':
         $codigo = trim($data['id'] ?? '');
-        $tipo = trim($data['type'] ?? 'Solicitud General');
-        $pacienteDni = trim($data['dni'] ?? $data['pacienteDni'] ?? '');
-        $pacienteNombre = trim($data['paciente'] ?? '');
+        $tipoRaw = trim($data['type'] ?? 'Solicitud General');
+        $pacienteDni = trim($data['dni'] ?? $data['pacienteDni'] ?? 's/d');
+        $pacienteNombre = trim($data['paciente'] ?? 'Sin Nombre');
         $pacienteHc = trim($data['hc'] ?? '');
         $pacienteEdad = trim($data['edad'] ?? '');
         $servicioOrigen = trim($data['servicio'] ?? 'General');
@@ -423,86 +423,124 @@ switch ($action) {
         $moduloActual = intval($data['moduloActual'] ?? 1);
         $totalModulos = intval($data['totalModulos'] ?? 1);
         $proximoRetiro = trim($data['proximoRetiro'] ?? '');
+        $proximoRetiroVal = (!empty($proximoRetiro) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $proximoRetiro)) ? $proximoRetiro : null;
+
+        // Normalizar Tipo de Formulario para compatibilidad con ENUM
+        $tipoNorm = 'Interconsulta General';
+        if (stripos($tipoRaw, 'cardio') !== false) $tipoNorm = 'Interconsulta Cardiología';
+        else if (stripos($tipoRaw, 'receta') !== false || stripos($tipoRaw, 'farmacia') !== false) $tipoNorm = 'Receta Electrónica';
+        else if (stripos($tipoRaw, 'imágen') !== false || stripos($tipoRaw, 'imagen') !== false) $tipoNorm = 'Solicitud de Imágenes';
+        else if (stripos($tipoRaw, 'nutri') !== false || stripos($tipoRaw, 'leche') !== false) $tipoNorm = 'Prescripción Nutricional';
+        else if (stripos($tipoRaw, 'social') !== false) $tipoNorm = 'Intervención Servicio Social';
+        else if (stripos($tipoRaw, 'general') !== false) $tipoNorm = 'Interconsulta General';
+        else $tipoNorm = $tipoRaw;
+
+        // Concatenar observaciones y fecha de retiro si se guardan en texto
+        $extraObs = [];
+        if (!empty($fechaRetiro)) $extraObs[] = "Fecha Retiro/Atención: {$fechaRetiro}";
+        if (!empty($observaciones)) $extraObs[] = "Observaciones: {$observaciones}";
+        $extraText = !empty($extraObs) ? " | " . implode(" | ", $extraObs) : "";
+
+        $rp1Full = trim($rp1 . $extraText);
+        $motivoFull = trim(($motivo ?: $diagnostico) . $extraText);
 
         try {
-            // Auto-heal schema if columns are missing
-            try {
-                $cols = $pdo->query("DESCRIBE solicitud")->fetchAll(PDO::FETCH_COLUMN);
-                $needed = [
-                    'paciente_edad' => 'VARCHAR(50) NULL',
-                    'servicio_origen_nombre' => 'VARCHAR(150) NULL',
-                    'servicio_destino_nombre' => 'VARCHAR(150) NULL',
-                    'staff_asignado' => 'VARCHAR(150) NULL',
-                    'diagnostico_presuntivo' => 'VARCHAR(255) NULL',
-                    'datos_rp1' => 'TEXT NULL',
-                    'medico_solicitante' => 'VARCHAR(150) NULL',
-                    'medico_respondedor' => 'VARCHAR(150) NULL',
-                    'fecha_solicitud' => 'VARCHAR(50) NULL',
-                    'fecha_retiro' => 'VARCHAR(50) NULL',
-                    'observaciones' => 'TEXT NULL',
-                    'proximo_retiro' => 'VARCHAR(50) NULL'
-                ];
-                foreach ($needed as $col => $typeDef) {
-                    if (!in_array($col, $cols)) {
-                        $pdo->exec("ALTER TABLE solicitud ADD COLUMN `$col` $typeDef");
+            // Obtener columnas existentes en la tabla 'solicitud'
+            $existingCols = $pdo->query("DESCRIBE solicitud")->fetchAll(PDO::FETCH_COLUMN);
+
+            // Mapeo de IDs relacionales si existen claves foráneas
+            $origId = null;
+            $destId = null;
+            $profId = null;
+            $respId = null;
+
+            if (in_array('servicio_origen_id', $existingCols) && !empty($servicioOrigen)) {
+                $st = $pdo->prepare("SELECT id FROM servicio WHERE nombre LIKE :n OR codigo LIKE :c LIMIT 1");
+                $st->execute([':n' => "%$servicioOrigen%", ':c' => "%$servicioOrigen%"]);
+                $origId = $st->fetchColumn() ?: null;
+            }
+            if (in_array('servicio_destino_id', $existingCols) && !empty($servicioDestino)) {
+                $st = $pdo->prepare("SELECT id FROM servicio WHERE nombre LIKE :n OR codigo LIKE :c LIMIT 1");
+                $st->execute([':n' => "%$servicioDestino%", ':c' => "%$servicioDestino%"]);
+                $destId = $st->fetchColumn() ?: null;
+            }
+            if (in_array('profesional_solicitante_id', $existingCols) && !empty($medico)) {
+                $cleanMed = trim(explode('•', explode('(', $medico)[0])[0]);
+                $st = $pdo->prepare("SELECT id FROM profesional WHERE nombre_completo LIKE :n LIMIT 1");
+                $st->execute([':n' => "%$cleanMed%"]);
+                $profId = $st->fetchColumn() ?: null;
+            }
+            if (in_array('profesional_respondedor_id', $existingCols) && !empty($medicoRespondedor)) {
+                $cleanResp = trim(explode('•', explode('(', $medicoRespondedor)[0])[0]);
+                $st = $pdo->prepare("SELECT id FROM profesional WHERE nombre_completo LIKE :n LIMIT 1");
+                $st->execute([':n' => "%$cleanResp%"]);
+                $respId = $st->fetchColumn() ?: null;
+            }
+
+            // Construir dinámicamente el INSERT con los campos que realmente existan en MySQL
+            $fields = [];
+            $values = [];
+            $updates = [];
+            $params = [];
+
+            $addCol = function($colName, $val, $shouldUpdate = true) use (&$fields, &$values, &$updates, &$params, $existingCols) {
+                if (in_array($colName, $existingCols)) {
+                    $paramKey = ":param_" . $colName;
+                    $fields[] = "`$colName`";
+                    $values[] = $paramKey;
+                    if ($shouldUpdate) {
+                        $updates[] = "`$colName` = VALUES(`$colName`)";
                     }
+                    $params[$paramKey] = $val;
                 }
-            } catch (Exception $eCol) {}
+            };
 
-            $stmt = $pdo->prepare("
-                INSERT INTO solicitud (
-                    codigo_unico, tipo_formulario, paciente_dni, paciente_nombre, paciente_hc, paciente_edad,
-                    servicio_origen_nombre, servicio_destino_nombre, staff_asignado, diagnostico_presuntivo,
-                    motivo_consulta, datos_rp1, medico_solicitante, medico_respondedor, fecha_solicitud,
-                    fecha_retiro, observaciones, respuesta_medica, es_recurrente, modulo_actual, total_modulos,
-                    proximo_retiro, estado
-                ) VALUES (
-                    :codigo, :tipo, :dni, :nombre, :hc, :edad,
-                    :serv_orig, :serv_dest, :staff, :diag,
-                    :motivo, :rp1, :medico, :medico_resp, :fecha,
-                    :fecha_retiro, :obs, :resp, :recurrente, :mod_act, :mod_tot,
-                    :prox_retiro, :estado
-                ) ON DUPLICATE KEY UPDATE
-                    estado = VALUES(estado),
-                    respuesta_medica = VALUES(respuesta_medica),
-                    medico_respondedor = VALUES(medico_respondedor),
-                    modulo_actual = VALUES(modulo_actual),
-                    total_modulos = VALUES(total_modulos),
-                    fecha_retiro = VALUES(fecha_retiro),
-                    observaciones = VALUES(observaciones),
-                    motivo_consulta = VALUES(motivo_consulta),
-                    datos_rp1 = VALUES(datos_rp1),
-                    proximo_retiro = VALUES(proximo_retiro)
-            ");
-            $stmt->execute([
-                ':codigo' => $codigo,
-                ':tipo' => $tipo,
-                ':dni' => $pacienteDni,
-                ':nombre' => $pacienteNombre,
-                ':hc' => $pacienteHc,
-                ':edad' => $pacienteEdad,
-                ':serv_orig' => $servicioOrigen,
-                ':serv_dest' => $servicioDestino,
-                ':staff' => $staffAsignado,
-                ':diag' => $diagnostico,
-                ':motivo' => $motivo,
-                ':rp1' => $rp1,
-                ':medico' => $medico,
-                ':medico_resp' => $medicoRespondedor,
-                ':fecha' => $fecha,
-                ':fecha_retiro' => $fechaRetiro,
-                ':obs' => $observaciones,
-                ':resp' => $respuestaMedica,
-                ':recurrente' => $isRecurring,
-                ':mod_act' => $moduloActual,
-                ':mod_tot' => $totalModulos,
-                ':prox_retiro' => $proximoRetiro,
-                ':estado' => $estado
+            $addCol('codigo_unico', $codigo, false);
+            $addCol('tipo_formulario', $tipoNorm);
+            $addCol('paciente_dni', $pacienteDni);
+            $addCol('paciente_nombre', $pacienteNombre);
+            $addCol('paciente_hc', $pacienteHc);
+            $addCol('paciente_edad', $pacienteEdad);
+            $addCol('servicio_origen_id', $origId);
+            $addCol('servicio_destino_id', $destId);
+            $addCol('profesional_solicitante_id', $profId);
+            $addCol('profesional_respondedor_id', $respId);
+            $addCol('servicio_origen_nombre', $servicioOrigen);
+            $addCol('servicio_destino_nombre', $servicioDestino);
+            $addCol('staff_asignado', $staffAsignado);
+            $addCol('diagnostico_presuntivo', $diagnostico);
+            $addCol('motivo_consulta', $motivoFull);
+            $addCol('datos_rp1', $rp1Full);
+            $addCol('medico_solicitante', $medico);
+            $addCol('medico_respondedor', $medicoRespondedor);
+            $addCol('fecha_solicitud', in_array('fecha_solicitud', $existingCols) ? date('Y-m-d H:i:s') : null);
+            $addCol('fecha_retiro', $fechaRetiro);
+            $addCol('observaciones', $observaciones);
+            $addCol('respuesta_medica', $respuestaMedica);
+            $addCol('es_recurrente', $isRecurring);
+            $addCol('modulo_actual', $moduloActual);
+            $addCol('total_modulos', $totalModulos);
+            $addCol('proximo_retiro', $proximoRetiroVal);
+            $addCol('estado', $estado);
+
+            $sql = "INSERT INTO solicitud (" . implode(', ', $fields) . ") VALUES (" . implode(', ', $values) . ")";
+            if (!empty($updates)) {
+                $sql .= " ON DUPLICATE KEY UPDATE " . implode(', ', $updates);
+            }
+
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
+
+            echo json_encode([
+                'success' => true, 
+                'message' => "Prescripción / Solicitud {$codigo} sincronizada en MySQL (10.12.4.2)",
+                'id' => $codigo
             ]);
-
-            echo json_encode(['success' => true, 'message' => "Solicitud {$codigo} sincronizada en MySQL (10.12.4.2)"]);
         } catch (Exception $e) {
-            echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+            echo json_encode([
+                'success' => false, 
+                'error' => "Error al guardar en MySQL: " . $e->getMessage()
+            ]);
         }
         break;
 
@@ -517,7 +555,26 @@ switch ($action) {
                 WHERE p.activo = 1 
                 ORDER BY p.es_admin DESC, p.nombre_completo ASC
             ")->fetchAll();
-            $solicitudes = $pdo->query("SELECT * FROM solicitud ORDER BY id DESC LIMIT 500")->fetchAll();
+
+            $existingCols = $pdo->query("DESCRIBE solicitud")->fetchAll(PDO::FETCH_COLUMN);
+            if (in_array('servicio_origen_id', $existingCols)) {
+                $solicitudes = $pdo->query("
+                    SELECT s.*, 
+                           COALESCE(so.nombre, 'General') AS servicio_origen_nombre, 
+                           COALESCE(sd.nombre, so.nombre, 'General') AS servicio_destino_nombre,
+                           COALESCE(ps.nombre_completo, 'Médico Solicitante') AS medico_solicitante,
+                           COALESCE(pr.nombre_completo, '') AS medico_respondedor
+                    FROM solicitud s
+                    LEFT JOIN servicio so ON s.servicio_origen_id = so.id
+                    LEFT JOIN servicio sd ON s.servicio_destino_id = sd.id
+                    LEFT JOIN profesional ps ON s.profesional_solicitante_id = ps.id
+                    LEFT JOIN profesional pr ON s.profesional_respondedor_id = pr.id
+                    ORDER BY s.id DESC LIMIT 500
+                ")->fetchAll();
+            } else {
+                $solicitudes = $pdo->query("SELECT * FROM solicitud ORDER BY id DESC LIMIT 500")->fetchAll();
+            }
+
             $logs = $pdo->query("SELECT * FROM auditoria_log ORDER BY id DESC LIMIT 200")->fetchAll();
 
             echo json_encode([

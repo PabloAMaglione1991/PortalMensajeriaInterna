@@ -2878,7 +2878,11 @@ function handleFormSubmit(event, type) {
     newRecord.destino = 'Farmacia y Recetas Electrónicas';
     newRecord.staffAssigned = 'Equipo Completo de Farmacia Hospitalaria';
     newRecord.diagnostico = document.getElementById('f-diag').value;
-    newRecord.rp1 = `${document.getElementById('f-rp').value} — ${document.getElementById('f-dosis').value}`;
+    const fRp = document.getElementById('f-rp')?.value || '';
+    const fDosis = document.getElementById('f-dosis')?.value || '';
+    const fDur = document.getElementById('f-duracion')?.value || '';
+    newRecord.rp1 = `${fRp}${fDosis ? ' — Dosis: ' + fDosis : ''}${fDur ? ' — Duración: ' + fDur : ''}`;
+    newRecord.motivo = `${newRecord.diagnostico ? 'Dx: ' + newRecord.diagnostico + ' | ' : ''}Rp: ${newRecord.rp1}`;
     newRecord.fechaRetiro = document.getElementById('f-fecha-retiro')?.value || '';
     newRecord.observaciones = document.getElementById('f-observaciones')?.value || '';
     newRecord.medico = currentDocName;
@@ -2914,7 +2918,10 @@ function handleFormSubmit(event, type) {
     newRecord.destino = 'Nutrición y Lactario';
     newRecord.staffAssigned = 'Equipo Completo de Nutrición y Lactario';
     newRecord.diagnostico = document.getElementById('n-diag').value;
-    newRecord.rp1 = `${document.getElementById('n-rp1-formula').value} - ${document.getElementById('n-rp1-vol').value}`;
+    const nForm = document.getElementById('n-rp1-formula')?.value || '';
+    const nVol = document.getElementById('n-rp1-vol')?.value || '';
+    newRecord.rp1 = `${nForm}${nVol ? ' — ' + nVol : ''}`;
+    newRecord.motivo = `${newRecord.diagnostico ? 'Dx: ' + newRecord.diagnostico + ' | ' : ''}Fórmula: ${newRecord.rp1}`;
     newRecord.fechaRetiro = document.getElementById('n-fecha-retiro')?.value || '';
     newRecord.observaciones = document.getElementById('n-observaciones')?.value || '';
     newRecord.medico = currentDocName;
@@ -2942,6 +2949,8 @@ function handleFormSubmit(event, type) {
   }).then(res => res.json()).then(data => {
     if (data && data.success) {
       console.log('✅ Solicitud sincronizada en MySQL 10.12.4.2:', newRecord.id);
+    } else {
+      console.error('❌ Respuesta MySQL:', data);
     }
   }).catch(err => console.log('MySQL Save Record Error:', err));
 
