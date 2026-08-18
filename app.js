@@ -239,7 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initTheme();
   initGlobalDataSync();
   initKeyboardShortcuts();
-  initDraftAutoSave();
+  clearAllFormDrafts();
   initLivePreviewBindings();
   initRecurringFormToggles();
   renderActiveUser();
@@ -359,6 +359,10 @@ function logoutUser() {
   if (activeUser) {
     logEvent('LOGIN', `Cierre de sesión registrado para ${activeUser.name}`, activeUser);
   }
+  clearAllFormDrafts();
+  document.querySelectorAll('form').forEach(f => {
+    if (f.id !== 'login-form-el') resetFormCompletely(f);
+  });
   activeUser = null;
   isAuthenticated = false;
   localStorage.removeItem('alassia_user');
@@ -2455,12 +2459,12 @@ function switchTab(tabId) {
   };
   document.getElementById('active-tab-title').textContent = titleMap[tabId] || 'Portal Alassia';
 
-  // Auto-restore form draft if available
+  // Reset form to clean state when switching to any form tab
   const activeTabEl = document.getElementById(tabId);
-  if (activeTabEl) {
+  if (activeTabEl && tabId.startsWith('tab-') && (tabId.includes('cardio') || tabId.includes('general') || tabId.includes('farmacia') || tabId.includes('imagenes') || tabId.includes('nutri'))) {
     const form = activeTabEl.querySelector('form');
-    if (form && form.id) {
-      restoreFormDraft(form.id);
+    if (form) {
+      resetFormCompletely(form);
     }
   }
 
@@ -2541,53 +2545,72 @@ function initKeyboardShortcuts() {
   });
 }
 
-/* Auto-Save Drafts System (sessionStorage) */
-function initDraftAutoSave() {
-  document.addEventListener('input', (e) => {
-    const form = e.target.closest('form');
-    if (form && form.id && form.id !== 'login-form-el') {
-      const formData = {};
-      const inputs = form.querySelectorAll('input, select, textarea');
-      inputs.forEach(input => {
-        if (input.id && input.type !== 'password' && input.type !== 'hidden') {
-          formData[input.id] = input.type === 'checkbox' ? input.checked : input.value;
-        }
-      });
-      sessionStorage.setItem(`alassia_draft_${form.id}`, JSON.stringify(formData));
-    }
-  });
-}
-
-function restoreFormDraft(formId) {
-  const saved = sessionStorage.getItem(`alassia_draft_${formId}`);
-  if (!saved) return;
-
+/* Clear Form Drafts & Total Cache Cleaner */
+function clearAllFormDrafts() {
   try {
-    const data = JSON.parse(saved);
-    const form = document.getElementById(formId);
-    if (!form) return;
-
-    let restored = false;
-    Object.keys(data).forEach(id => {
-      const el = document.getElementById(id);
-      if (el && data[id] !== '' && data[id] !== false) {
-        if (el.type === 'checkbox') {
-          el.checked = data[id];
-        } else {
-          el.value = data[id];
-        }
-        el.dispatchEvent(new Event('input'));
-        restored = true;
+    Object.keys(sessionStorage).forEach(k => {
+      if (k.startsWith('alassia_draft_')) {
+        sessionStorage.removeItem(k);
       }
     });
-
-    if (restored) {
-      showToast('ℹ️ Borrador en progreso restaurado automáticamente.');
-    }
-  } catch (err) {
-    console.error("Draft restoration error", err);
-  }
+  } catch (e) {}
 }
+
+function resetFormCompletely(formEl) {
+  if (!formEl) return;
+  if (typeof formEl === 'string') formEl = document.getElementById(formEl);
+  if (!formEl) return;
+
+  if (formEl.reset) formEl.reset();
+
+  // Clear inputs, textareas, selects explicitly
+  formEl.querySelectorAll('input, textarea').forEach(input => {
+    if (input.type === 'checkbox' || input.type === 'radio') {
+      input.checked = false;
+    } else if (input.type !== 'hidden') {
+      input.value = '';
+    }
+  });
+
+  // Re-populate active doctor into hidden fields
+  renderActiveUser();
+
+  // Re-initialize live paper preview bindings to clean fallbacks
+  initLivePreviewBindings();
+
+  // Hide recurring sub-options & observation containers
+  const recurringMonths = formEl.querySelector('[id$="-recurring-months-group"]');
+  if (recurringMonths) recurringMonths.style.display = 'none';
+  const recurringFreq = formEl.querySelector('[id$="-recurring-freq-group"]');
+  if (recurringFreq) recurringFreq.style.display = 'none';
+
+  ['prev-c-obs-container', 'prev-g-obs-container', 'prev-f-obs-container', 'prev-i-obs-container', 'prev-n-obs-container'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+
+  const prevFRec = document.getElementById('prev-f-fecha-retiro');
+  if (prevFRec) prevFRec.textContent = 'Inmediato';
+  const prevNRec = document.getElementById('prev-n-fecha-retiro');
+  if (prevNRec) prevNRec.textContent = 'Inmediato';
+}
+
+function clearAppCacheAndReload() {
+  clearAllFormDrafts();
+  try {
+    sessionStorage.clear();
+  } catch(e){}
+
+  document.querySelectorAll('form').forEach(f => {
+    if (f.id !== 'login-form-el') resetFormCompletely(f);
+  });
+
+  showToast('🧹 Formularios y caché limpiados con éxito. Recargando...');
+  setTimeout(() => {
+    window.location.reload();
+  }, 400);
+}
+window.clearAppCacheAndReload = clearAppCacheAndReload;
 
 /* Generic Reactive data-sync Event Listener */
 function initGlobalDataSync() {
@@ -2899,11 +2922,10 @@ function handleFormSubmit(event, type) {
   // Log Audit Event
   logEvent('CREACION', `Emisión de ${newRecord.type} #${newRecord.id} para paciente ${newRecord.paciente} (HC: ${newRecord.hc})`);
 
-  // Clean form inputs for next submission
-  if (event.target && event.target.reset) {
-    event.target.reset();
+  // Thoroughly clean and reset form inputs & paper preview for next submission
+  if (event.target) {
+    resetFormCompletely(event.target);
   }
-  renderActiveUser(); // restore doctor name in form
 
   // Trigger Notification
   addNotification({
