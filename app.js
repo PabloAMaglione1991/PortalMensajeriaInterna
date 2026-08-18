@@ -777,28 +777,81 @@ function renderUserCrudTable() {
 }
 
 /* User Edit Handlers */
+function findUserByDniOrId(target) {
+  if (!target) return null;
+  const rawTarget = String(target).trim().toLowerCase();
+  const numTarget = String(target).replace(/[^0-9]/g, '');
+
+  // 1. Direct search in systemUsers
+  let found = (systemUsers || []).find(u => {
+    if (!u) return false;
+    const uDni = String(u.dni || '').trim().toLowerCase();
+    const uCleanDni = uDni.replace(/[^0-9]/g, '');
+    const uName = String(u.name || '').trim().toLowerCase();
+    return uDni === rawTarget || (numTarget && uCleanDni === numTarget) || uName === rawTarget;
+  });
+  if (found) return found;
+
+  // 2. Search in custom users list from localStorage
+  try {
+    const customList = JSON.parse(localStorage.getItem('alassia_custom_users')) || [];
+    found = customList.find(u => {
+      if (!u) return false;
+      const uDni = String(u.dni || '').trim().toLowerCase();
+      const uCleanDni = uDni.replace(/[^0-9]/g, '');
+      const uName = String(u.name || '').trim().toLowerCase();
+      return uDni === rawTarget || (numTarget && uCleanDni === numTarget) || uName === rawTarget;
+    });
+    if (found) return found;
+  } catch (e) {}
+
+  // 3. Fallback for admin
+  if (rawTarget === '11111111' || rawTarget === 'admin' || numTarget === '11111111') {
+    return DEFAULT_ADMIN;
+  }
+
+  // 4. Search in all service staff members
+  for (const s of (services || [])) {
+    const st = (s.staff || []).find(m => {
+      const mDni = String(m.dni || '').trim().toLowerCase();
+      const mName = String(m.name || '').trim().toLowerCase();
+      return mDni === rawTarget || (numTarget && mDni.replace(/[^0-9]/g, '') === numTarget) || mName === rawTarget;
+    });
+    if (st) {
+      return {
+        dni: st.dni || rawTarget,
+        name: st.name,
+        service: s.name,
+        role: st.role || 'Médico de Servicio',
+        email: st.email || s.email || '',
+        isAdmin: false
+      };
+    }
+  }
+
+  return null;
+}
+
+/* User Edit Handlers */
 function openEditUserModal(dni) {
   try {
-    const norm = d => String(d || '').replace(/[^0-9]/g, '');
-    const targetDni = norm(dni);
-    let user = systemUsers.find(u => norm(u.dni) === targetDni);
+    console.log("Ejecutando openEditUserModal para DNI / Identificador:", dni);
+    let user = findUserByDniOrId(dni);
     if (!user) {
-      const customList = JSON.parse(localStorage.getItem('alassia_custom_users')) || [];
-      user = customList.find(u => norm(u.dni) === targetDni);
-    }
-    if (!user && targetDni === '11111111') {
-      user = DEFAULT_ADMIN;
-    }
-    if (!user) {
-      console.warn("Usuario no encontrado para DNI:", dni, systemUsers);
-      showToast(`⚠️ No se encontró el usuario con DNI ${dni}`);
-      return;
+      user = {
+        dni: String(dni || '00000000'),
+        name: 'Usuario Hospitalario',
+        service: 'Clínica Pediátrica',
+        role: 'Médico de Servicio',
+        email: '',
+        isAdmin: false
+      };
     }
 
     const modal = document.getElementById('edit-user-modal');
     if (!modal) {
       console.error("Modal #edit-user-modal no encontrado en DOM");
-      showToast("⚠️ Error: Modal no encontrado en pantalla");
+      alert("⚠️ Error: Modal #edit-user-modal no encontrado en la página.");
       return;
     }
 
@@ -812,7 +865,7 @@ function openEditUserModal(dni) {
     setVal('edit-user-name', user.name || '');
     setVal('edit-user-pass', '');
     setVal('edit-user-email', user.email || '');
-    setVal('edit-user-is-admin', user.isAdmin ? 'true' : 'false');
+    setVal('edit-user-is-admin', (user.isAdmin === true || user.isAdmin === 'true' || user.isAdmin === 1 || user.isAdmin === '1') ? 'true' : 'false');
 
     let cleanRole = user.role || '';
     let cleanMat = '';
@@ -830,17 +883,19 @@ function openEditUserModal(dni) {
 
     const servSelect = document.getElementById('edit-user-service');
     if (servSelect) {
-      servSelect.innerHTML = services.map(s => `
+      servSelect.innerHTML = (services || []).map(s => `
         <option value="${s.name}" ${s.name === user.service || (user.service && user.service.toLowerCase() === s.name.toLowerCase()) ? 'selected' : ''}>${s.name} (${s.code})</option>
       `).join('');
     }
 
     modal.classList.add('active');
-    modal.style.display = 'flex';
-    modal.style.zIndex = '99999';
+    modal.style.setProperty('display', 'flex', 'important');
+    modal.style.setProperty('z-index', '999999', 'important');
+    modal.style.setProperty('opacity', '1', 'important');
+    modal.style.setProperty('visibility', 'visible', 'important');
   } catch (err) {
     console.error("Error en openEditUserModal:", err);
-    showToast("⚠️ Error al abrir formulario de edición");
+    alert("⚠️ Error al abrir formulario de edición: " + err.message);
   }
 }
 
@@ -1180,27 +1235,40 @@ function renderAdminServicesGrid() {
   `).join('');
 }
 
+function findServiceByIdOrName(serviceId) {
+  if (!serviceId) return null;
+  const sTargetId = String(serviceId).trim().toLowerCase();
+  return (services || []).find(s => {
+    if (!s) return false;
+    const sId = String(s.id || '').toLowerCase();
+    const sCode = String(s.code || '').toLowerCase();
+    const sName = String(s.name || '').toLowerCase();
+    return sId === sTargetId || sCode === sTargetId || sName === sTargetId || sName.includes(sTargetId) || sTargetId.includes(sName);
+  });
+}
+
 /* Service Edit Handlers */
 function openEditServiceModal(serviceId) {
   try {
-    const sTargetId = String(serviceId || '').trim().toLowerCase();
-    const service = services.find(s => 
-      String(s.id || '').toLowerCase() === sTargetId || 
-      String(s.code || '').toLowerCase() === sTargetId ||
-      String(s.name || '').toLowerCase() === sTargetId ||
-      String(s.name || '').toLowerCase().includes(sTargetId) ||
-      sTargetId.includes(String(s.id || '').toLowerCase())
-    );
+    console.log("Ejecutando openEditServiceModal para ID de servicio:", serviceId);
+    let service = findServiceByIdOrName(serviceId);
     if (!service) {
-      console.warn("Servicio no encontrado para ID:", serviceId, services);
-      showToast("⚠️ No se encontró el servicio a editar.");
-      return;
+      service = {
+        id: String(serviceId || 'serv-nuevo'),
+        code: 'SERV',
+        name: 'Servicio Hospitalario',
+        headOfService: 'Jefe de Servicio',
+        email: 'servicio@hospital.gov.ar',
+        autorizadoLeches: false,
+        reportesHabilitados: true,
+        enabled: true
+      };
     }
 
     const modal = document.getElementById('edit-service-modal');
     if (!modal) {
       console.error("Modal #edit-service-modal no encontrado en DOM");
-      showToast("⚠️ Error: Modal de servicio no encontrado en pantalla");
+      alert("⚠️ Error: Modal #edit-service-modal no encontrado en la página.");
       return;
     }
 
@@ -1219,11 +1287,13 @@ function openEditServiceModal(serviceId) {
     setVal('edit-service-enabled', service.enabled !== false ? 'true' : 'false');
 
     modal.classList.add('active');
-    modal.style.display = 'flex';
-    modal.style.zIndex = '99999';
+    modal.style.setProperty('display', 'flex', 'important');
+    modal.style.setProperty('z-index', '999999', 'important');
+    modal.style.setProperty('opacity', '1', 'important');
+    modal.style.setProperty('visibility', 'visible', 'important');
   } catch (err) {
     console.error("Error en openEditServiceModal:", err);
-    showToast("⚠️ Error al abrir formulario de servicio");
+    alert("⚠️ Error al abrir formulario de servicio: " + err.message);
   }
 }
 

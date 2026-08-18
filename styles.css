@@ -1125,6 +1125,9 @@ textarea.form-control {
 
 .modal-backdrop.active {
   display: flex !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
 }
 
 .modal-card {
