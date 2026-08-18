@@ -604,6 +604,70 @@ switch ($action) {
         }
         break;
 
+    // 5.1 RESOLVER / ENTREGAR Y ARCHIVAR SOLICITUD
+    case 'resolve_solicitud':
+    case 'update_status':
+        try {
+            $codigo = trim($data['id'] ?? $data['codigo_unico'] ?? '');
+            $estado = trim($data['estado'] ?? 'Confirmado / Resuelto');
+            $respuesta = trim($data['respuesta_medica'] ?? $data['respuestaMedica'] ?? '');
+            $medicoResp = trim($data['medico_respondedor'] ?? $data['medicoRespondedor'] ?? '');
+
+            // Normalizar estado
+            $estadoNorm = 'Confirmado / Resuelto';
+            if (stripos($estado, 'proceso') !== false) $estadoNorm = 'En Proceso';
+            else if (stripos($estado, 'complet') !== false) $estadoNorm = 'Tratamiento Completado';
+            else if (stripos($estado, 'cancel') !== false) $estadoNorm = 'Cancelado';
+            else if (stripos($estado, 'pend') !== false) $estadoNorm = 'Pendiente';
+
+            $existingCols = $pdo->query("DESCRIBE solicitud")->fetchAll(PDO::FETCH_COLUMN);
+
+            $respId = null;
+            if (in_array('profesional_respondedor_id', $existingCols) && !empty($medicoResp)) {
+                $cleanResp = trim(explode('•', explode('(', $medicoResp)[0])[0]);
+                $st = $pdo->prepare("SELECT id FROM profesional WHERE nombre_completo LIKE :n LIMIT 1");
+                $st->execute([':n' => "%$cleanResp%"]);
+                $respId = $st->fetchColumn() ?: null;
+            }
+
+            $updates = ["estado = :estado"];
+            $params = [':estado' => $estadoNorm, ':cod' => $codigo];
+
+            if (in_array('respuesta_medica', $existingCols)) {
+                $updates[] = "respuesta_medica = :resp";
+                $params[':resp'] = $respuesta;
+            }
+            if (in_array('profesional_respondedor_id', $existingCols) && $respId) {
+                $updates[] = "profesional_respondedor_id = :resp_id";
+                $params[':resp_id'] = $respId;
+            }
+            if (in_array('medico_respondedor', $existingCols)) {
+                $updates[] = "medico_respondedor = :med_resp";
+                $params[':med_resp'] = $medicoResp;
+            }
+            if (in_array('fecha_resolucion', $existingCols)) {
+                $updates[] = "fecha_resolucion = :fresol";
+                $params[':fresol'] = date('Y-m-d H:i:s');
+            }
+
+            $sql = "UPDATE solicitud SET " . implode(', ', $updates) . " WHERE codigo_unico = :cod OR id = :cod";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
+
+            echo json_encode([
+                'success' => true,
+                'message' => "Solicitud {$codigo} resuelta y archivada exitosamente en MySQL (10.12.4.2)",
+                'id' => $codigo,
+                'estado' => $estadoNorm
+            ]);
+        } catch (Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'error' => "Error al resolver en MySQL: " . $e->getMessage()
+            ]);
+        }
+        break;
+
     // 6. CARGAR DATOS COMPLETOS DE LA BASE AL INICIAR
     case 'get_all_data':
         try {

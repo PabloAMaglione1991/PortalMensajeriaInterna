@@ -3177,12 +3177,22 @@ function handleResolveSubmit(e) {
 
     localStorage.setItem('alassia_records', JSON.stringify(records));
 
-    fetch('api.php?action=save_record', {
+    fetch('api.php?action=resolve_solicitud', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(record)
+      body: JSON.stringify({
+        id: record.id,
+        estado: newStatus,
+        respuestaMedica: responseText,
+        medicoRespondedor: doctorName
+      })
     }).then(res => res.json()).then(data => {
-      console.log('✅ Estado actualizado y archivado en MySQL 10.12.4.2:', data);
+      if (data && data.success) {
+        console.log('✅ Solicitud resuelta y archivada en MySQL 10.12.4.2:', data);
+      } else {
+        console.error('❌ Error MySQL al resolver solicitud:', data);
+        showToast(`⚠️ Alerta BD: ${data.error || 'Error al persistir en MySQL'}`);
+      }
     }).catch(err => console.log('MySQL Sync Resolve Error:', err));
 
     logEvent('RESOLUCION', `Solicitud #${record.id} entregada y resuelta por ${doctorName}. Estado: ${newStatus}. Archivada.`);
