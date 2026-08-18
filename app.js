@@ -758,51 +758,70 @@ function renderUserCrudTable() {
 
 /* User Edit Handlers */
 function openEditUserModal(dni) {
-  const norm = d => String(d || '').replace(/[^0-9]/g, '');
-  const targetDni = norm(dni);
-  const user = systemUsers.find(u => norm(u.dni) === targetDni) || (JSON.parse(localStorage.getItem('alassia_custom_users')) || []).find(u => norm(u.dni) === targetDni);
-  if (!user) {
-    console.warn("Usuario no encontrado para DNI:", dni, systemUsers);
-    showToast("⚠️ No se encontró el usuario a editar.");
-    return;
+  try {
+    const norm = d => String(d || '').replace(/[^0-9]/g, '');
+    const targetDni = norm(dni);
+    let user = systemUsers.find(u => norm(u.dni) === targetDni);
+    if (!user) {
+      const customList = JSON.parse(localStorage.getItem('alassia_custom_users')) || [];
+      user = customList.find(u => norm(u.dni) === targetDni);
+    }
+    if (!user && targetDni === '11111111') {
+      user = DEFAULT_ADMIN;
+    }
+    if (!user) {
+      console.warn("Usuario no encontrado para DNI:", dni, systemUsers);
+      showToast(`⚠️ No se encontró el usuario con DNI ${dni}`);
+      return;
+    }
+
+    const modal = document.getElementById('edit-user-modal');
+    if (!modal) {
+      console.error("Modal #edit-user-modal no encontrado en DOM");
+      showToast("⚠️ Error: Modal no encontrado en pantalla");
+      return;
+    }
+
+    const setVal = (id, val) => {
+      const el = document.getElementById(id);
+      if (el) el.value = val;
+    };
+
+    setVal('edit-user-original-dni', user.dni);
+    setVal('edit-user-dni', user.dni);
+    setVal('edit-user-name', user.name || '');
+    setVal('edit-user-pass', '');
+    setVal('edit-user-email', user.email || '');
+    setVal('edit-user-is-admin', user.isAdmin ? 'true' : 'false');
+
+    let cleanRole = user.role || '';
+    let cleanMat = '';
+    if (cleanRole.includes('• Mat.')) {
+      const parts = cleanRole.split('• Mat.');
+      cleanRole = parts[0].trim();
+      cleanMat = parts[1].trim();
+    } else if (cleanRole.includes('Mat.')) {
+      const parts = cleanRole.split('Mat.');
+      cleanRole = parts[0].trim();
+      cleanMat = parts[1].trim();
+    }
+    setVal('edit-user-role', cleanRole);
+    setVal('edit-user-mat', cleanMat);
+
+    const servSelect = document.getElementById('edit-user-service');
+    if (servSelect) {
+      servSelect.innerHTML = services.map(s => `
+        <option value="${s.name}" ${s.name === user.service || (user.service && user.service.toLowerCase() === s.name.toLowerCase()) ? 'selected' : ''}>${s.name} (${s.code})</option>
+      `).join('');
+    }
+
+    modal.classList.add('active');
+    modal.style.display = 'flex';
+    modal.style.zIndex = '99999';
+  } catch (err) {
+    console.error("Error en openEditUserModal:", err);
+    showToast("⚠️ Error al abrir formulario de edición");
   }
-
-  const modal = document.getElementById('edit-user-modal');
-  if (!modal) {
-    console.error("Modal #edit-user-modal no encontrado");
-    return;
-  }
-
-  document.getElementById('edit-user-original-dni').value = user.dni;
-  document.getElementById('edit-user-dni').value = user.dni;
-  document.getElementById('edit-user-name').value = user.name || '';
-  document.getElementById('edit-user-pass').value = '';
-  document.getElementById('edit-user-email').value = user.email || '';
-  document.getElementById('edit-user-is-admin').value = user.isAdmin ? 'true' : 'false';
-
-  let cleanRole = user.role || '';
-  let cleanMat = '';
-  if (cleanRole.includes('• Mat.')) {
-    const parts = cleanRole.split('• Mat.');
-    cleanRole = parts[0].trim();
-    cleanMat = parts[1].trim();
-  } else if (cleanRole.includes('Mat.')) {
-    const parts = cleanRole.split('Mat.');
-    cleanRole = parts[0].trim();
-    cleanMat = parts[1].trim();
-  }
-  document.getElementById('edit-user-role').value = cleanRole;
-  document.getElementById('edit-user-mat').value = cleanMat;
-
-  const servSelect = document.getElementById('edit-user-service');
-  if (servSelect) {
-    servSelect.innerHTML = services.map(s => `
-      <option value="${s.name}" ${s.name === user.service || (user.service && user.service.toLowerCase() === s.name.toLowerCase()) ? 'selected' : ''}>${s.name} (${s.code})</option>
-    `).join('');
-  }
-
-  modal.classList.add('active');
-  modal.style.display = 'flex';
 }
 
 function closeEditUserModal() {
@@ -1143,35 +1162,49 @@ function renderAdminServicesGrid() {
 
 /* Service Edit Handlers */
 function openEditServiceModal(serviceId) {
-  const sTargetId = String(serviceId || '').trim().toLowerCase();
-  const service = services.find(s => 
-    String(s.id || '').toLowerCase() === sTargetId || 
-    String(s.code || '').toLowerCase() === sTargetId ||
-    String(s.name || '').toLowerCase() === sTargetId
-  );
-  if (!service) {
-    console.warn("Servicio no encontrado para ID:", serviceId, services);
-    showToast("⚠️ No se encontró el servicio a editar.");
-    return;
+  try {
+    const sTargetId = String(serviceId || '').trim().toLowerCase();
+    const service = services.find(s => 
+      String(s.id || '').toLowerCase() === sTargetId || 
+      String(s.code || '').toLowerCase() === sTargetId ||
+      String(s.name || '').toLowerCase() === sTargetId ||
+      String(s.name || '').toLowerCase().includes(sTargetId) ||
+      sTargetId.includes(String(s.id || '').toLowerCase())
+    );
+    if (!service) {
+      console.warn("Servicio no encontrado para ID:", serviceId, services);
+      showToast("⚠️ No se encontró el servicio a editar.");
+      return;
+    }
+
+    const modal = document.getElementById('edit-service-modal');
+    if (!modal) {
+      console.error("Modal #edit-service-modal no encontrado en DOM");
+      showToast("⚠️ Error: Modal de servicio no encontrado en pantalla");
+      return;
+    }
+
+    const setVal = (id, val) => {
+      const el = document.getElementById(id);
+      if (el) el.value = val;
+    };
+
+    setVal('edit-service-id', service.id);
+    setVal('edit-service-code', service.code || '');
+    setVal('edit-service-name', service.name || '');
+    setVal('edit-service-head', service.headOfService || '');
+    setVal('edit-service-email', service.email || '');
+    setVal('edit-service-milk-auth', service.autorizadoLeches ? 'true' : 'false');
+    setVal('edit-service-report-auth', service.reportesHabilitados !== false ? 'true' : 'false');
+    setVal('edit-service-enabled', service.enabled !== false ? 'true' : 'false');
+
+    modal.classList.add('active');
+    modal.style.display = 'flex';
+    modal.style.zIndex = '99999';
+  } catch (err) {
+    console.error("Error en openEditServiceModal:", err);
+    showToast("⚠️ Error al abrir formulario de servicio");
   }
-
-  const modal = document.getElementById('edit-service-modal');
-  if (!modal) {
-    console.error("Modal #edit-service-modal no encontrado");
-    return;
-  }
-
-  document.getElementById('edit-service-id').value = service.id;
-  document.getElementById('edit-service-code').value = service.code || '';
-  document.getElementById('edit-service-name').value = service.name || '';
-  document.getElementById('edit-service-head').value = service.headOfService || '';
-  document.getElementById('edit-service-email').value = service.email || '';
-  document.getElementById('edit-service-milk-auth').value = service.autorizadoLeches ? 'true' : 'false';
-  document.getElementById('edit-service-report-auth').value = service.reportesHabilitados !== false ? 'true' : 'false';
-  document.getElementById('edit-service-enabled').value = service.enabled !== false ? 'true' : 'false';
-
-  modal.classList.add('active');
-  modal.style.display = 'flex';
 }
 
 function closeEditServiceModal() {
@@ -3434,3 +3467,35 @@ function setupSearch() {
 function filterInbox(type) {
   renderInbox(type);
 }
+
+// Explicit Window Global Bindings for HTML onclick handlers
+window.openEditUserModal = openEditUserModal;
+window.closeEditUserModal = closeEditUserModal;
+window.handleEditUserSubmit = handleEditUserSubmit;
+window.openEditServiceModal = openEditServiceModal;
+window.closeEditServiceModal = closeEditServiceModal;
+window.handleEditServiceSubmit = handleEditServiceSubmit;
+window.openAddStaffModal = openAddStaffModal;
+window.closeAddStaffModal = closeAddStaffModal;
+window.handleAddStaffSubmit = handleAddStaffSubmit;
+window.openCreateServiceModal = openCreateServiceModal;
+window.closeCreateServiceModal = closeCreateServiceModal;
+window.handleCreateServiceSubmit = handleCreateServiceSubmit;
+window.handleModalCreateServiceSubmit = handleModalCreateServiceSubmit;
+window.deleteUserByDNI = deleteUserByDNI;
+window.deleteService = deleteService;
+window.quickAddStaffTo = quickAddStaffTo;
+window.removeStaffFromService = removeStaffFromService;
+window.switchTab = switchTab;
+window.toggleFormAccess = toggleFormAccess;
+window.toggleServiceReports = toggleServiceReports;
+window.setAllReportsState = setAllReportsState;
+window.showRecordDetail = showRecordDetail;
+window.closeModal = closeModal;
+window.openResolveModal = openResolveModal;
+window.closeResolveModal = closeResolveModal;
+window.openDispenseModal = openDispenseModal;
+window.closeDispenseModal = closeDispenseModal;
+window.openEmailModal = openEmailModal;
+window.closeEmailModal = closeEmailModal;
+window.handleLogout = handleLogout;
