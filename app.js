@@ -184,8 +184,7 @@ const INITIAL_LOGS = [];
 const INITIAL_DATA = [];
 const INITIAL_NOTIFS = [];
 
-let services = INITIAL_SERVICES;
-localStorage.setItem('alassia_services', JSON.stringify(services));
+let services = JSON.parse(localStorage.getItem('alassia_services')) || INITIAL_SERVICES;
 let records = JSON.parse(localStorage.getItem('alassia_records')) || [];
 let auditLogs = JSON.parse(localStorage.getItem('alassia_audit_logs')) || [];
 let notifications = JSON.parse(localStorage.getItem('alassia_notifs')) || [];
@@ -689,6 +688,11 @@ function handleCreateUserSubmit(e) {
 
 /* Automatic Synchronization of Registered Users with Service Staff Rosters */
 function syncUsersWithServiceStaff() {
+  // Limpiar staff previo para evitar acumulación de empleados eliminados
+  services.forEach(s => {
+    s.staff = [];
+  });
+
   systemUsers.forEach(u => {
     if (!u.service || u.isAdmin) return;
 
@@ -846,7 +850,7 @@ function handleEditUserSubmit(e) {
   showToast(`¡Usuario ${newName} (DNI ${dni}) actualizado exitosamente!`);
 }
 
-function deleteUserByDNI(dni) {
+async function deleteUserByDNI(dni) {
   if (dni === '11111111') {
     showToast('⚠️ No se puede eliminar la cuenta principal de Dirección Médica.');
     return;
@@ -860,22 +864,27 @@ function deleteUserByDNI(dni) {
     customUsers = customUsers.filter(u => u.dni !== dni);
     localStorage.setItem('alassia_custom_users', JSON.stringify(customUsers));
 
-    // Quitar del staff de servicios
-    services.forEach(s => {
-      if (s.staff) {
-        s.staff = s.staff.filter(st => st.dni !== dni && st.name !== deleted.name);
+    // Re-sincronizar staff limpio
+    syncUsersWithServiceStaff();
+
+    try {
+      const res = await fetch('api.php?action=delete_user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dni: dni })
+      });
+      const data = await res.json();
+      if (data.success) {
+        logEvent('ADMIN', `Baja de usuario DNI ${dni} (${deleted.name}) en MySQL`);
+        showToast(`¡Usuario ${deleted.name} (DNI ${dni}) eliminado correctamente de la base de datos!`);
+      } else {
+        showToast(`⚠️ ${data.message || data.error || 'Error al eliminar en MySQL.'}`);
       }
-    });
-    localStorage.setItem('alassia_services', JSON.stringify(services));
+    } catch (err) {
+      console.log('MySQL User Delete Sync:', err);
+      showToast(`Usuario DNI ${dni} eliminado localmente.`);
+    }
 
-    fetch('api.php?action=delete_user', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ dni: dni })
-    }).catch(err => console.log('MySQL User Delete Sync:', err));
-
-    logEvent('ADMIN', `Baja de usuario DNI ${dni} (${deleted.name})`);
-    showToast(`Usuario DNI ${dni} eliminado del sistema.`);
     renderUserCrudTable();
     renderAdminServicesGrid();
     renderServicesGrid();

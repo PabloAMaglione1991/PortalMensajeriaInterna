@@ -334,8 +334,23 @@ switch ($action) {
                 exit;
             }
             try {
-                $stmt = $pdo->prepare("UPDATE profesional SET activo = 0 WHERE dni = :dni");
-                $stmt->execute([':dni' => $dni]);
+                // 1. Intentar borrado físico
+                $deleted = false;
+                try {
+                    $stmtDel = $pdo->prepare("DELETE FROM profesional WHERE dni = :dni AND dni != '11111111'");
+                    $stmtDel->execute([':dni' => $dni]);
+                    if ($stmtDel->rowCount() > 0) {
+                        $deleted = true;
+                    }
+                } catch (Exception $eDel) {
+                    $deleted = false;
+                }
+
+                // 2. Si tiene referencias foráneas en solicitudes, realizar soft-delete (activo = 0)
+                if (!$deleted) {
+                    $stmt = $pdo->prepare("UPDATE profesional SET activo = 0 WHERE dni = :dni");
+                    $stmt->execute([':dni' => $dni]);
+                }
 
                 $stmtLog = $pdo->prepare("
                     INSERT INTO auditoria_log (categoria, usuario_dni, usuario_nombre, detalle_accion, ip_origen) 
@@ -346,10 +361,12 @@ switch ($action) {
                     ':ip' => $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1'
                 ]);
 
-                echo json_encode(['success' => true, 'message' => "Usuario DNI {$dni} dado de baja en MySQL (10.12.4.2)"]);
+                echo json_encode(['success' => true, 'message' => "Usuario DNI {$dni} eliminado exitosamente en MySQL (10.12.4.2)"]);
             } catch (Exception $e) {
                 echo json_encode(['success' => false, 'error' => $e->getMessage()]);
             }
+        } else {
+            echo json_encode(['success' => false, 'message' => 'DNI no especificado.']);
         }
         break;
 
