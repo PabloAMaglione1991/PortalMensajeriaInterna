@@ -258,6 +258,13 @@ document.addEventListener('DOMContentLoaded', () => {
   renderAuditLogs();
   updateStats();
   setupSearch();
+
+  // Polling periódico automático (15s) para sincronizar en tiempo real con MySQL 10.12.4.2
+  setInterval(() => {
+    if (isAuthenticated) {
+      loadBackendDataFromDb();
+    }
+  }, 15000);
 });
 
 /* Global Environment Switch */
@@ -1969,7 +1976,7 @@ function loadBackendDataFromDb() {
 
       // 3. Sincronizar Solicitudes e Interconsultas de MySQL 10.12.4.2
       if (data.solicitudes && Array.isArray(data.solicitudes)) {
-        records = data.solicitudes.map(s => {
+        const dbRecords = data.solicitudes.map(s => {
           const recServOrigen = s.servicio_origen_nombre || s.servicio_origen || 'General';
           const recServDestino = s.servicio_destino_nombre || s.servicio_destino || recServOrigen;
           return {
@@ -1987,14 +1994,31 @@ function loadBackendDataFromDb() {
             rp1: s.datos_rp1 || '',
             medico: s.medico_solicitante || '',
             fecha: s.fecha_solicitud || '',
+            fechaRetiro: s.fecha_retiro || '',
+            observaciones: s.observaciones || '',
             estado: s.estado || 'Pendiente',
             respuestaMedica: s.respuesta_medica || '',
             medicoRespondedor: s.medico_respondedor || '',
             isRecurring: s.es_recurrente == 1,
             moduloActual: parseInt(s.modulo_actual || 1),
-            totalModulos: parseInt(s.total_modulos || 1)
+            totalModulos: parseInt(s.total_modulos || 1),
+            proximoRetiro: s.proximo_retiro || ''
           };
         });
+
+        // Merge: keep all DB records, and push any local records that haven't reached DB yet
+        const dbIds = new Set(dbRecords.map(r => r.id));
+        const unsyncedLocals = (records || []).filter(r => r.id && !dbIds.has(r.id));
+
+        unsyncedLocals.forEach(unsynced => {
+          fetch('api.php?action=save_record', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(unsynced)
+          }).catch(e => {});
+        });
+
+        records = [...unsyncedLocals, ...dbRecords];
         localStorage.setItem('alassia_records', JSON.stringify(records));
       }
 
@@ -2907,9 +2931,19 @@ function handleFormSubmit(event, type) {
     }
   }
 
-  // Save Record
+  // Save Record locally and in MySQL Database (10.12.4.2)
   records.unshift(newRecord);
   localStorage.setItem('alassia_records', JSON.stringify(records));
+
+  fetch('api.php?action=save_record', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(newRecord)
+  }).then(res => res.json()).then(data => {
+    if (data && data.success) {
+      console.log('✅ Solicitud sincronizada en MySQL 10.12.4.2:', newRecord.id);
+    }
+  }).catch(err => console.log('MySQL Save Record Error:', err));
 
   // Add Team-Wide Notification for Target Service
   addNotification({
@@ -3097,6 +3131,12 @@ function handleResolveSubmit(e) {
 
     localStorage.setItem('alassia_records', JSON.stringify(records));
 
+    fetch('api.php?action=save_record', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(record)
+    }).catch(err => console.log('MySQL Sync Resolve Error:', err));
+
     logEvent('RESOLUCION', `Solicitud #${record.id} dictaminada y confirmada por ${doctorName}. Estado: ${newStatus}. Archivada.`);
 
     addNotification({
@@ -3124,6 +3164,12 @@ function changeStatusInline(id, newStatus) {
 
     record.estado = newStatus;
     localStorage.setItem('alassia_records', JSON.stringify(records));
+
+    fetch('api.php?action=save_record', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(record)
+    }).catch(err => console.log('MySQL Sync Status Error:', err));
 
     logEvent('RESOLUCION', `Estado de solicitud #${record.id} cambiado a "${newStatus}"`);
 
@@ -3394,6 +3440,12 @@ function revertLastDispense(id) {
 
   localStorage.setItem('alassia_records', JSON.stringify(records));
 
+  fetch('api.php?action=save_record', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(record)
+  }).catch(err => console.log('MySQL Sync Revert Error:', err));
+
   logEvent('DISPENSA', `REVERSIÓN DE ENTREGA: Módulo ${prevModule} deshecho para paciente ${record.paciente} (${record.id}). Retorno a Módulo ${record.moduloActual}/${record.totalModulos}.`);
 
   addNotification({
@@ -3439,6 +3491,12 @@ function triggerAbsenteeismAlert(id) {
 
   records.unshift(socialRecord);
   localStorage.setItem('alassia_records', JSON.stringify(records));
+
+  fetch('api.php?action=save_record', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(socialRecord)
+  }).catch(err => console.log('MySQL Sync Social Alert Error:', err));
 
   logEvent('ALARMA', `Alerta de inasistencia/ausentismo despachada EXCLUSIVAMENTE a Servicio Social para paciente ${record.paciente} (${record.id})`);
 

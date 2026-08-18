@@ -402,27 +402,77 @@ switch ($action) {
     case 'save_record':
         $codigo = trim($data['id'] ?? '');
         $tipo = trim($data['type'] ?? 'Solicitud General');
-        $pacienteDni = preg_replace('/[^0-9]/', '', $data['pacienteDni'] ?? $data['dni'] ?? '');
+        $pacienteDni = trim($data['dni'] ?? $data['pacienteDni'] ?? '');
         $pacienteNombre = trim($data['paciente'] ?? '');
         $pacienteHc = trim($data['hc'] ?? '');
-        $servicioOrigen = trim($data['servicio'] ?? 'Clínica Pediátrica');
+        $pacienteEdad = trim($data['edad'] ?? '');
+        $servicioOrigen = trim($data['servicio'] ?? 'General');
         $servicioDestino = trim($data['destino'] ?? 'General');
-        $motivo = trim($data['motivo'] ?? $data['diagnostico'] ?? $data['rp1'] ?? '');
+        $staffAsignado = trim($data['staffAssigned'] ?? '');
+        $diagnostico = trim($data['diagnostico'] ?? '');
+        $motivo = trim($data['motivo'] ?? '');
+        $rp1 = trim($data['rp1'] ?? '');
+        $medico = trim($data['medico'] ?? '');
+        $medicoRespondedor = trim($data['medicoRespondedor'] ?? '');
+        $fecha = trim($data['fecha'] ?? date('d/m/Y, H:i'));
+        $fechaRetiro = trim($data['fechaRetiro'] ?? '');
+        $observaciones = trim($data['observaciones'] ?? '');
         $estado = trim($data['estado'] ?? 'Pendiente');
+        $respuestaMedica = trim($data['respuestaMedica'] ?? '');
         $isRecurring = !empty($data['isRecurring']) ? 1 : 0;
         $moduloActual = intval($data['moduloActual'] ?? 1);
         $totalModulos = intval($data['totalModulos'] ?? 1);
-        $respuestaMedica = trim($data['respuestaMedica'] ?? '');
+        $proximoRetiro = trim($data['proximoRetiro'] ?? '');
 
         try {
+            // Auto-heal schema if columns are missing
+            try {
+                $cols = $pdo->query("DESCRIBE solicitud")->fetchAll(PDO::FETCH_COLUMN);
+                $needed = [
+                    'paciente_edad' => 'VARCHAR(50) NULL',
+                    'servicio_origen_nombre' => 'VARCHAR(150) NULL',
+                    'servicio_destino_nombre' => 'VARCHAR(150) NULL',
+                    'staff_asignado' => 'VARCHAR(150) NULL',
+                    'diagnostico_presuntivo' => 'VARCHAR(255) NULL',
+                    'datos_rp1' => 'TEXT NULL',
+                    'medico_solicitante' => 'VARCHAR(150) NULL',
+                    'medico_respondedor' => 'VARCHAR(150) NULL',
+                    'fecha_solicitud' => 'VARCHAR(50) NULL',
+                    'fecha_retiro' => 'VARCHAR(50) NULL',
+                    'observaciones' => 'TEXT NULL',
+                    'proximo_retiro' => 'VARCHAR(50) NULL'
+                ];
+                foreach ($needed as $col => $typeDef) {
+                    if (!in_array($col, $cols)) {
+                        $pdo->exec("ALTER TABLE solicitud ADD COLUMN `$col` $typeDef");
+                    }
+                }
+            } catch (Exception $eCol) {}
+
             $stmt = $pdo->prepare("
-                INSERT INTO solicitud (codigo_unico, tipo_formulario, paciente_dni, paciente_nombre, paciente_hc, motivo_consulta, respuesta_medica, es_recurrente, modulo_actual, total_modulos, estado)
-                VALUES (:codigo, :tipo, :dni, :nombre, :hc, :motivo, :resp, :recurrente, :mod_act, :mod_tot, :estado)
-                ON DUPLICATE KEY UPDATE
+                INSERT INTO solicitud (
+                    codigo_unico, tipo_formulario, paciente_dni, paciente_nombre, paciente_hc, paciente_edad,
+                    servicio_origen_nombre, servicio_destino_nombre, staff_asignado, diagnostico_presuntivo,
+                    motivo_consulta, datos_rp1, medico_solicitante, medico_respondedor, fecha_solicitud,
+                    fecha_retiro, observaciones, respuesta_medica, es_recurrente, modulo_actual, total_modulos,
+                    proximo_retiro, estado
+                ) VALUES (
+                    :codigo, :tipo, :dni, :nombre, :hc, :edad,
+                    :serv_orig, :serv_dest, :staff, :diag,
+                    :motivo, :rp1, :medico, :medico_resp, :fecha,
+                    :fecha_retiro, :obs, :resp, :recurrente, :mod_act, :mod_tot,
+                    :prox_retiro, :estado
+                ) ON DUPLICATE KEY UPDATE
                     estado = VALUES(estado),
+                    respuesta_medica = VALUES(respuesta_medica),
+                    medico_respondedor = VALUES(medico_respondedor),
                     modulo_actual = VALUES(modulo_actual),
+                    total_modulos = VALUES(total_modulos),
+                    fecha_retiro = VALUES(fecha_retiro),
+                    observaciones = VALUES(observaciones),
                     motivo_consulta = VALUES(motivo_consulta),
-                    respuesta_medica = VALUES(respuesta_medica)
+                    datos_rp1 = VALUES(datos_rp1),
+                    proximo_retiro = VALUES(proximo_retiro)
             ");
             $stmt->execute([
                 ':codigo' => $codigo,
@@ -430,11 +480,23 @@ switch ($action) {
                 ':dni' => $pacienteDni,
                 ':nombre' => $pacienteNombre,
                 ':hc' => $pacienteHc,
+                ':edad' => $pacienteEdad,
+                ':serv_orig' => $servicioOrigen,
+                ':serv_dest' => $servicioDestino,
+                ':staff' => $staffAsignado,
+                ':diag' => $diagnostico,
                 ':motivo' => $motivo,
+                ':rp1' => $rp1,
+                ':medico' => $medico,
+                ':medico_resp' => $medicoRespondedor,
+                ':fecha' => $fecha,
+                ':fecha_retiro' => $fechaRetiro,
+                ':obs' => $observaciones,
                 ':resp' => $respuestaMedica,
                 ':recurrente' => $isRecurring,
                 ':mod_act' => $moduloActual,
                 ':mod_tot' => $totalModulos,
+                ':prox_retiro' => $proximoRetiro,
                 ':estado' => $estado
             ]);
 
@@ -455,8 +517,8 @@ switch ($action) {
                 WHERE p.activo = 1 
                 ORDER BY p.es_admin DESC, p.nombre_completo ASC
             ")->fetchAll();
-            $solicitudes = $pdo->query("SELECT * FROM solicitud ORDER BY fecha_solicitud DESC LIMIT 300")->fetchAll();
-            $logs = $pdo->query("SELECT * FROM auditoria_log ORDER BY fecha_registro DESC LIMIT 200")->fetchAll();
+            $solicitudes = $pdo->query("SELECT * FROM solicitud ORDER BY id DESC LIMIT 500")->fetchAll();
+            $logs = $pdo->query("SELECT * FROM auditoria_log ORDER BY id DESC LIMIT 200")->fetchAll();
 
             echo json_encode([
                 'success' => true,
